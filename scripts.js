@@ -5,6 +5,8 @@
 
 // ── État global ───────────────────────────────────────────────
 let currentUser      = null;
+let currentUniverse  = null;
+let userUniverses    = [];
 let isAppReady       = false;
 let chars            = {};
 let editingId        = null;
@@ -405,6 +407,9 @@ async function init() {
 
 async function onSignedIn(user) {
   currentUser = user;
+  currentUniverse = null;
+  userUniverses = [];
+  isAppReady = false;
   updateUserUI(currentUser);
   const username = user.user_metadata?.full_name
     || user.user_metadata?.name
@@ -413,8 +418,129 @@ async function onSignedIn(user) {
     || 'Joueur';
   await sb.from('profiles').update({ username }).eq('id', user.id);
   document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loading-overlay').classList.add('active');
+  await loadUniversesFromDB();
+  document.getElementById('loading-overlay').classList.remove('active');
+  showUniverseScreen();
+}
+
+async function loadUniversesFromDB() {
+  if (!currentUser) return [];
+  const errEl = document.getElementById('universe-error');
+  if (errEl) errEl.classList.remove('show');
+
+  const { data: universes, error } = await sb
+    .from('universes')
+    .select('id, owner_id, name, description, join_code, created_at, updated_at')
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('Erreur chargement univers:', error);
+    userUniverses = [];
+    if (errEl) {
+      errEl.textContent = 'Impossible de charger les univers : ' + error.message;
+      errEl.classList.add('show');
+    }
+    renderUniverseList();
+    return [];
+  }
+
+  const universeIds = (universes || []).map(u => u.id);
+  let roleByUniverse = {};
+  if (universeIds.length) {
+    const { data: memberships, error: membershipError } = await sb
+      .from('universe_members')
+      .select('universe_id, role')
+      .eq('user_id', currentUser.id)
+      .in('universe_id', universeIds);
+    if (membershipError) console.warn('Erreur chargement rôles univers:', membershipError.message);
+    (memberships || []).forEach(m => { roleByUniverse[m.universe_id] = m.role; });
+  }
+
+  userUniverses = (universes || []).map(u => ({
+    ...u,
+    role: roleByUniverse[u.id] || (u.owner_id === currentUser.id ? 'owner' : 'player'),
+  }));
+  renderUniverseList();
+  return userUniverses;
+}
+
+function showUniverseScreen() {
+  document.getElementById('loading-overlay').classList.remove('active');
+  document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('universe-screen')?.classList.add('active');
+  renderUniverseList();
+  applyTranslations();
+}
+
+function renderUniverseList() {
+  const list = document.getElementById('universe-list');
+  if (!list) return;
+  if (!userUniverses.length) {
+    list.innerHTML = `<div class="universe-empty">Aucun univers disponible.<br>Créez votre premier univers pour commencer.</div>`;
+    return;
+  }
+  list.innerHTML = userUniverses.map(u => `
+    <button class="universe-card" onclick="enterUniverse('${u.id}')">
+      <div class="universe-card-title">${esc(u.name)}</div>
+      <div class="universe-card-desc">${esc(u.description || 'Aucune description')}</div>
+      <div class="universe-card-meta">
+        <span>${esc(u.role || 'membre')}</span>
+        <span>${esc(u.join_code || '')}</span>
+      </div>
+    </button>
+  `).join('');
+}
+
+async function createUniverseFromLanding() {
+  const name = prompt('Nom du nouvel univers');
+  if (!name || !name.trim()) return;
+  const description = prompt('Description de l’univers (optionnel)') || '';
+  document.getElementById('loading-overlay').classList.add('active');
+  const { data, error } = await sb.rpc('create_universe', {
+    p_name: name.trim(),
+    p_description: description.trim(),
+  });
+  document.getElementById('loading-overlay').classList.remove('active');
+  if (error) {
+    console.error('Erreur création univers:', error);
+    showToast('Impossible de créer l’univers.');
+    return;
+  }
+  await loadUniversesFromDB();
+  if (data?.id) await enterUniverse(data.id);
+}
+
+function showJoinUniversePlaceholder() {
+  const code = prompt('Code univers à 8 caractères');
+  if (!code) return;
+  showToast('L’abonnement à un univers par code sera ajouté dans une prochaine étape.');
+}
+
+async function enterUniverse(universeId) {
+  const universe = userUniverses.find(u => u.id === universeId);
+  if (!universe) {
+    showToast('Univers introuvable.');
+    return;
+  }
+  currentUniverse = universe;
+  document.getElementById('universe-screen')?.classList.remove('active');
   document.getElementById('loading-overlay').classList.add('active');
   document.getElementById('app').style.display = 'flex';
+  try {
+    await loadUniverseData();
+  } finally {
+    document.getElementById('loading-overlay').classList.remove('active');
+  }
+}
+
+async function loadUniverseData() {
+  if (!currentUniverse?.id) {
+    showUniverseScreen();
+    return;
+  }
   await unreadMarkers.initFromDB(currentUser.id);
   await Promise.all([
     loadCharsFromDB(),
@@ -428,7 +554,6 @@ async function onSignedIn(user) {
       : Promise.resolve()),
   ]);
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
-  document.getElementById('loading-overlay').classList.remove('active');
   isAppReady = true;
   if (!navigateFromHash()) {
     renderList();
@@ -438,10 +563,13 @@ async function onSignedIn(user) {
 
 function onSignedOut() {
   currentUser = null;
+  currentUniverse = null;
+  userUniverses = [];
   unreadMarkers.resetCache();
   chars = {};
   charSecrets = {};
   document.getElementById('loading-overlay').classList.remove('active');
+  document.getElementById('universe-screen')?.classList.remove('active');
   document.getElementById('auth-screen').classList.add('active');
   document.getElementById('app').style.display = 'none';
 }
@@ -1024,5 +1152,6 @@ async function cleanupOrphanTags(type) {
 
 // ── Boot ──────────────────────────────────────────────────────
 document.getElementById('app').style.display = 'none';
+document.getElementById('universe-screen')?.classList.remove('active');
 window.bootCamplyApp = init;
 init();

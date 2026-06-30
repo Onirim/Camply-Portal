@@ -125,6 +125,22 @@
 </div>
 </div>
 
+<!-- Universe selection screen -->
+<div id="universe-screen">
+  <div class="universe-box">
+    <div class="auth-logo">Camply <span>Portal</span></div>
+    <div class="auth-tagline">Choisissez l'univers dans lequel vous souhaitez jouer</div>
+
+    <div class="universe-actions">
+      <button class="btn-primary" onclick="createUniverseFromLanding()">Créer un univers</button>
+      <button class="btn-cancel" onclick="showJoinUniversePlaceholder()">Rejoindre avec un code</button>
+    </div>
+
+    <div id="universe-error" class="auth-error"></div>
+    <div id="universe-list" class="universe-list"></div>
+  </div>
+</div>
+
 <!-- Installation assistant -->
 <div id="install-screen">
   <div class="install-box">
