@@ -1,0 +1,154 @@
+// ══════════════════════════════════════════════════════════════
+// Camply — Configuration des Cartes (multi-cartes)
+// Adaptez ce fichier selon votre projet.
+// ══════════════════════════════════════════════════════════════
+
+const MAP_CONFIG = {
+  // ── Cartes disponibles ────────────────────────────
+  // Chaque carte a une clé unique (key), un nom affiché (name),
+  // le chemin de son image et ses dimensions natives en pixels.
+  //
+  // ⚠️  La clé 'default' est réservée pour les données
+  //     existantes migrées depuis la version mono-carte.
+  //     Si vous aviez déjà des marqueurs, gardez une entrée
+  //     avec key: 'default' comme première carte.
+  maps: [
+    {
+      key:         'default',              // ← identifiant unique, ne pas changer si données existantes
+      name:        'Default Map',     // ← nom affiché dans le sélecteur
+      image:       './pictures/map.png',
+      imageWidth:  4095,
+      imageHeight: 4095,
+     markerColorLabels: {
+        '#e05c5c': 'Rouge', //rouge
+        '#e07a3a': 'Orange', //orange
+        '#e8c46a': 'Jaune', //jaune
+        '#5cbf7a': 'Vert', //vert
+        '#5c9be0': 'Bleu', //bleu
+        '#9b7de8': 'Violet', //violet
+        '#e05c9b': 'Rose', //rose
+        '#5cbfbf': 'Turquoise', //turquoise
+      },
+    },
+    // Décommentez et remplissez pour ajouter d'autres cartes :
+     {
+      key:         'region',              // ← identifiant unique, ne pas changer si données existantes
+      name:        'Region Map',     // ← nom affiché dans le sélecteur
+      image:       './pictures/map.png',
+      imageWidth:  4095,
+      imageHeight: 4095,
+      markerColorLabels: {
+        '#e05c5c': 'Rouge', //rouge
+        '#e07a3a': 'Orange', //orange
+        '#e8c46a': 'Jaune', //jaune
+        '#5cbf7a': 'Vert', //vert
+        '#5c9be0': 'Bleu', //bleu
+        '#9b7de8': 'Violet', //violet
+        '#e05c9b': 'Rose', //rose
+        '#5cbfbf': 'Turquoise', //turquoise
+      },
+    },
+    // {
+    //   key:         'dungeon',
+    //   name:        'Donjon',
+    //   image:       './pictures/dungeon.png',
+    //   imageWidth:  2048,
+    //   imageHeight: 2048,
+    //    markerColorLabels: {
+    //    '#e05c5c': 'Rouge', //rouge
+    //    '#e07a3a': 'Orange', //orange
+    //    '#e8c46a': 'Jaune', //jaune
+    //    '#5cbf7a': 'Vert', //vert
+    //    '#5c9be0': 'Bleu', //bleu
+    //    '#9b7de8': 'Violet', //violet
+    //    '#e05c9b': 'Rose', //rose
+    //    '#5cbfbf': 'Turquoise', //turquoise
+    //  },
+    // },
+    // {
+    //   key:         'region',
+    //   name:        'Région Nord',
+    //   image:       './pictures/region.png',
+    //   imageWidth:  4096,
+    //   imageHeight: 3000,
+    //    markerColorLabels: {
+    //    '#e05c5c': 'Rouge', //rouge
+    //    '#e07a3a': 'Orange', //orange
+    //    '#e8c46a': 'Jaune', //jaune
+    //    '#5cbf7a': 'Vert', //vert
+    //    '#5c9be0': 'Bleu', //bleu
+    //    '#9b7de8': 'Violet', //violet
+    //    '#e05c9b': 'Rose', //rose
+    //    '#5cbfbf': 'Turquoise', //turquoise
+    //  },
+    // },
+    // {
+    //   key:         'sea',
+    //   name:        'Carte Marine',
+    //   image:       './pictures/sea.png',
+    //   imageWidth:  5000,
+    //   imageHeight: 3500,
+    //    markerColorLabels: {
+    //    '#e05c5c': 'Rouge', //rouge
+    //    '#e07a3a': 'Orange', //orange
+    //    '#e8c46a': 'Jaune', //jaune
+    //    '#5cbf7a': 'Vert', //vert
+    //    '#5c9be0': 'Bleu', //bleu
+    //    '#9b7de8': 'Violet', //violet
+    //    '#e05c9b': 'Rose', //rose
+    //    '#5cbfbf': 'Turquoise', //turquoise
+    //  },
+    // },
+  ],
+
+  // ── Comportement du zoom ──────────────────────────────────
+  zoomMin:     0.15,
+  zoomMax:     4.0,
+  zoomStep:    0.15,
+  zoomInitial: 'fit', // 'fit' = ajuste à la fenêtre, ou nombre (ex: 0.5)
+
+  // ── Apparence des marqueurs ───────────────────────────────
+  markerSize: 28,
+  markerColors: [
+    '#e05c5c',
+    '#e07a3a',
+    '#e8c46a',
+    '#5cbf7a',
+    '#5c9be0',
+    '#9b7de8',
+    '#e05c9b',
+    '#5cbfbf',
+  ],
+
+  // ── Textes de l'interface ─────────────────────────────────
+  labels: {
+    tabName:                  'Carte',
+    addMarkerHint:            'Maj+clic gauche pour ajouter un marqueur',
+    markerModalTitle:         'Nouveau marqueur',
+    editModalTitle:           'Modifier le marqueur',
+    fieldName:                'Nom',
+    fieldDesc:                'Description',
+    fieldColor:               'Couleur',
+    namePlaceholder:          'Ex : Taverne du Dragon d\'Or',
+    descPlaceholder:          'Notes, description du lieu…',
+    btnSave:                  'Enregistrer',
+    btnCancel:                'Annuler',
+    btnDelete:                'Supprimer',
+    confirmDelete:            'Supprimer ce marqueur ?',
+    toastAdded:               'Marqueur ajouté !',
+    toastSaved:               'Marqueur sauvegardé !',
+    toastDeleted:             'Marqueur supprimé.',
+    toastError:               'Erreur lors de la sauvegarde.',
+    emptyName:                'Veuillez saisir un nom.',
+    imageError:               'Impossible de charger la carte. Vérifiez map-config.js.',
+    toastLayerNotFound:       'Couche introuvable ou non publique.',
+    toastLayerOwn:            'C\'est votre propre couche de carte !',
+    toastLayerAlreadyFollowed:'Vous suivez déjà cette couche.',
+    toastLayerUnsubscribed:   'Abonnement à la couche supprimé.',
+    toastLayerSubscribed:     'Abonné à "${title}" !',
+    layerPanelTitle:          'Partage',
+    ownLayerSection:          'Ma couche',
+    followedLayerSection:     'Couches suivies',
+    mapSelectorLabel:         'Carte',
+  },
+};

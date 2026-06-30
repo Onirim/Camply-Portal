@@ -1,0 +1,1116 @@
+/* ══════════════════════════════════════════════════════════════
+   GRIMOIRE — Thème Dark Fantasy Médiéval
+   Bordeaux · Bronze · Parchemin brûlé · Ornements
+   
+   INSTALLATION :
+   1. Ajoutez dans <head> de index.html, AVANT styles.css :
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700;900&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+   
+   2. Ajoutez après tous les autres <link rel="stylesheet"> :
+      <link rel="stylesheet" href="theme-dark-fantasy.css" />
+   
+   ══════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════
+   VARIABLES — Palette Bordeaux & Bronze
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  /* Fonds — du plus sombre au plus clair */
+  --bg:  #0d0608;
+  --bg2: #130a0c;
+  --bg3: #1c0f12;
+  --bg4: #251419;
+
+  /* Bordures */
+  --border:  #3d1e24;
+  --border2: #6b3040;
+
+  /* Textes */
+  --text:  #e8d9c0;
+  --text2: #a88a70;
+  --text3: #5c3d35;
+
+  /* Accent principal — Bronze doré */
+  --accent:  #c9860a;
+  --accent2: #a86c08;
+
+  /* Couleurs fonctionnelles — conservées du thème original */
+  --offc: #c94040;
+  --offd: #c96030;
+  --def:  #4a7ab5;
+  --mov:  #4a9b60;
+  --sup:  #8b5ab5;
+
+  /* Variables spécifiques au jeu */
+  --energy-color:   #c94040;
+  --recovery-color: #c96030;
+  --vigor-color:    #4a9b60;
+  --rank-color:     #c9860a;
+
+  /* Typographies médiévales */
+  --font-display: 'Cinzel', 'Palatino Linotype', Georgia, serif;
+  --font-body:    'IM Fell English', Georgia, serif;
+  --font-mono:    'Share Tech Mono', 'Courier New', monospace;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BASE & SCROLLBAR
+   ══════════════════════════════════════════════════════════════ */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 0;
+  border-left: 1px solid var(--accent2);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent2); }
+
+/* Liens */
+a { color: var(--accent); }
+a:hover { color: var(--accent2); }
+.chr-reader-body a,
+.doc-reader-body a {
+  color: var(--accent);
+  border-bottom: 1px solid rgba(201, 134, 10, 0.3);
+}
+.chr-reader-body a:hover,
+.doc-reader-body a:hover {
+  color: #e8b84a;
+  border-bottom-color: #e8b84a;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TOPBAR — Bandeau de navigation
+   ══════════════════════════════════════════════════════════════ */
+#topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  /* Filet décoratif bronze sous la topbar */
+  box-shadow: 0 1px 0 var(--accent2), 0 2px 12px rgba(0,0,0,0.6);
+}
+
+/* Logo — style enluminure */
+#topbar .logo {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(201, 134, 10, 0.3);
+}
+#topbar .logo span {
+  color: var(--text3);
+  font-family: 'Cinzel', serif;
+  font-weight: 400;
+  font-size: 14px;
+}
+
+/* Boutons de navigation */
+#topbar nav button {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+#topbar nav button:hover {
+  color: var(--accent);
+  background: rgba(201, 134, 10, 0.08);
+}
+#topbar nav button.active {
+  color: var(--accent);
+  background: rgba(201, 134, 10, 0.12);
+  /* Soulignement bronze */
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+/* Bouton partage */
+#topbar .share-btn {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  border-radius: 2px;
+}
+#topbar .share-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(201, 134, 10, 0.08);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ORNEMENT UTILITAIRE — Mixin pseudo-éléments
+   (réutilisé dans plusieurs composants)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Séparateur de section avec filigrane central */
+.form-section-title,
+.preview-section-title,
+.campaign-section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text3);
+  position: relative;
+}
+.form-section-title::after,
+.preview-section-title::after,
+.campaign-section-title::after {
+  background: linear-gradient(90deg, var(--border2) 0%, var(--border) 60%, transparent 100%);
+  height: 1px;
+}
+
+/* Bordure bronze sur les sections */
+.form-section {
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.form-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 20px; right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2), transparent);
+  opacity: 0.4;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ROSTER — Liste des personnages
+   ══════════════════════════════════════════════════════════════ */
+.list-header h1 {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  text-shadow: 0 0 30px rgba(201, 134, 10, 0.15);
+}
+.list-header h1 span { color: var(--accent); }
+.list-header .count {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+}
+
+/* Cartes personnages */
+.char-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.25s;
+  /* Coin décoratif via clip-path non intrusif */
+}
+
+/* Barre top colorée — style médiéval */
+.char-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+/* Ornement coin supérieur droit */
+.char-card::after {
+  content: '';
+  position: absolute; top: 0; right: 0;
+  width: 18px; height: 18px;
+  border-top: 1px solid var(--border2);
+  border-right: 1px solid var(--border2);
+  opacity: 0.5;
+  transition: opacity 0.25s;
+}
+.char-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(201, 134, 10, 0.1);
+}
+.char-card:hover::before { opacity: 1; }
+.char-card:hover::after { opacity: 1; border-color: var(--accent); }
+
+/* Nom du personnage */
+.char-card .card-name {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.char-card .card-sub {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text3);
+}
+.char-card .card-rank {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  background: rgba(201, 134, 10, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(201, 134, 10, 0.25);
+  border-radius: 2px;
+  padding: 2px 8px;
+  letter-spacing: 0.08em;
+}
+
+/* Valeurs des attributs */
+.card-attr .val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+}
+.card-attr .lbl {
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.card-attr.e .val { color: var(--energy-color); }
+.card-attr.r .val { color: var(--recovery-color); }
+.card-attr.v .val { color: var(--vigor-color); }
+
+/* Tags pouvoirs */
+.card-power-tag {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border-radius: 2px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BOUTON PRINCIPAL
+   ══════════════════════════════════════════════════════════════ */
+.btn-primary {
+  background: var(--accent);
+  color: #0d0608;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  border: none;
+  /* Filet lumineux */
+  box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset, 0 4px 16px rgba(201, 134, 10, 0.2);
+  transition: all 0.2s;
+}
+.btn-primary:hover {
+  background: #e0990c;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset, 0 6px 20px rgba(201, 134, 10, 0.35);
+}
+.btn-primary svg { width: 12px; height: 12px; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   ÉDITEUR — Formulaire
+   ══════════════════════════════════════════════════════════════ */
+#editor-form {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+}
+
+/* Champs de formulaire */
+.field label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.field input, .field select, .field textarea {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text);
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 14px;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(201, 134, 10, 0.1);
+  outline: none;
+}
+.field select option { background: var(--bg3); }
+
+/* Barre de points */
+.pts-bar {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+.pts-bar .pts-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.pts-bar .pts-value { font-family: 'Share Tech Mono', monospace; font-size: 14px; }
+.pts-bar .pts-value.ok { color: var(--mov); }
+.pts-bar .pts-value.over { color: var(--offc); }
+
+/* Boutons +/- des attributs */
+.attr-ctrl button, .apt-ctrl button, .xp-ctrl button {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text2);
+  transition: all 0.15s;
+}
+.attr-ctrl button:hover, .apt-ctrl button:hover, .xp-ctrl button:hover {
+  border-color: var(--accent2);
+  color: var(--accent);
+  background: rgba(201, 134, 10, 0.08);
+}
+
+/* Valeurs des attributs dans l'éditeur */
+.attr-val { font-family: 'Share Tech Mono', monospace; font-size: 20px; font-weight: 700; }
+.attr-val.e { color: var(--energy-color); }
+.attr-val.r { color: var(--recovery-color); }
+.attr-val.v { color: var(--vigor-color); }
+.attr-cost { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text3); }
+
+/* Entrées de pouvoir */
+.power-entry {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  border-left: 2px solid var(--border2);
+}
+.power-entry-header input,
+.power-entry-footer select {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text);
+  font-family: 'IM Fell English', Georgia, serif;
+}
+.power-entry-header input:focus,
+.power-entry-footer select:focus { border-color: var(--accent); }
+
+.power-cost-display {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* Bouton Ajouter */
+.add-btn {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px dashed var(--border);
+  border-radius: 2px;
+  color: var(--text3);
+}
+.add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Aptitudes */
+.apt-row .apt-name {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 13px;
+  color: var(--text2);
+}
+.apt-val { font-family: 'Share Tech Mono', monospace; font-weight: 700; color: var(--sup); }
+.apt-val.zero { color: var(--text3); }
+
+.apt-pts-bar { background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; }
+.apt-pts-bar .lbl { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); }
+.apt-pts-bar .val { font-family: 'Share Tech Mono', monospace; font-weight: 700; }
+.apt-pts-bar .val.ok { color: var(--mov); }
+.apt-pts-bar .val.over { color: var(--offc); }
+
+/* Traits */
+.trait-row input.trait-name {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px;
+  color: var(--text); font-family: 'IM Fell English', Georgia, serif; font-size: 13px;
+}
+.trait-row input.trait-name:focus { border-color: var(--accent); }
+.trait-bonus-val { font-family: 'Share Tech Mono', monospace; color: var(--accent); }
+
+/* Complications */
+.compl-entry { background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; }
+.compl-entry-header input, .compl-entry textarea {
+  background: var(--bg4); border: 1px solid var(--border); border-radius: 2px;
+  color: var(--text); font-family: 'IM Fell English', Georgia, serif;
+}
+.compl-entry-header input:focus, .compl-entry textarea:focus { border-color: var(--accent); }
+.compl-chip {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--border2);
+  border-radius: 0 2px 2px 0;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 13px;
+  color: var(--text2);
+}
+.compl-detail { font-size: 12px; color: var(--text3); }
+
+/* Background */
+.background-field textarea {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px;
+  color: var(--text); font-family: 'IM Fell English', Georgia, serif; font-size: 13px;
+  line-height: 1.8;
+}
+.background-field textarea:focus { border-color: var(--accent); }
+.background-preview { font-family: 'IM Fell English', Georgia, serif; font-size: 14px; line-height: 1.8; color: var(--text2); }
+
+/* XP */
+.xp-field { background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; }
+.xp-field .xp-label { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2); }
+.xp-field .xp-detail { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 10px; color: var(--text3); }
+.xp-val { font-family: 'Share Tech Mono', monospace; font-size: 16px; color: var(--accent); }
+
+/* Boutons Save/Cancel */
+.btn-save {
+  background: var(--accent);
+  color: #0d0608;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset;
+}
+.btn-save:hover { background: #e0990c; }
+.btn-cancel {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text2);
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.btn-cancel:hover { border-color: var(--border2); color: var(--text); }
+
+/* Actions form — sticky */
+.form-actions {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  /* Filet décoratif */
+  box-shadow: 0 -1px 0 rgba(201, 134, 10, 0.1);
+}
+
+/* Indicateur code de partage */
+.share-code-box {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px;
+}
+.share-code-box .code {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 16px;
+  color: var(--accent);
+  letter-spacing: 0.16em;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   PREVIEW — Fiche personnage
+   ══════════════════════════════════════════════════════════════ */
+#preview-panel { background: var(--bg); }
+
+/* Nom */
+.preview-name {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  text-shadow: 0 0 40px rgba(201, 134, 10, 0.12);
+  line-height: 1.1;
+}
+.preview-sub {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text3);
+  margin-top: 6px;
+}
+.preview-rank-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  background: rgba(201, 134, 10, 0.1);
+  color: var(--accent);
+  border: 1px solid rgba(201, 134, 10, 0.3);
+  border-radius: 2px;
+  padding: 3px 10px;
+  letter-spacing: 0.1em;
+}
+
+/* Séparateur header */
+.preview-header {
+  border-bottom: 1px solid var(--border);
+  /* Ornement double ligne */
+  padding-bottom: 20px;
+  position: relative;
+}
+.preview-header::after {
+  content: '✦';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--bg);
+  padding: 0 10px;
+  letter-spacing: 0;
+}
+
+/* Attributs preview */
+.preview-attr {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.preview-attr.e { border-left: 2px solid var(--energy-color); }
+.preview-attr.r { border-left: 2px solid var(--recovery-color); }
+.preview-attr.v { border-left: 2px solid var(--vigor-color); }
+.preview-attr .val { font-family: 'Share Tech Mono', monospace; font-size: 30px; font-weight: 700; }
+.preview-attr.e .val { color: var(--energy-color); }
+.preview-attr.r .val { color: var(--recovery-color); }
+.preview-attr.v .val { color: var(--vigor-color); }
+.preview-attr .lbl { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); }
+.preview-attr .cost { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text3); }
+
+/* Pouvoirs preview */
+.preview-power {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+.pow-name { font-family: 'IM Fell English', Georgia, serif; font-size: 14px; color: var(--text); }
+.pow-desc { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; color: var(--text2); }
+.pow-cost { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text3); }
+.pow-mod-tag {
+  font-family: 'Share Tech Mono', monospace; font-size: 10px;
+  background: rgba(201, 134, 10, 0.12); color: var(--accent);
+  border: 1px solid rgba(201, 134, 10, 0.2);
+  border-radius: 2px; padding: 1px 6px;
+}
+
+/* Badges types de pouvoirs */
+.pow-badge {
+  font-family: 'Cinzel', serif; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.06em; border-radius: 2px;
+}
+.pow-badge.offc { background: rgba(201,64,64,0.15); color: var(--offc); border: 1px solid rgba(201,64,64,0.25); }
+.pow-badge.offd { background: rgba(201,96,48,0.15); color: var(--offd); border: 1px solid rgba(201,96,48,0.25); }
+.pow-badge.def  { background: rgba(74,122,181,0.15); color: var(--def);  border: 1px solid rgba(74,122,181,0.25); }
+.pow-badge.mov  { background: rgba(74,155,96,0.15);  color: var(--mov);  border: 1px solid rgba(74,155,96,0.25); }
+.pow-badge.sup  { background: rgba(139,90,181,0.15); color: var(--sup);  border: 1px solid rgba(139,90,181,0.25); }
+
+/* Aptitudes preview */
+.apt-preview-row {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 2px;
+}
+.apt-preview-row .name { font-family: 'IM Fell English', Georgia, serif; font-size: 12px; color: var(--text2); }
+.apt-preview-row .rank-num { font-family: 'Share Tech Mono', monospace; font-size: 13px; font-weight: 700; color: var(--sup); }
+
+/* Traits preview */
+.trait-chip {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 2px;
+  font-family: 'IM Fell English', Georgia, serif; font-size: 12px; color: var(--text2);
+}
+.trait-chip .bonus { color: var(--accent); font-family: 'Share Tech Mono', monospace; font-weight: 700; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   CHRONIQUES
+   ══════════════════════════════════════════════════════════════ */
+.chr-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+}
+.chr-card::before {
+  background: linear-gradient(90deg, transparent, var(--sup), transparent);
+}
+.chr-card:hover { border-color: var(--border2); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+.chr-card-title {
+  font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
+}
+.chr-card-desc { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; color: var(--text3); }
+.chr-card-entry-count { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--accent); }
+.chr-card-last-date { font-family: 'IM Fell English', Georgia, serif; font-size: 10px; color: var(--text3); }
+
+/* Détail chronique */
+.chr-detail-title {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif; font-size: 26px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
+}
+.chr-detail-desc { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 13px; color: var(--text3); }
+
+/* Entrées */
+.entry-row { background: var(--bg2); border: 1px solid var(--border); border-radius: 3px; }
+.entry-row:hover { border-color: var(--border2); transform: translateX(4px); }
+.entry-row-title { font-family: 'Cinzel', serif; font-size: 14px; font-weight: 600; letter-spacing: 0.03em; color: var(--text); }
+.entry-row-date { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); }
+.entry-row-preview { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; color: var(--text3); }
+
+/* Breadcrumb */
+.chr-reader-breadcrumb {
+  font-family: 'Cinzel', serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3);
+}
+.chr-reader-breadcrumb:hover { color: var(--sup); }
+
+/* Lecteur Markdown — Chroniques */
+.chr-reader-title {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif; font-size: 30px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
+}
+.chr-reader-meta { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; color: var(--text3); }
+.chr-reader-body { font-family: 'IM Fell English', Georgia, serif; font-size: 15px; color: var(--text2); line-height: 1.9; }
+.chr-reader-body h1, .chr-reader-body h2, .chr-reader-body h3 {
+  font-family: 'Cinzel', serif; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text);
+}
+.chr-reader-body h1 { font-size: 24px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.chr-reader-body h2 { font-size: 18px; }
+.chr-reader-body h3 { font-size: 14px; color: var(--text3); }
+.chr-reader-body strong { color: var(--text); }
+.chr-reader-body em { color: var(--accent); }
+.chr-reader-body blockquote {
+  border-left: 2px solid var(--sup); background: rgba(139,90,181,0.06);
+  border-radius: 0 2px 2px 0; font-style: italic; color: var(--text2);
+}
+.chr-reader-body code {
+  font-family: 'Share Tech Mono', monospace; font-size: 12px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; color: var(--accent);
+}
+.chr-reader-body pre { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; }
+.chr-reader-body hr {
+  border: none; margin: 32px 0; text-align: center;
+  position: relative; height: 16px; overflow: visible;
+}
+.chr-reader-body hr::before {
+  content: '⸻ ✦ ⸻';
+  position: absolute; top: 0; left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px; color: var(--text3); letter-spacing: 0.2em;
+  background: var(--bg); padding: 0 12px; white-space: nowrap;
+}
+
+/* Éditeur chronique */
+#chr-editor-form { background: var(--bg2); border-right: 1px solid var(--border); }
+.chr-form-actions { background: var(--bg2); border-top: 1px solid var(--border); box-shadow: 0 -1px 0 rgba(201,134,10,0.1); }
+.chr-share-code-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; }
+.chr-share-code-box .code { font-family: 'Share Tech Mono', monospace; font-size: 15px; color: var(--sup); letter-spacing: 0.14em; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   DOCUMENTS
+   ══════════════════════════════════════════════════════════════ */
+.doc-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+}
+.doc-card::before { background: linear-gradient(90deg, transparent, var(--def), transparent); }
+.doc-card:hover { border-color: var(--border2); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+.doc-card-title {
+  font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
+}
+.doc-card-preview { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; color: var(--text3); }
+
+/* Lecteur document */
+.doc-reader-title {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif; font-size: 36px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
+}
+.doc-reader-meta { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; color: var(--text3); }
+.doc-reader-body { font-family: 'IM Fell English', Georgia, serif; font-size: 16px; color: var(--text2); line-height: 1.9; }
+.doc-reader-body h1, .doc-reader-body h2, .doc-reader-body h3 {
+  font-family: 'Cinzel', serif; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text);
+}
+.doc-reader-body h1 { font-size: 28px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.doc-reader-body h2 { font-size: 21px; }
+.doc-reader-body h3 { font-size: 16px; color: var(--text3); }
+.doc-reader-body strong { color: var(--text); }
+.doc-reader-body em { color: var(--accent); }
+.doc-reader-body blockquote {
+  border-left: 2px solid var(--def); background: rgba(74,122,181,0.06);
+  border-radius: 0 2px 2px 0; font-style: italic;
+}
+.doc-reader-body code {
+  font-family: 'Share Tech Mono', monospace; font-size: 13px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; color: var(--def);
+}
+.doc-reader-body hr { border: none; position: relative; margin: 36px 0; height: 16px; overflow: visible; }
+.doc-reader-body hr::before {
+  content: '⸻ ✦ ⸻';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  font-size: 12px; color: var(--text3); letter-spacing: 0.2em;
+  background: var(--bg); padding: 0 12px; white-space: nowrap;
+}
+
+/* Éditeur document */
+#doc-editor-form { background: var(--bg2); border-right: 1px solid var(--border); }
+.doc-title-field input {
+  border-bottom: 2px solid var(--border);
+  font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text); background: transparent;
+}
+.doc-title-field input:focus { border-bottom-color: var(--def); }
+.doc-form-actions { background: var(--bg2); border-top: 1px solid var(--border); box-shadow: 0 -1px 0 rgba(201,134,10,0.1); }
+.doc-content-field textarea {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px;
+  color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 13px; line-height: 1.7;
+}
+.doc-content-field textarea:focus { border-color: var(--def); }
+.doc-share-code-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; }
+.doc-share-code-box .code { font-family: 'Share Tech Mono', monospace; font-size: 15px; color: var(--def); letter-spacing: 0.14em; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   CAMPAGNES
+   ══════════════════════════════════════════════════════════════ */
+.campaign-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 4px;
+}
+.campaign-card::before {
+  background: linear-gradient(90deg, var(--accent), var(--sup));
+  height: 3px;
+}
+.campaign-card:hover { border-color: var(--border2); box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+.campaign-card-title {
+  font-family: 'Cinzel', serif; font-size: 19px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
+}
+.campaign-card-desc { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; color: var(--text3); }
+.campaign-detail-title {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif; font-size: 28px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
+}
+
+/* Sélecteur d'items */
+.campaign-selectable-item { background: var(--bg2); border: 1px solid var(--border); border-radius: 2px; }
+.campaign-selectable-item:hover { border-color: var(--border2); }
+.campaign-selectable-item.selected {
+  border-color: var(--accent);
+  background: rgba(201, 134, 10, 0.06);
+}
+.campaign-selectable-item.selected .campaign-selectable-check {
+  background: var(--accent); border-color: var(--accent);
+}
+.campaign-selectable-name { font-family: 'Cinzel', serif; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   RÈGLES DU JEU — Rulebook
+   ══════════════════════════════════════════════════════════════ */
+.rulebook-toc { background: var(--bg2); border-right: 1px solid var(--border); }
+.rulebook-toc-title {
+  font-family: 'Cinzel', serif; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent);
+}
+.rulebook-toc-search input {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px;
+  color: var(--text2); font-family: 'IM Fell English', Georgia, serif;
+}
+.rulebook-toc-search input:focus { border-color: var(--accent); }
+.rulebook-toc-link { font-family: 'IM Fell English', Georgia, serif; font-size: 13px; color: var(--text3); }
+.rulebook-toc-link[data-level="1"] {
+  font-family: 'Cinzel', serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2);
+}
+.rulebook-toc-link:hover { color: var(--text2); background: rgba(201,134,10,0.05); }
+.rulebook-toc-link.active { color: var(--accent); border-left-color: var(--accent); background: rgba(201,134,10,0.08); }
+
+.rulebook-content { background: var(--bg); }
+.rulebook-body { font-family: 'IM Fell English', Georgia, serif; font-size: 15px; color: var(--text2); line-height: 1.9; }
+
+.rulebook-body h1 {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif; font-size: 28px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text);
+}
+.rulebook-body h1::after {
+  background: linear-gradient(90deg, var(--accent), var(--border2), transparent);
+}
+.rulebook-body h1::before { content: '✦'; color: var(--accent); background: var(--bg); }
+.rulebook-body h2 {
+  font-family: 'Cinzel', serif; font-size: 18px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text);
+}
+.rulebook-body h2::before { background: linear-gradient(180deg, var(--accent), var(--border2)); }
+.rulebook-body h3 {
+  font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); border-left: 1px solid var(--border2);
+}
+.rulebook-body strong { color: var(--text); font-weight: 700; }
+.rulebook-body em { color: var(--accent); font-style: italic; }
+.rulebook-body blockquote {
+  border-left: 2px solid var(--accent); background: rgba(201,134,10,0.05);
+  border-radius: 0 2px 2px 0; font-style: italic;
+}
+.rulebook-body blockquote::before { color: var(--accent); }
+.rulebook-body hr::before { content: '— ✦ —'; color: var(--accent); opacity: 0.5; }
+.rulebook-body code {
+  font-family: 'Share Tech Mono', monospace;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; color: var(--accent);
+}
+.rulebook-body pre { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; }
+.rulebook-body th { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.rulebook-body td { font-family: 'IM Fell English', Georgia, serif; border-bottom: 1px solid var(--border); color: var(--text2); }
+.rulebook-body tbody tr:hover td { background: rgba(201,134,10,0.03); }
+.rulebook-body ul li::before { content: '›'; color: var(--accent); }
+.rulebook-body ol li::before { background: rgba(201,134,10,0.1); border: 1px solid rgba(201,134,10,0.25); color: var(--accent); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TAGS
+   ══════════════════════════════════════════════════════════════ */
+.tags-input-wrap {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px;
+}
+.tags-input-wrap:focus-within { border-color: var(--accent); }
+.tags-input-wrap input { font-family: 'IM Fell English', Georgia, serif; font-size: 13px; color: var(--text); background: none; }
+.tags-autocomplete {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 2px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.tags-autocomplete-item { font-family: 'IM Fell English', Georgia, serif; font-size: 13px; color: var(--text2); }
+.tags-autocomplete-item:hover, .tags-autocomplete-item.active { background: var(--bg3); color: var(--text); }
+
+/* Filtres roster */
+.filter-label { font-family: 'Cinzel', serif; font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   BADGES & VISIBILITÉ
+   ══════════════════════════════════════════════════════════════ */
+.card-visibility.public { background: rgba(74,155,96,0.12); color: var(--mov); border: 1px solid rgba(74,155,96,0.25); border-radius: 2px; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.08em; }
+.card-visibility.private { background: rgba(74,122,181,0.08); color: var(--text3); border: 1px solid var(--border); border-radius: 2px; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.08em; }
+.followed-badge { background: rgba(139,90,181,0.12); color: var(--sup); border: 1px solid rgba(139,90,181,0.25); border-radius: 2px; font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.06em; }
+.card-followed-owner { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 11px; color: var(--text3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   AUTH SCREEN
+   ══════════════════════════════════════════════════════════════ */
+#auth-screen { background: var(--bg); }
+.auth-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  /* Ornement double cadre */
+  box-shadow: 0 0 0 1px rgba(201, 134, 10, 0.1), 0 32px 80px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(201,134,10,0.05);
+  position: relative;
+}
+/* Coins ornementaux */
+.auth-box::before {
+  content: '';
+  position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 1px solid rgba(201, 134, 10, 0.12);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.auth-logo {
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: 22px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--accent); text-align: center;
+  text-shadow: 0 0 30px rgba(201, 134, 10, 0.3);
+}
+.auth-logo span { font-family: 'Cinzel', serif; font-weight: 400; color: var(--text3); }
+.auth-tagline { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; color: var(--text3); text-align: center; }
+.discord-btn {
+  font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  border-radius: 2px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   LOADING OVERLAY
+   ══════════════════════════════════════════════════════════════ */
+#loading-overlay { background: var(--bg); }
+.spinner {
+  border-color: var(--border);
+  border-top-color: var(--accent);
+}
+.loading-text { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   USER MENU
+   ══════════════════════════════════════════════════════════════ */
+.user-btn {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px;
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2);
+}
+.user-btn:hover { border-color: var(--border2); color: var(--text); }
+.user-btn .avatar {
+  background: var(--accent); color: #0d0608; font-family: 'Cinzel', serif;
+  font-size: 10px; font-weight: 700; border-radius: 50%;
+}
+.user-dropdown {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 3px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+.user-dropdown-header { border-bottom: 1px solid var(--border); }
+.user-dropdown-header .uname { font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700; color: var(--text); }
+.user-dropdown-header .uemail { font-family: 'IM Fell English', Georgia, serif; font-size: 11px; color: var(--text3); }
+.user-dropdown-item { font-family: 'IM Fell English', Georgia, serif; font-size: 13px; color: var(--text2); }
+.user-dropdown-item:hover { background: var(--bg3); color: var(--text); }
+.user-dropdown-item.danger:hover { color: var(--offc); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST & INDICATEUR SAUVEGARDE
+   ══════════════════════════════════════════════════════════════ */
+#toast {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 2px; font-family: 'IM Fell English', Georgia, serif;
+  font-size: 13px; color: var(--text);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+.save-indicator { font-family: 'Share Tech Mono', monospace; font-size: 10px; }
+.save-indicator.saving { color: var(--accent); }
+.save-indicator.saved  { color: var(--mov); }
+.save-indicator.error  { color: var(--offc); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   LIGHTBOX
+   ══════════════════════════════════════════════════════════════ */
+#lightbox { background: rgba(5, 2, 4, 0.94); }
+#lightbox-close {
+  background: rgba(201, 134, 10, 0.1);
+  border: 1px solid rgba(201, 134, 10, 0.2);
+  border-radius: 2px; color: var(--text2);
+}
+#lightbox-close:hover { background: rgba(201, 134, 10, 0.2); color: var(--accent); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   ICÔNES BOUTONS
+   ══════════════════════════════════════════════════════════════ */
+.icon-btn {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px;
+  color: var(--text2);
+}
+.icon-btn:hover { border-color: var(--border2); color: var(--text); }
+.icon-btn.danger:hover { border-color: var(--offc); color: var(--offc); }
+.rm-btn { color: var(--text3); }
+.rm-btn:hover { color: var(--offc); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TRANSFERT — Modale
+   ══════════════════════════════════════════════════════════════ */
+#transfer-modal-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(201,134,10,0.08), 0 32px 80px rgba(0,0,0,0.8);
+}
+.transfer-title { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.transfer-desc { font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; color: var(--text3); }
+.transfer-section-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text3); }
+.transfer-type-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; color: var(--text2); }
+.transfer-type-btn:hover { border-color: var(--border2); color: var(--text); }
+.transfer-type-btn.active { border-color: var(--tcolor, var(--accent)); }
+.transfer-type-label { font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 0.08em; text-transform: uppercase; }
+.transfer-code-input {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 2px;
+  color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 16px; letter-spacing: 0.2em;
+}
+.transfer-code-input:focus { border-color: var(--accent); }
+.transfer-username-wrap { background: var(--bg3); border: 1px solid var(--border); border-radius: 2px; }
+.transfer-username-wrap:focus-within { border-color: var(--accent); }
+.transfer-username-input { font-family: 'IM Fell English', Georgia, serif; font-size: 14px; color: var(--text); }
+.transfer-confirm-btn {
+  background: var(--bg3); color: var(--accent);
+  font-family: 'Cinzel', serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  border: 1px solid var(--border2); border-radius: 2px;
+}
+.transfer-confirm-btn:not(:disabled):hover { border-color: var(--accent); background: rgba(201,134,10,0.1); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   EMPTY STATES
+   ══════════════════════════════════════════════════════════════ */
+.empty-state h2, #chr-empty-state h2, #doc-empty-state h2, #campaign-empty-state h2 {
+  font-family: 'Cinzel', serif;
+  font-size: 18px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text2);
+}
+.empty-state p, #chr-empty-state p {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic; font-size: 13px; color: var(--text3);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ILLUSTRATIONS
+   ══════════════════════════════════════════════════════════════ */
+.illus-upload-zone {
+  border: 1px dashed var(--border2); border-radius: 3px;
+  background: var(--bg3);
+}
+.illus-upload-zone:hover { border-color: var(--accent); }
+.illus-upload-zone.has-image { border-style: solid; border-color: var(--border); }
+.illus-upload-placeholder { color: var(--text3); font-family: 'IM Fell English', Georgia, serif; font-style: italic; font-size: 12px; }
+.illus-overlay-btn {
+  background: var(--bg2); border: 1px solid var(--border2);
+  color: var(--text); font-family: 'Cinzel', serif; font-size: 10px;
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 2px;
+}
+.illus-overlay-btn:hover { border-color: var(--accent); color: var(--accent); }
+.illus-overlay-btn.danger:hover { border-color: var(--offc); color: var(--offc); }
+.preview-illus, .card-illus { border: 1px solid var(--border); border-radius: 3px; }
+
+/* Slider position illustration */
+.illus-slider-wrap label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+
+/* ══════════════════════════════════════════════════════════════
+   SÉLECTEUR DE LANGUE
+   ══════════════════════════════════════════════════════════════ */
+#lang-select {
+  background: var(--bg3) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text2) !important;
+  font-family: 'Cinzel', serif !important;
+  font-size: 10px !important;
+  letter-spacing: 0.08em !important;
+  border-radius: 2px !important;
+}
+#lang-select:hover { border-color: var(--border2) !important; color: var(--text) !important; }

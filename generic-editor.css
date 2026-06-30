@@ -1,0 +1,248 @@
+/* ══════════════════════════════════════════════════════════════
+   Camply — Styles éditeur générique
+   À ajouter à styles.css (ou importer en <link> séparé)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Tag Race / Classe sur les cartes ── */
+.card-rc-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: rgba(155, 125, 232, 0.13);
+  color: var(--sup);
+  border: 1px solid rgba(155, 125, 232, 0.28);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* ── Caractéristiques sur la carte roster ── */
+.card-char-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.card-char-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  /*min-width: 48px;*/
+}
+
+.card-char-trigram {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.card-char-score {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ÉDITEUR — Composants génériques
+   ══════════════════════════════════════════════════════════════ */
+
+/* Entrée générique (caractéristique, compétence, trait) */
+.generic-entry {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.generic-entry-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Input texte réutilisable */
+.generic-input {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 6px 8px;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 0;
+}
+.generic-input:focus { border-color: var(--accent); }
+.generic-input::placeholder { color: var(--text3); }
+
+/* Champ trigramme (3 lettres) */
+.trigram-input {
+  width: 52px !important;
+  flex-shrink: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.trigram-input:focus { border-color: var(--accent); }
+.trigram-input::placeholder { color: var(--text3); font-size: 10px; letter-spacing: 0; }
+
+/* Textarea générique */
+.generic-textarea {
+  width: 100%;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 6px 8px;
+  resize: vertical;
+  min-height: 48px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.generic-textarea:focus { border-color: var(--accent); }
+.generic-textarea::placeholder { color: var(--text3); }
+
+/* ── Contrôle de score ── */
+.score-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.score-ctrl button {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+  flex-shrink: 0;
+  user-select: none;
+}
+.score-ctrl button:hover { border-color: var(--accent); color: var(--accent); }
+.score-ctrl button:active { transform: scale(0.92); }
+
+.score-val {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 32px;
+  text-align: center;
+}
+
+/* Score optionnel pour les traits (peut être "—") */
+.trait-score {
+  color: var(--text3);
+  font-size: 13px;
+}
+
+/* ── Compétence : entrée compacte sur une ligne ── */
+.skill-entry {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+}
+
+/* ── Contrôle de niveau ── */
+.level-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.level-ctrl .lbl {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 500;
+  flex: 1;
+}
+
+.level-ctrl .score-val {
+  font-size: 18px;
+  min-width: 36px;
+}
+
+/* ── Hint texte sous les sections ── */
+.section-hint {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: -8px;
+  margin-bottom: 4px;
+  font-style: italic;
+}
+
+/* ── Sélecteur de couleur de trait ── */
+.trait-color-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0 4px;
+}
+.trait-color-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s, border-color 0.1s;
+  flex-shrink: 0;
+}
+.trait-color-swatch:hover { transform: scale(1.15); }
+.trait-color-swatch.selected {
+  border-color: var(--text);
+  transform: scale(1.1);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FICHE PERSONNAGE — Aperçu compétences (2 colonnes)
+   ══════════════════════════════════════════════════════════════ */
+
+/* apt-preview-grid est déjà défini en 2 colonnes dans styles.css.
+   Si ce n'est pas le cas, on le force ici : */
+.apt-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+@media (max-width: 480px) {
+  .apt-preview-grid { grid-template-columns: 1fr; }
+  .card-char-chip   { padding: 4px 6px; }
+}
