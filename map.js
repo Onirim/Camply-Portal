@@ -292,10 +292,7 @@ async function initMap() {
   _buildMapSelector();
   _bindMapEvents();
 
-  await Promise.all([
-    loadAllOwnLayersFromDB(),
-    loadFollowedLayersFromDB(),
-  ]);
+  await loadAllOwnLayersFromDB(); // charge aussi les couches suivies
 
   _recomputeMapAccess();
   const fallbackMap = _firstAccessibleMapKey();
