@@ -25,6 +25,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Nombre d'univers qu'un utilisateur a le droit de posséder (owner_id).
+-- Valeur ajustable manuellement en base par utilisateur si besoin.
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS max_universes INT NOT NULL DEFAULT 1;
+
 -- Trigger : crée automatiquement un profil à l'inscription
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
@@ -2625,10 +2629,15 @@ CREATE TRIGGER set_universe_join_code
 CREATE TABLE IF NOT EXISTS public.universe_members (
   universe_id UUID NOT NULL REFERENCES public.universes(id) ON DELETE CASCADE,
   user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role        TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'player', 'viewer')),
+  role        TEXT NOT NULL CHECK (role IN ('owner', 'admin', 'gm', 'player', 'viewer')),
   joined_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (universe_id, user_id)
 );
+
+-- Ajout du rôle 'gm' (MJ) sur une base déjà existante.
+ALTER TABLE public.universe_members DROP CONSTRAINT IF EXISTS universe_members_role_check;
+ALTER TABLE public.universe_members ADD CONSTRAINT universe_members_role_check
+  CHECK (role IN ('owner', 'admin', 'gm', 'player', 'viewer'));
 
 CREATE INDEX IF NOT EXISTS universe_members_user_idx ON public.universe_members(user_id);
 CREATE INDEX IF NOT EXISTS universe_members_role_idx ON public.universe_members(universe_id, role);
@@ -2679,9 +2688,23 @@ SET search_path = public
 AS $$
 DECLARE
   created_universe public.universes;
+  v_max_universes INT;
+  v_owned_count INT;
 BEGIN
   IF auth.uid() IS NULL THEN
     RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  SELECT max_universes INTO v_max_universes
+  FROM public.profiles
+  WHERE id = auth.uid();
+
+  SELECT COUNT(*) INTO v_owned_count
+  FROM public.universes
+  WHERE owner_id = auth.uid();
+
+  IF v_owned_count >= COALESCE(v_max_universes, 1) THEN
+    RAISE EXCEPTION 'Vous avez atteint votre limite d''univers possédés (% max).', COALESCE(v_max_universes, 1);
   END IF;
 
   INSERT INTO public.universes (owner_id, name, description, illustration_url, illustration_position)
@@ -2696,9 +2719,130 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.transfer_universe_ownership(
+  p_universe_id UUID,
+  p_new_owner_id UUID
+)
+RETURNS public.universes
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_current_owner UUID;
+  v_max_universes INT;
+  v_owned_count INT;
+  updated_universe public.universes;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  SELECT owner_id INTO v_current_owner
+  FROM public.universes
+  WHERE id = p_universe_id;
+
+  IF v_current_owner IS NULL THEN
+    RAISE EXCEPTION 'Univers introuvable';
+  END IF;
+
+  IF v_current_owner != auth.uid() THEN
+    RAISE EXCEPTION 'Seul le propriétaire actuel peut transférer cet univers';
+  END IF;
+
+  IF p_new_owner_id = auth.uid() THEN
+    RAISE EXCEPTION 'Vous êtes déjà propriétaire de cet univers';
+  END IF;
+
+  IF NOT public.is_universe_member(p_universe_id, p_new_owner_id) THEN
+    RAISE EXCEPTION 'Cet utilisateur doit être membre de l''univers pour en devenir propriétaire';
+  END IF;
+
+  SELECT max_universes INTO v_max_universes
+  FROM public.profiles
+  WHERE id = p_new_owner_id;
+
+  SELECT COUNT(*) INTO v_owned_count
+  FROM public.universes
+  WHERE owner_id = p_new_owner_id;
+
+  IF v_owned_count >= COALESCE(v_max_universes, 1) THEN
+    RAISE EXCEPTION 'Cet utilisateur a atteint sa limite d''univers possédés (% max)', COALESCE(v_max_universes, 1);
+  END IF;
+
+  UPDATE public.universes
+  SET owner_id = p_new_owner_id
+  WHERE id = p_universe_id
+  RETURNING * INTO updated_universe;
+
+  UPDATE public.universe_members
+  SET role = 'owner'
+  WHERE universe_id = p_universe_id AND user_id = p_new_owner_id;
+
+  UPDATE public.universe_members
+  SET role = 'player'
+  WHERE universe_id = p_universe_id AND user_id = v_current_owner;
+
+  RETURN updated_universe;
+END;
+$$;
+
 GRANT EXECUTE ON FUNCTION public.create_universe(TEXT, TEXT, TEXT, INT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_universe_member(UUID, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.has_universe_role(UUID, TEXT[], UUID) TO authenticated;
+CREATE OR REPLACE FUNCTION public.delete_universe(p_universe_id UUID)
+RETURNS TEXT[]
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_owner UUID;
+  v_urls  TEXT[];
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  SELECT owner_id INTO v_owner
+  FROM public.universes
+  WHERE id = p_universe_id;
+
+  IF v_owner IS NULL THEN
+    RAISE EXCEPTION 'Univers introuvable';
+  END IF;
+
+  IF v_owner != auth.uid() THEN
+    RAISE EXCEPTION 'Seul le propriétaire peut supprimer cet univers';
+  END IF;
+
+  -- Collecte les URLs d'illustration de tout l'univers (y compris les
+  -- éléments privés créés par d'autres membres, invisibles via les
+  -- policies RLS SELECT habituelles) pour nettoyage du storage côté client.
+  SELECT COALESCE(array_agg(url), ARRAY[]::TEXT[]) INTO v_urls
+  FROM (
+    SELECT illustration_url AS url FROM public.universes  WHERE id = p_universe_id AND illustration_url <> ''
+    UNION ALL
+    SELECT illustration_url FROM public.characters WHERE universe_id = p_universe_id AND illustration_url <> ''
+    UNION ALL
+    SELECT illustration_url FROM public.chronicles WHERE universe_id = p_universe_id AND illustration_url <> ''
+    UNION ALL
+    SELECT illustration_url FROM public.documents  WHERE universe_id = p_universe_id AND illustration_url <> ''
+  ) t;
+
+  -- SECURITY DEFINER : le cascade delete ci-dessous doit purger toutes les
+  -- données de l'univers (personnages, chroniques, documents, campagnes,
+  -- cartes...) même celles créées par d'autres membres, dont les policies
+  -- RLS individuelles (auth.uid() = user_id) ne laisseraient pas le
+  -- propriétaire de l'univers les supprimer directement.
+  DELETE FROM public.universes WHERE id = p_universe_id;
+
+  RETURN v_urls;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.transfer_universe_ownership(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_universe(UUID) TO authenticated;
 
 -- ══════════════════════════════════════════════════════════════
 -- 3. Colonnes universe_id sur les entités métier
@@ -3159,6 +3303,27 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.shares_campaign_with(UUID, UUID, UUID) TO authenticated;
 
+-- Un membre 'gm' (ou le propriétaire) peut écrire sur les objets publics
+-- partagés avec lui via une campagne commune (personnages, chroniques,
+-- entrées, documents, couches de carte). Les simples joueurs restent en
+-- lecture seule sur ces mêmes objets.
+CREATE OR REPLACE FUNCTION public.can_gm_edit(
+  p_universe_id UUID,
+  p_owner_id    UUID,
+  p_editor_id   UUID DEFAULT auth.uid()
+)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT public.has_universe_role(p_universe_id, ARRAY['owner', 'gm'], p_editor_id)
+     AND public.shares_campaign_with(p_universe_id, p_owner_id, p_editor_id);
+$$;
+
+GRANT EXECUTE ON FUNCTION public.can_gm_edit(UUID, UUID, UUID) TO authenticated;
+
 
 -- ══════════════════════════════════════════════════════════════
 -- 5. RLS — campaigns / campaign_members
@@ -3235,15 +3400,15 @@ CREATE POLICY "characters_select" ON public.characters FOR SELECT
     OR (is_public = TRUE AND public.shares_campaign_with(universe_id, user_id, auth.uid()))
   );
 
--- Édition : propriétaire OU utilisateur ayant accès (même règle que
--- la lecture) — reprend le comportement existant qui autorisait déjà
--- l'édition collaborative d'un personnage partagé, désormais rebasé
--- sur la co-appartenance à une campagne plutôt que sur un "follow".
+-- Édition : propriétaire, OU membre 'gm'/'owner' de l'univers partageant
+-- une campagne avec le propriétaire de l'objet (droits d'édition MJ).
+-- Un simple joueur ne peut voir un objet partagé public que pour le
+-- consulter, pas pour l'éditer.
 DROP POLICY IF EXISTS "characters_update" ON public.characters;
 CREATE POLICY "characters_update" ON public.characters FOR UPDATE
   USING (
     auth.uid() = user_id
-    OR (is_public = TRUE AND public.shares_campaign_with(universe_id, user_id, auth.uid()))
+    OR (is_public = TRUE AND public.can_gm_edit(universe_id, user_id, auth.uid()))
   );
 
 -- Chroniques
@@ -3252,6 +3417,13 @@ CREATE POLICY "chronicles_select" ON public.chronicles FOR SELECT
   USING (
     auth.uid() = user_id
     OR (is_public = TRUE AND public.shares_campaign_with(universe_id, user_id, auth.uid()))
+  );
+
+DROP POLICY IF EXISTS "chronicles_update" ON public.chronicles;
+CREATE POLICY "chronicles_update" ON public.chronicles FOR UPDATE
+  USING (
+    auth.uid() = user_id
+    OR (is_public = TRUE AND public.can_gm_edit(universe_id, user_id, auth.uid()))
   );
 
 DROP POLICY IF EXISTS "entries_select" ON public.chronicle_entries;
@@ -3265,6 +3437,30 @@ CREATE POLICY "entries_select" ON public.chronicle_entries FOR SELECT
       )
   ));
 
+-- Un MJ peut créer/modifier des entrées dans une chronique publique
+-- partagée avec lui, au même titre que son propriétaire.
+DROP POLICY IF EXISTS "entries_insert" ON public.chronicle_entries;
+CREATE POLICY "entries_insert" ON public.chronicle_entries FOR INSERT
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.chronicles c
+    WHERE c.id = chronicle_id
+      AND (
+        c.user_id = auth.uid()
+        OR (c.is_public = TRUE AND public.can_gm_edit(c.universe_id, c.user_id, auth.uid()))
+      )
+  ));
+
+DROP POLICY IF EXISTS "entries_update" ON public.chronicle_entries;
+CREATE POLICY "entries_update" ON public.chronicle_entries FOR UPDATE
+  USING (EXISTS (
+    SELECT 1 FROM public.chronicles c
+    WHERE c.id = chronicle_id
+      AND (
+        c.user_id = auth.uid()
+        OR (c.is_public = TRUE AND public.can_gm_edit(c.universe_id, c.user_id, auth.uid()))
+      )
+  ));
+
 -- Documents
 DROP POLICY IF EXISTS "documents_select" ON public.documents;
 CREATE POLICY "documents_select" ON public.documents FOR SELECT
@@ -3273,6 +3469,9 @@ CREATE POLICY "documents_select" ON public.documents FOR SELECT
     OR (is_public = TRUE AND public.shares_campaign_with(universe_id, user_id, auth.uid()))
   );
 
+-- Un MJ a toujours le droit d'écriture sur un document public partagé,
+-- même si son propriétaire n'a pas activé allow_write_share (ce flag ne
+-- régit que la co-édition entre simples joueurs).
 DROP POLICY IF EXISTS "documents_update" ON public.documents;
 CREATE POLICY "documents_update" ON public.documents FOR UPDATE
   USING (
@@ -3282,6 +3481,7 @@ CREATE POLICY "documents_update" ON public.documents FOR UPDATE
       AND is_public = TRUE
       AND public.shares_campaign_with(universe_id, user_id, auth.uid())
     )
+    OR (is_public = TRUE AND public.can_gm_edit(universe_id, user_id, auth.uid()))
   )
   WITH CHECK (
     auth.uid() = user_id
@@ -3290,6 +3490,7 @@ CREATE POLICY "documents_update" ON public.documents FOR UPDATE
       AND is_public = TRUE
       AND public.shares_campaign_with(universe_id, user_id, auth.uid())
     )
+    OR (is_public = TRUE AND public.can_gm_edit(universe_id, user_id, auth.uid()))
   );
 
 -- Couches de carte
@@ -3298,6 +3499,16 @@ CREATE POLICY "map_layers_select" ON public.map_layers FOR SELECT
   USING (
     auth.uid() = user_id
     OR (is_public = TRUE AND public.shares_campaign_with(universe_id, user_id, auth.uid()))
+  );
+
+-- Un MJ peut modifier une couche de carte publique partagée avec lui
+-- (mais pas en créer une nouvelle au nom d'un autre joueur : une seule
+-- couche par utilisateur, cf. contrainte UNIQUE(user_id)).
+DROP POLICY IF EXISTS "map_layers_update" ON public.map_layers;
+CREATE POLICY "map_layers_update" ON public.map_layers FOR UPDATE
+  USING (
+    auth.uid() = user_id
+    OR (is_public = TRUE AND public.can_gm_edit(universe_id, user_id, auth.uid()))
   );
 
 -- Marqueurs de carte : visibles si la couche correspondante
@@ -3312,6 +3523,35 @@ CREATE POLICY "map_markers_select_shared" ON public.map_markers FOR SELECT
         AND ml.map_key  = map_markers.map_key
         AND ml.is_public = TRUE
         AND public.shares_campaign_with(ml.universe_id, ml.user_id, auth.uid())
+    )
+  );
+
+-- Un MJ peut créer/modifier/supprimer les marqueurs d'une couche
+-- publique partagée avec lui, comme s'il en était le propriétaire.
+DROP POLICY IF EXISTS "map_markers_all_own" ON public.map_markers;
+CREATE POLICY "map_markers_all_own" ON public.map_markers FOR ALL
+  USING (
+    auth.uid() = user_id
+    OR (
+      EXISTS (
+        SELECT 1 FROM public.map_layers ml
+        WHERE ml.user_id = map_markers.user_id
+          AND ml.map_key = map_markers.map_key
+          AND ml.is_public = TRUE
+      )
+      AND public.can_gm_edit(map_markers.universe_id, map_markers.user_id, auth.uid())
+    )
+  )
+  WITH CHECK (
+    auth.uid() = user_id
+    OR (
+      EXISTS (
+        SELECT 1 FROM public.map_layers ml
+        WHERE ml.user_id = map_markers.user_id
+          AND ml.map_key = map_markers.map_key
+          AND ml.is_public = TRUE
+      )
+      AND public.can_gm_edit(map_markers.universe_id, map_markers.user_id, auth.uid())
     )
   );
 

@@ -1014,6 +1014,28 @@
 
             <div id="config-members-list"></div>
           </div>
+
+          <div class="config-block">
+            <div class="form-section-title" data-i18n="config_section_transfer">Transférer la propriété</div>
+            <p class="config-block-hint" data-i18n="config_transfer_hint">
+              Transférez la propriété de cet univers à un membre. Vous perdrez vos droits d'administration et deviendrez simple joueur.
+            </p>
+
+            <div class="chr-follow-wrap" style="margin-bottom:16px">
+              <select id="config-transfer-select"></select>
+              <button class="btn-follow-chr" onclick="transferUniverseOwnership()" data-i18n="config_transfer_btn">Transférer</button>
+            </div>
+
+            <div id="config-transfer-error" class="auth-error"></div>
+          </div>
+
+          <div class="config-block">
+            <div class="form-section-title" data-i18n="config_section_danger">Zone dangereuse</div>
+            <p class="config-block-hint" data-i18n="config_delete_hint">
+              Supprime définitivement cet univers ainsi que toutes ses données (personnages, chroniques, documents, campagnes, cartes) et images associées.
+            </p>
+            <button class="btn-danger-outline" onclick="openDeleteUniverseModal()" data-i18n="config_delete_btn">Supprimer l'univers</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1306,5 +1328,55 @@
   <div id="transfer-modal">
   <div id="transfer-modal-panel"></div>
 </div>
+  <div id="delete-universe-modal">
+    <div id="delete-universe-modal-panel">
+      <div class="transfer-header">
+        <div class="transfer-title">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+            <path d="M2 4h12M5.5 4V2.5h5V4M6.5 7v5M9.5 7v5" stroke-linecap="round"/>
+            <path d="M3.5 4l0.6 9a1 1 0 0 0 1 0.9h5.8a1 1 0 0 0 1-0.9l0.6-9" stroke-linecap="round"/>
+          </svg>
+          <span data-i18n="delete_universe_modal_title">Supprimer l'univers</span>
+        </div>
+        <button class="transfer-close-btn" onclick="closeDeleteUniverseModal()" title="Annuler">✕</button>
+      </div>
+
+      <p class="transfer-desc" data-i18n="delete_universe_modal_desc">
+        Cette action supprime définitivement l'univers, toutes ses données (personnages, chroniques, documents, campagnes, cartes, membres) et toutes les images associées.
+      </p>
+
+      <div class="transfer-warning" style="display:flex">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+          <path d="M8 2L1 14h14L8 2z"/>
+          <line x1="8" y1="7" x2="8" y2="10"/>
+          <circle cx="8" cy="12.5" r="0.5" fill="currentColor"/>
+        </svg>
+        <span data-i18n="delete_universe_warning">Cette action est irréversible. Toutes les données seront perdues définitivement.</span>
+      </div>
+
+      <div class="transfer-section-label" id="delete-universe-type-label"></div>
+      <div class="transfer-field-wrap">
+        <div class="transfer-username-wrap">
+          <input type="text" id="delete-universe-confirm-input"
+            class="transfer-username-input"
+            oninput="_refreshDeleteUniverseConfirmState()"
+            autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+
+      <div id="delete-universe-error-msg" class="transfer-error-msg" style="display:none"></div>
+
+      <div class="transfer-actions">
+        <button class="btn-cancel" onclick="closeDeleteUniverseModal()" data-i18n="btn_cancel">Annuler</button>
+        <button class="transfer-confirm-btn danger" id="delete-universe-confirm-btn" onclick="confirmDeleteUniverse()" disabled>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <path d="M3 4h10M6 4V2.8h4V4M7 7.5v4M9 7.5v4" stroke-linecap="round"/>
+            <path d="M4 4l0.6 8.5a1 1 0 0 0 1 0.9h4.8a1 1 0 0 0 1-0.9l0.6-8.5" stroke-linecap="round"/>
+          </svg>
+          <span data-i18n="delete_universe_confirm_btn">Supprimer définitivement</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

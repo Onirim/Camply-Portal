@@ -7,11 +7,12 @@ let chronicles         = {};
 let followedChronicles = {};
 let chrEntries         = {};
 
-let activeChrId        = null;
-let editingChrId       = null;
-let editingEntryId     = null;
-let chrState           = null;
-let entryState         = null;
+let activeChrId          = null;
+let editingChrId         = null;
+let editingChrIsFollowed = false;
+let editingEntryId       = null;
+let chrState             = null;
+let entryState           = null;
 
 // ══════════════════════════════════════════════════════════════
 // CHARGEMENT
@@ -78,14 +79,16 @@ async function loadEntriesForChronicle(chrId) {
 async function saveChronicleToDB() {
   if (!chrState.title.trim()) { alert(t('alert_chr_no_title')); return; }
   const payload = {
-    user_id:               currentUser.id,
-    universe_id:           currentUniverse.id,
     title:                 chrState.title.trim(),
     description:           chrState.description,
-    is_public:             chrState.is_public || false,
     illustration_url:      chrState.illustration_url || '',
     illustration_position: chrState.illustration_position || 0,
   };
+  if (!editingChrIsFollowed) {
+    payload.user_id     = currentUser.id;
+    payload.universe_id = currentUniverse.id;
+    payload.is_public   = chrState.is_public || false;
+  }
   const isUUID = editingChrId &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingChrId);
 
@@ -101,7 +104,11 @@ async function saveChronicleToDB() {
   if (result.error) { showToast(t('toast_chr_save_error')); return; }
 
   editingChrId = result.data.id;
-  chronicles[editingChrId] = { ...chrState, id: editingChrId };
+  if (editingChrIsFollowed) {
+    followedChronicles[editingChrId] = { ...followedChronicles[editingChrId], ...chrState, id: editingChrId };
+  } else {
+    chronicles[editingChrId] = { ...chrState, id: editingChrId };
+  }
   showToast(t('toast_chr_saved'));
 }
 
@@ -274,7 +281,8 @@ async function showChrDetail(chrId) {
 function renderChrDetail() {
   const chr = chronicles[activeChrId] || followedChronicles[activeChrId];
   if (!chr) return;
-  const isOwn = !!chronicles[activeChrId];
+  const isOwn   = !!chronicles[activeChrId];
+  const canEdit = isOwn || isUniverseGM();
   const entries = chrEntries[activeChrId] || [];
 
   const visTag = chr.is_public
@@ -284,7 +292,7 @@ function renderChrDetail() {
     ? `<span class="chr-detail-owner">${t('chr_followed_owner')}${esc(chr._owner_name)}</span>` : '';
 
   const entriesHtml = entries.length
-    ? entries.map(e => entryRowHTML(e, isOwn, activeChrId)).join('')
+    ? entries.map(e => entryRowHTML(e, isOwn, activeChrId, canEdit)).join('')
     : `<div class="chr-no-entries">${t('chr_no_entries')}</div>`;
 
   document.getElementById('chr-detail-content').innerHTML = `
@@ -296,7 +304,7 @@ function renderChrDetail() {
         ${chr.description ? `<div class="chr-detail-desc">${esc(chr.description)}</div>` : ''}
         <div class="chr-detail-meta">${visTag}${ownerTag}</div>
       </div>
-      ${isOwn ? `<div class="chr-detail-actions">
+      ${canEdit ? `<div class="chr-detail-actions">
         <button class="btn-cancel" onclick="openChrEditor('${activeChrId}')">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13"><path d="M11 2l3 3-9 9H2v-3z"/></svg>
           ${t('chr_detail_btn_edit')}
@@ -312,7 +320,7 @@ function renderChrDetail() {
   `;
 }
 
-function entryRowHTML(e, isOwn, chrId) {
+function entryRowHTML(e, isOwn, chrId, canEdit = isOwn) {
   const date = e.created_at
     ? new Date(e.created_at).toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'fr-FR', { day:'numeric', month:'long', year:'numeric' })
     : '';
@@ -323,13 +331,13 @@ function entryRowHTML(e, isOwn, chrId) {
     <div class="entry-row-header">
       <div class="entry-row-title">${esc(e.title)}</div>
       <div class="entry-row-date">${date}</div>
-      ${isOwn ? `<div class="entry-row-actions" onclick="event.stopPropagation()">
+      ${canEdit ? `<div class="entry-row-actions" onclick="event.stopPropagation()">
         <button class="icon-btn" onclick="openEntryEditor('${e.id}')" title="${t('btn_edit')}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3z"/></svg>
         </button>
-        <button class="icon-btn danger" onclick="deleteEntryFromDB('${e.id}')" title="${t('btn_delete')}">
+        ${isOwn ? `<button class="icon-btn danger" onclick="deleteEntryFromDB('${e.id}')" title="${t('btn_delete')}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,4 13,4"/><path d="M5 4V2h6v2M6 7v5M10 7v5"/><path d="M4 4l1 10h6l1-10"/></svg>
-        </button>
+        </button>` : ''}
       </div>` : ''}
     </div>
     ${preview ? `<div class="entry-row-preview">${esc(preview)}…</div>` : ''}
@@ -342,6 +350,7 @@ function entryRowHTML(e, isOwn, chrId) {
 
 function newChronicle() {
   editingChrId = null;
+  editingChrIsFollowed = false;
   chrState = { title: '', description: '', is_public: false,
                illustration_url: '', illustration_position: 0 };
   showView('chr-editor');
@@ -350,7 +359,8 @@ function newChronicle() {
 
 function openChrEditor(id) {
   editingChrId = id;
-  chrState = { ...chronicles[id] };
+  editingChrIsFollowed = !!followedChronicles[id] && !chronicles[id];
+  chrState = { ...(chronicles[id] || followedChronicles[id]) };
   showView('chr-editor');
   populateChrEditor();
 }
@@ -359,7 +369,8 @@ function populateChrEditor() {
   document.getElementById('chr-f-title').value       = chrState.title || '';
   document.getElementById('chr-f-description').value = chrState.description || '';
   const pub = document.getElementById('chr-f-public');
-  pub.checked = chrState.is_public || false;
+  pub.checked  = chrState.is_public || false;
+  pub.disabled = editingChrIsFollowed;
   document.getElementById('chr-public-label').textContent =
     pub.checked ? t('share_code_active_chr') : t('share_code_inactive_chr');
   setChrIllusPreview(chrState.illustration_url || '', chrState.illustration_position || 0);

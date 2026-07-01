@@ -627,6 +627,15 @@ async function loadMapMarkersFromDB() {
   (data || []).forEach(m => { mapMarkers[m.id] = { ...m, map_key: _normalizeMapKey(m.map_key) }; });
 }
 
+/** Retrouve un marqueur (propre ou dans une couche suivie) et son store d'origine. */
+function _findMarkerContext(markerId) {
+  if (mapMarkers[markerId]) return { marker: mapMarkers[markerId], own: true };
+  for (const entry of Object.values(mapFollowedLayers)) {
+    if (entry.markers[markerId]) return { marker: entry.markers[markerId], own: false, followedEntry: entry };
+  }
+  return null;
+}
+
 async function _saveMarkerToDB(payload, ctx) {
   if (ctx.mode === 'add') {
     const { data, error } = await sb.from('map_markers')
@@ -638,11 +647,19 @@ async function _saveMarkerToDB(payload, ctx) {
     _updateMarkerCount();
     showToast(t('map_toast_added'));
   } else {
+    // Un MJ peut éditer un marqueur d'une couche suivie qui lui est
+    // partagée : on retrouve alors son store d'origine pour ne pas le
+    // faire apparaître comme un marqueur possédé.
+    const existing = _findMarkerContext(ctx.id);
     const { data, error } = await sb.from('map_markers')
       .update(payload).eq('id', ctx.id).eq('universe_id', currentUniverse.id)
       .select('id, x, y, name, description, color, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
-    mapMarkers[data.id] = data;
+    if (existing && !existing.own) {
+      existing.followedEntry.markers[data.id] = data;
+    } else {
+      mapMarkers[data.id] = data;
+    }
     _refreshMarkerDOM(data);
     showToast(t('map_toast_saved'));
   }
@@ -653,6 +670,7 @@ async function deleteMapMarker(id) {
   const { error } = await sb.from('map_markers').delete().eq('id', id).eq('universe_id', currentUniverse.id);
   if (error) { showToast(t('map_toast_error')); return; }
   delete mapMarkers[id];
+  for (const entry of Object.values(mapFollowedLayers)) delete entry.markers[id];
   document.getElementById('marker-' + id)?.remove();
   _updateMarkerCount();
   _closePopup();
@@ -739,12 +757,14 @@ function _renderAllMarkers() {
   _renderMapAccessState();
   if (!_canAccessMap()) return;
 
-  // Couches suivies en dessous : seulement celles de la carte courante
+  // Couches suivies en dessous : seulement celles de la carte courante.
+  // Un MJ de l'univers peut éditer les marqueurs des couches partagées.
+  const canEditShared = isUniverseGM();
   Object.values(mapFollowedLayers).forEach(({ layer, markers }) => {
     if (_normalizeMapKey(layer.map_key) !== currentMapKey) return;
     Object.values(markers)
       .filter(m => _isMarkerOnCurrentMap(m))
-      .forEach(m => _renderMarker(m, false));
+      .forEach(m => _renderMarker(m, canEditShared));
   });
 
   // Marqueurs propres par-dessus (déjà filtrés par loadMapMarkersFromDB)
@@ -919,7 +939,7 @@ function _closePopup() {
 
 function openMapMarkerModal(mode, rx, ry, markerId) {
   mapModalCtx = { mode, x: rx, y: ry, id: markerId };
-  const m = (mode === 'edit' && markerId) ? mapMarkers[markerId] : null;
+  const m = (mode === 'edit' && markerId) ? _findMarkerContext(markerId)?.marker : null;
   mapModalColor = m?.color || MAP_CONFIG.markerColors[0];
 
   document.getElementById('map-modal-title-text').textContent =
