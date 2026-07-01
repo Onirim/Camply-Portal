@@ -5,6 +5,8 @@
 
 // ── État global ───────────────────────────────────────────────
 let currentUser      = null;
+let currentUniverse  = null;
+let userUniverses    = [];
 let isAppReady       = false;
 let chars            = {};
 let editingId        = null;
@@ -405,6 +407,9 @@ async function init() {
 
 async function onSignedIn(user) {
   currentUser = user;
+  currentUniverse = null;
+  userUniverses = [];
+  isAppReady = false;
   updateUserUI(currentUser);
   const username = user.user_metadata?.full_name
     || user.user_metadata?.name
@@ -413,8 +418,219 @@ async function onSignedIn(user) {
     || 'Joueur';
   await sb.from('profiles').update({ username }).eq('id', user.id);
   document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loading-overlay').classList.add('active');
+  await loadUniversesFromDB();
+  document.getElementById('loading-overlay').classList.remove('active');
+  showUniverseScreen();
+}
+
+async function loadUniversesFromDB() {
+  if (!currentUser) return [];
+  const errEl = document.getElementById('universe-error');
+  if (errEl) errEl.classList.remove('show');
+
+  const { data: universes, error } = await sb
+    .from('universes')
+    .select('id, owner_id, name, description, illustration_url, illustration_position, created_at, updated_at')
+    .order('updated_at', { ascending: false });
+
+  if (error) {
+    console.error('Erreur chargement univers:', error);
+    userUniverses = [];
+    if (errEl) {
+      errEl.textContent = 'Impossible de charger les univers : ' + error.message;
+      errEl.classList.add('show');
+    }
+    renderUniverseList();
+    return [];
+  }
+
+  const universeIds = (universes || []).map(u => u.id);
+  let roleByUniverse = {};
+  if (universeIds.length) {
+    const { data: memberships, error: membershipError } = await sb
+      .from('universe_members')
+      .select('universe_id, role')
+      .eq('user_id', currentUser.id)
+      .in('universe_id', universeIds);
+    if (membershipError) console.warn('Erreur chargement rôles univers:', membershipError.message);
+    (memberships || []).forEach(m => { roleByUniverse[m.universe_id] = m.role; });
+  }
+
+  userUniverses = (universes || []).map(u => ({
+    ...u,
+    role: roleByUniverse[u.id] || (u.owner_id === currentUser.id ? 'owner' : 'player'),
+  }));
+  renderUniverseList();
+  return userUniverses;
+}
+
+function showUniverseScreen() {
+  document.getElementById('loading-overlay').classList.remove('active');
+  document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('universe-screen')?.classList.add('active');
+  closeUniverseCreateForm();
+  renderUniverseList();
+  applyTranslations();
+}
+
+function renderUniverseList() {
+  const list = document.getElementById('universe-list');
+  if (!list) return;
+  if (!userUniverses.length) {
+    list.innerHTML = `<div class="universe-empty">Aucun univers disponible.<br>Créez votre premier univers pour commencer.</div>`;
+    return;
+  }
+  list.innerHTML = userUniverses.map(u => `
+    <button class="universe-card" onclick="enterUniverse('${u.id}')">
+      ${u.illustration_url ? `<img class="card-illus" src="${esc(u.illustration_url)}" style="object-position:center ${u.illustration_position || 0}%" alt="">` : ''}
+      <div class="universe-card-title">${esc(u.name)}</div>
+      <div class="universe-card-desc">${esc(u.description || 'Aucune description')}</div>
+      <div class="universe-card-meta">
+        <span>${esc(u.role || 'membre')}</span>
+      </div>
+    </button>
+  `).join('');
+}
+
+// ── Création d'univers ───────────────────────────────────────
+let universeFormState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
+
+function openUniverseCreateForm() {
+  universeFormState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
+  document.getElementById('universe-f-name').value = '';
+  document.getElementById('universe-f-description').value = '';
+  const username = currentUser?.user_metadata?.full_name
+    || currentUser?.user_metadata?.name
+    || currentUser?.user_metadata?.username
+    || currentUser?.email?.split('@')[0]
+    || 'Joueur';
+  document.getElementById('universe-f-owner').value = username;
+  setUniverseIllusPreview('', 0);
+  const errEl = document.getElementById('universe-create-error');
+  if (errEl) errEl.classList.remove('show');
+  document.getElementById('universe-list-view').style.display = 'none';
+  document.getElementById('universe-create-view').style.display = 'block';
+}
+
+function closeUniverseCreateForm() {
+  document.getElementById('universe-create-view').style.display = 'none';
+  document.getElementById('universe-list-view').style.display = 'block';
+}
+
+function universeIllusZoneClick() {
+  if (!universeFormState.illustration_url) document.getElementById('universe-illus-input').click();
+}
+
+function setUniverseIllusPreview(url, position) {
+  const img         = document.getElementById('universe-illus-preview-img');
+  const placeholder = document.getElementById('universe-illus-placeholder');
+  const zone        = document.getElementById('universe-illus-zone');
+  const sliderWrap  = document.getElementById('universe-illus-slider-wrap');
+  const slider      = document.getElementById('universe-illus-pos-slider');
+  const pos = position !== undefined ? position : (universeFormState.illustration_position || 0);
+  if (url) {
+    img.src = url; img.style.display = 'block';
+    img.style.objectPosition = `center ${pos}%`;
+    placeholder.style.display = 'none';
+    zone.classList.add('has-image');
+    sliderWrap.classList.add('visible'); slider.value = pos;
+  } else {
+    img.src = ''; img.style.display = 'none';
+    placeholder.style.display = 'flex';
+    zone.classList.remove('has-image');
+    sliderWrap.classList.remove('visible'); slider.value = 0;
+  }
+}
+
+function updateUniverseIllusPosition(val) {
+  universeFormState.illustration_position = parseInt(val);
+  const img = document.getElementById('universe-illus-preview-img');
+  if (img) img.style.objectPosition = `center ${val}%`;
+}
+
+async function uploadUniverseIllustration(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (!currentUser) { showToast(t('toast_upload_no_user')); return; }
+  if (file.size > 3 * 1024 * 1024) { showToast(t('toast_illus_too_large')); return; }
+  document.getElementById('universe-illus-uploading').classList.add('active');
+  const oldUrl = universeFormState.illustration_url || '';
+  const path   = `${currentUser.id}/universe_tmp_${Date.now()}.jpg`;
+  const blob   = await compressImage(file);
+  const { error } = await sb.storage
+    .from('character-illustrations').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  document.getElementById('universe-illus-uploading').classList.remove('active');
+  if (error) { showToast(t('toast_illus_upload_error') + error.message); return; }
+  if (oldUrl && !oldUrl.includes(path)) await deleteStorageFile(oldUrl);
+  const { data } = sb.storage.from('character-illustrations').getPublicUrl(path);
+  universeFormState.illustration_url      = `${data.publicUrl}?v=${Date.now()}`;
+  universeFormState.illustration_position = 0;
+  setUniverseIllusPreview(universeFormState.illustration_url, 0);
+  showToast(t('toast_illus_added'));
+  input.value = '';
+}
+
+async function removeUniverseIllustration() {
+  if (!universeFormState.illustration_url) return;
+  await deleteStorageFile(universeFormState.illustration_url);
+  universeFormState.illustration_url      = '';
+  universeFormState.illustration_position = 0;
+  setUniverseIllusPreview('', 0);
+}
+
+async function submitCreateUniverse() {
+  const errEl = document.getElementById('universe-create-error');
+  const name  = document.getElementById('universe-f-name').value.trim();
+  if (!name) {
+    if (errEl) { errEl.textContent = 'Le nom de l’univers est requis.'; errEl.classList.add('show'); }
+    return;
+  }
+  const description = document.getElementById('universe-f-description').value.trim();
+  if (errEl) errEl.classList.remove('show');
+
+  document.getElementById('loading-overlay').classList.add('active');
+  const { data, error } = await sb.rpc('create_universe', {
+    p_name: name,
+    p_description: description,
+    p_illustration_url: universeFormState.illustration_url || '',
+    p_illustration_position: universeFormState.illustration_position || 0,
+  });
+  document.getElementById('loading-overlay').classList.remove('active');
+  if (error) {
+    console.error('Erreur création univers:', error);
+    if (errEl) { errEl.textContent = 'Impossible de créer l’univers : ' + error.message; errEl.classList.add('show'); }
+    return;
+  }
+  await loadUniversesFromDB();
+  closeUniverseCreateForm();
+  if (data?.id) await enterUniverse(data.id);
+}
+
+async function enterUniverse(universeId) {
+  const universe = userUniverses.find(u => u.id === universeId);
+  if (!universe) {
+    showToast('Univers introuvable.');
+    return;
+  }
+  currentUniverse = universe;
+  document.getElementById('universe-screen')?.classList.remove('active');
   document.getElementById('loading-overlay').classList.add('active');
   document.getElementById('app').style.display = 'flex';
+  try {
+    await loadUniverseData();
+  } finally {
+    document.getElementById('loading-overlay').classList.remove('active');
+  }
+}
+
+async function loadUniverseData() {
+  if (!currentUniverse?.id) {
+    showUniverseScreen();
+    return;
+  }
   await unreadMarkers.initFromDB(currentUser.id);
   await Promise.all([
     loadCharsFromDB(),
@@ -428,7 +644,6 @@ async function onSignedIn(user) {
       : Promise.resolve()),
   ]);
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
-  document.getElementById('loading-overlay').classList.remove('active');
   isAppReady = true;
   if (!navigateFromHash()) {
     renderList();
@@ -438,10 +653,13 @@ async function onSignedIn(user) {
 
 function onSignedOut() {
   currentUser = null;
+  currentUniverse = null;
+  userUniverses = [];
   unreadMarkers.resetCache();
   chars = {};
   charSecrets = {};
   document.getElementById('loading-overlay').classList.remove('active');
+  document.getElementById('universe-screen')?.classList.remove('active');
   document.getElementById('auth-screen').classList.add('active');
   document.getElementById('app').style.display = 'none';
 }
@@ -1024,5 +1242,6 @@ async function cleanupOrphanTags(type) {
 
 // ── Boot ──────────────────────────────────────────────────────
 document.getElementById('app').style.display = 'none';
+document.getElementById('universe-screen')?.classList.remove('active');
 window.bootCamplyApp = init;
 init();
