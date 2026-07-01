@@ -8,7 +8,6 @@ let currentMapKey     = null; // clé de la carte affichée
 let mapMarkers        = {};   // id → marker (propres, carte courante seulement)
 let mapFollowedLayers = {};   // layerId → { layer, markers: {id→marker} }
 let mapOwnLayers      = {};   // map_key → layer
-let mapFollowedIds    = [];   // [layerId, ...]
 let mapLoaded         = false;
 let mapAccessByKey    = {};
 let mapColorFilter = {};   // mapKey → Set des couleurs masquées
@@ -617,15 +616,37 @@ async function deleteMapMarker(id) {
 // DB — COUCHES PROPRES (une par carte)
 // ══════════════════════════════════════════════════════════════
 
-/** Charge toutes les couches propres (toutes cartes confondues). */
+/** Charge toutes les couches (propres + partagées via campagne), toutes cartes confondues. */
 async function loadAllOwnLayersFromDB() {
   if (!currentUser) return;
-  const { data } = await sb.from('map_layers')
-    .select('id, title, description, is_public, share_code, map_key')
-    .eq('user_id', currentUser.id)
+  const { data: layers, error } = await sb.from('map_layers')
+    .select('id, title, description, is_public, user_id, map_key')
     .eq('universe_id', currentUniverse.id);
+  if (error) { console.error('Erreur chargement couches:', error); return; }
+
+  const ownerIds = [...new Set((layers || []).filter(l => l.user_id !== currentUser.id).map(l => l.user_id))];
+  let ownerMap = {};
+  if (ownerIds.length) {
+    const { data: profiles } = await sb.from('profiles').select('id, username').in('id', ownerIds);
+    (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
+  }
+
   mapOwnLayers = {};
-  (data || []).forEach(l => { mapOwnLayers[l.map_key] = l; });
+  mapFollowedLayers = {};
+  for (const layer of (layers || [])) {
+    if (layer.user_id === currentUser.id) {
+      mapOwnLayers[layer.map_key] = layer;
+      continue;
+    }
+    const { data: markers } = await sb.from('map_markers')
+      .select('id, x, y, name, description, color, map_key')
+      .eq('user_id', layer.user_id).eq('universe_id', currentUniverse.id);
+    mapFollowedLayers[layer.id] = {
+      layer: { ...layer, _owner_name: ownerMap[layer.user_id] || '?' },
+      markers: Object.fromEntries((markers || []).map(m => [m.id, { ...m, map_key: _normalizeMapKey(m.map_key) }])),
+    };
+  }
+  _recomputeMapAccess();
 }
 
 async function saveOwnLayerToDB() {
@@ -638,13 +659,13 @@ async function saveOwnLayerToDB() {
   if (layer?.id) {
     const { data, error } = await sb.from('map_layers')
       .update(payload).eq('id', layer.id).eq('universe_id', currentUniverse.id)
-      .select('id, title, description, is_public, share_code, map_key').single();
+      .select('id, title, description, is_public, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapOwnLayers[data.map_key] = data;
   } else {
     const { data, error } = await sb.from('map_layers')
       .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey, universe_id: currentUniverse.id })
-      .select('id, title, description, is_public, share_code, map_key').single();
+      .select('id, title, description, is_public, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapOwnLayers[data.map_key] = data;
   }
@@ -656,127 +677,9 @@ async function saveOwnLayerToDB() {
   showToast(t('map_toast_saved'));
 }
 
-// ══════════════════════════════════════════════════════════════
-// DB — COUCHES SUIVIES
-// ══════════════════════════════════════════════════════════════
-
-async function loadFollowedLayersFromDB() {
-  if (!currentUser) return;
-  const { data: follows } = await sb.from('followed_map_layers')
-    .select('layer_id').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id);
-  mapFollowedIds = (follows || []).map(r => r.layer_id);
-  if (!mapFollowedIds.length) { mapFollowedLayers = {}; return; }
-
-  const { data: layers } = await sb.from('map_layers')
-    .select('id, title, description, is_public, share_code, user_id, map_key')
-    .in('id', mapFollowedIds).eq('is_public', true).eq('universe_id', currentUniverse.id);
-
-  const ownerIds = [...new Set((layers || []).map(l => l.user_id))];
-  let ownerMap = {};
-  if (ownerIds.length) {
-    const { data: profiles } = await sb.from('profiles').select('id, username').in('id', ownerIds);
-    (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
-  }
-
-  mapFollowedLayers = {};
-  for (const layer of (layers || [])) {
-    // Charge tous les marqueurs du propriétaire (toutes cartes) pour ne pas refaire des requêtes au switch
-    const { data: markers } = await sb.from('map_markers')
-      .select('id, x, y, name, description, color, map_key')
-      .eq('user_id', layer.user_id).eq('universe_id', currentUniverse.id);
-    mapFollowedLayers[layer.id] = {
-      layer: { ...layer, _owner_name: ownerMap[layer.user_id] || '?' },
-      markers: Object.fromEntries((markers || []).map(m => [m.id, { ...m, map_key: _normalizeMapKey(m.map_key) }])),
-    };
-  }
-  _recomputeMapAccess();
-}
-
-/** Précharge les couches carte (propres + suivies) même hors vue Carte. */
+/** Précharge les couches carte (propres + partagées) même hors vue Carte. */
 async function ensureMapLayersCacheLoaded() {
-  await Promise.all([
-    loadAllOwnLayersFromDB(),
-    loadFollowedLayersFromDB(),
-  ]);
-}
-
-async function _ensureFollowedLayerRow(layerId) {
-  const { data: existing, error: checkError } = await sb.from('followed_map_layers')
-    .select('layer_id')
-    .eq('user_id', currentUser.id)
-    .eq('layer_id', layerId)
-    .eq('universe_id', currentUniverse.id)
-    .maybeSingle();
-
-  if (checkError) return { ok: false, already: false, error: checkError };
-  if (existing) return { ok: true, already: true, error: null };
-
-  const { error: insertError } = await sb.from('followed_map_layers')
-    .insert({ user_id: currentUser.id, layer_id: layerId, universe_id: currentUniverse.id });
-  if (insertError) return { ok: false, already: false, error: insertError };
-
-  return { ok: true, already: false, error: null };
-}
-
-async function followMapLayerByCode(code) {
-  if (!code.trim()) return;
-  const clean = code.trim().toUpperCase();
-  const { data, error } = await sb.from('map_layers')
-    .select('id, title, user_id, is_public, map_key')
-    .eq('share_code', clean).eq('is_public', true).eq('universe_id', currentUniverse.id).single();
-  if (error || !data) { showToast(t('map_toast_layer_not_found')); return; }
-  if (data.user_id === currentUser.id) { showToast(t('map_toast_layer_own')); return; }
-  if (mapFollowedIds.includes(data.id)) { showToast(t('map_toast_layer_already_followed')); return; }
-
-  const followRes = await _ensureFollowedLayerRow(data.id);
-  if (!followRes.ok) { showToast(t('map_toast_error')); return; }
-
-  if (!mapFollowedIds.includes(data.id)) mapFollowedIds.push(data.id);
-  await loadFollowedLayersFromDB();
-  _refreshMapSelectorAccess();
-
-  // Si la couche correspond à une autre carte, basculer dessus
-  if (data.map_key && data.map_key !== currentMapKey) {
-    await switchMap(data.map_key);
-  } else {
-    _ensureCurrentMapImage();
-    _renderAllMarkers();
-  }
-
-  _renderLayerPanel();
-  _renderMapAccessState();
-  document.getElementById('map-follow-input').value = '';
-  const msg = ti('map_toast_layer_subscribed', { title: data.title || clean });
-  showToast(msg);
-}
-
-async function unfollowMapLayer(layerId) {
-  const layer = mapFollowedLayers[layerId]?.layer;
-  if (layer?.share_code && typeof getFollowedCampaignTitlesByItem === 'function') {
-    const blocking = await getFollowedCampaignTitlesByItem('map', layer.share_code);
-    if (blocking.length) {
-      showToast(ti('toast_unfollow_blocked_by_campaigns', {
-        type: t('campaign_type_map'),
-        campaigns: blocking.join(', '),
-      }));
-      return;
-    }
-  }
-  await sb.from('followed_map_layers')
-    .delete().eq('user_id', currentUser.id).eq('layer_id', layerId).eq('universe_id', currentUniverse.id);
-  mapFollowedIds = mapFollowedIds.filter(id => id !== layerId);
-  delete mapFollowedLayers[layerId];
-  _recomputeMapAccess();
-  _refreshMapSelectorAccess();
-  const fallbackMap = _firstAccessibleMapKey();
-  if (!_canAccessMap(currentMapKey) && fallbackMap) {
-    await switchMap(fallbackMap);
-    return;
-  }
-  _renderAllMarkers();
-  _renderLayerPanel();
-  _renderMapAccessState();
-  showToast(t('map_toast_layer_unsubscribed'));
+  await loadAllOwnLayersFromDB();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1034,23 +937,9 @@ function _renderLayerPanel() {
 
   const layer    = _ownLayer();
   const isPublic = layer?.is_public || false;
-  const code     = layer?.share_code || null;
   const cfg      = _getCurrentMapConfig();
 
-  const shareCodeHtml = isPublic && code ? `
-    <div class="map-share-code-box">
-      <span class="map-share-code-val">${code}</span>
-      <button onclick="_copyMapShareCode('${code}')">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
-          width="12" height="12">
-          <rect x="5" y="5" width="8" height="8" rx="1"/>
-          <path d="M3 11H2a1 1 0 01-1-1V2a1 1 0 011-1h8a1 1 0 011 1v1"/>
-        </svg>
-        ${t('share_copy_btn')}
-      </button>
-    </div>` : '';
-
-  // Ne montre que les couches suivies pour la carte courante
+  // Ne montre que les couches partagées pour la carte courante
   const followedForThisMap = Object.values(mapFollowedLayers)
     .filter(({ layer: l }) => l.map_key === currentMapKey);
 
@@ -1059,17 +948,9 @@ function _renderLayerPanel() {
         <div class="map-followed-row">
           <div class="map-followed-dot"></div>
           <div class="map-followed-info">
-            <div class="map-followed-title">${esc(l.title || l.share_code)}</div>
+            <div class="map-followed-title">${esc(l.title || t('map_own_layer'))}</div>
             <div class="map-followed-owner">${t('followed_owner_prefix')}${esc(l._owner_name)}</div>
           </div>
-          <button class="icon-btn danger" onclick="unfollowMapLayer('${l.id}')"
-            title="${t('btn_unsubscribe')}">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-              <polyline points="3,4 13,4"/>
-              <path d="M5 4V2h6v2M6 7v5M10 7v5"/>
-              <path d="M4 4l1 10h6l1-10"/>
-            </svg>
-          </button>
         </div>`).join('')
     : `<div class="map-followed-empty">${t('map_followed_empty')}</div>`;
 
@@ -1101,7 +982,6 @@ function _renderLayerPanel() {
             <span id="map-layer-public-label">${isPublic ? t('map_public_active') : t('map_public_private')}</span>
           </label>
         </div>
-        ${shareCodeHtml}
         <button class="map-panel-save-btn" onclick="saveOwnLayerToDB()">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
             width="12" height="12"><polyline points="2,8 6,12 14,4"/></svg>
@@ -1112,16 +992,6 @@ function _renderLayerPanel() {
       <div class="map-panel-section">
         <div class="map-panel-title">${t('map_followed_layers')}
           ${cfg ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3)"> — ${esc(cfg.name)}</span>` : ''}
-        </div>
-        <div class="map-follow-input-wrap">
-          <input type="text" id="map-follow-input"
-            placeholder="${t('map_follow_code_ph')}"
-            maxlength="8"
-            oninput="this.value=this.value.toUpperCase()"
-            onkeydown="if(event.key==='Enter') followMapLayerByCode(this.value)">
-          <button onclick="followMapLayerByCode(document.getElementById('map-follow-input').value)">
-            ${t('btn_follow_map')}
-          </button>
         </div>
         <div class="map-followed-list">${followedHtml}</div>
       </div>
@@ -1134,12 +1004,6 @@ function _onLayerPublicChange(checked) {
   if (label) label.textContent = checked ? t('map_public_active') : t('map_public_private');
 }
 
-function _copyMapShareCode(code) {
-  navigator.clipboard.writeText(code)
-    .then(() => showToast(ti('toast_code_copied', { code })))
-    .catch(() => prompt(t('share_code_prompt_short'), code));
-}
-
 function toggleMapPanel() {
   const panel = document.getElementById('map-layer-panel');
   const btn   = document.getElementById('map-panel-btn');
@@ -1147,100 +1011,6 @@ function toggleMapPanel() {
   const open = panel.classList.toggle('open');
   if (btn) btn.classList.toggle('active', open);
 }
-
-// ══════════════════════════════════════════════════════════════
-// INTÉGRATION CAMPAGNES
-// ══════════════════════════════════════════════════════════════
-
-/** Navigation depuis une campagne : bascule sur la bonne carte. */
-async function navigateToMap(shareCode) {
-  showView('map');
-  await Promise.all([
-    loadAllOwnLayersFromDB(),
-    loadFollowedLayersFromDB(),
-  ]);
-
-  // Cherche la carte correspondant au share_code
-  let targetMapKey = null;
-
-  for (const [key, layer] of Object.entries(mapOwnLayers || {})) {
-    if (layer?.share_code === shareCode) { targetMapKey = key; break; }
-  }
-  if (!targetMapKey) {
-    for (const { layer: l } of Object.values(mapFollowedLayers || {})) {
-      if (l?.share_code === shareCode) { targetMapKey = l.map_key; break; }
-    }
-  }
-
-  if (targetMapKey && targetMapKey !== currentMapKey) {
-    await switchMap(targetMapKey);
-  }
-
-  return true;
-}
-
-/** Sync campagnes : abonnement automatique aux couches reçues via campagne. */
-async function syncFollowedMapLayers(shareCodes) {
-  if (!shareCodes || !shareCodes.length) return 0;
-  const { data: layerRows } = await sb.from('map_layers')
-    .select('id, title, user_id, is_public, share_code, map_key')
-    .in('share_code', shareCodes).eq('is_public', true).eq('universe_id', currentUniverse.id);
-  let added = 0;
-  let shouldReload = false;
-  for (const row of (layerRows || [])) {
-    if (row.user_id === currentUser.id) continue;
-    if (mapFollowedIds.includes(row.id)) { shouldReload = true; continue; }
-    const followRes = await _ensureFollowedLayerRow(row.id);
-    if (followRes.ok) {
-      if (!mapFollowedIds.includes(row.id)) mapFollowedIds.push(row.id);
-      if (!followRes.already) added++;
-      shouldReload = true;
-    }
-  }
-  if (shouldReload) {
-    await loadFollowedLayersFromDB();
-    _renderAllMarkers();
-    _renderLayerPanel();
-  }
-  return added;
-}
-
-// Patch de buildSelectableList pour le type 'map' (multi-cartes)
-document.addEventListener('DOMContentLoaded', () => {
-  const _orig = window.buildSelectableList;
-  window.buildSelectableList = function(type) {
-    if (type !== 'map') return _orig ? _orig(type) : [];
-
-    const items = [];
-    const maps  = MAP_CONFIG.maps || [];
-
-    // Couches propres (toutes cartes)
-    Object.entries(mapOwnLayers || {}).forEach(([mapKey, layer]) => {
-      if (!layer?.share_code || !layer?.is_public) return;
-      const mapCfg = maps.find(m => m.key === mapKey);
-      items.push({
-        code:  layer.share_code,
-        name:  layer.title || mapCfg?.name || mapKey,
-        sub:   mapCfg?.name || '',
-        owner: null,
-      });
-    });
-
-    // Couches suivies (toutes cartes)
-    Object.values(mapFollowedLayers || {}).forEach(({ layer: l }) => {
-      if (!l?.share_code || !l?.is_public) return;
-      const mapCfg = maps.find(m => m.key === l.map_key);
-      items.push({
-        code:  l.share_code,
-        name:  l.title || mapCfg?.name || l.map_key,
-        sub:   mapCfg?.name || '',
-        owner: l._owner_name,
-      });
-    });
-
-    return items;
-  };
-});
 
 const MAP_LEGEND_I18N = {
   fr: {

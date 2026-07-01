@@ -135,19 +135,24 @@
   font-family: var(--font-mono); font-size: 10px; color: var(--text3); margin-left: 4px;
 }
 
-/* Lignes d'items dans le détail */
+/* Lignes d'items / membres dans le détail */
 .campaign-item-row {
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: 6px; padding: 12px 16px;
   display: flex; align-items: center; gap: 12px;
-  transition: all 0.15s; cursor: pointer;
+  transition: all 0.15s;
   margin-bottom: 6px;
 }
-.campaign-item-row:hover { border-color: var(--border2); transform: translateX(3px); }
 .campaign-item-row-name {
   font-family: var(--font-display); font-size: 15px; font-weight: 600;
   letter-spacing: 0.02em; text-transform: uppercase;
   color: var(--text); flex: 1;
+}
+.campaign-member-avatar {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--sup));
+  color: var(--bg); display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 12px;
 }
 .campaign-item-row-meta {
   font-size: 11px; color: var(--text3);
