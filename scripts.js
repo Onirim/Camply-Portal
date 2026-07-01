@@ -358,7 +358,7 @@ async function loadUniversesFromDB() {
 
   const { data: universes, error } = await sb
     .from('universes')
-    .select('id, owner_id, name, description, illustration_url, illustration_position, created_at, updated_at')
+    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, created_at, updated_at')
     .order('updated_at', { ascending: false });
 
   if (error) {
@@ -400,6 +400,7 @@ function showUniverseScreen() {
   closeUniverseCreateForm();
   renderUniverseList();
   applyTranslations();
+  applyTheme('');
 }
 
 function renderUniverseList() {
@@ -539,6 +540,8 @@ async function enterUniverse(universeId) {
   }
   currentUniverse = universe;
   updateConfigNavVisibility();
+  await loadThemeManifest();
+  applyTheme(currentUniverse.theme_name || '');
   document.getElementById('universe-screen')?.classList.remove('active');
   document.getElementById('loading-overlay').classList.add('active');
   document.getElementById('app').style.display = 'flex';
@@ -578,7 +581,52 @@ async function loadUniverseData() {
 // CONFIGURATION DE L'UNIVERS COURANT (propriétaire uniquement)
 // ══════════════════════════════════════════════════════════════
 
-let universeConfigState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
+let universeConfigState = { name: '', description: '', illustration_url: '', illustration_position: 0, theme_name: '' };
+
+// ══════════════════════════════════════════════════════════════
+// THÈME DE L'UNIVERS
+// ══════════════════════════════════════════════════════════════
+
+let themeManifest = null;
+
+async function loadThemeManifest() {
+  if (themeManifest) return themeManifest;
+  try {
+    const res = await fetch('./themes/manifest.json');
+    themeManifest = await res.json();
+  } catch (e) {
+    console.error('Erreur chargement manifest des thèmes:', e);
+    themeManifest = [];
+  }
+  return themeManifest;
+}
+
+function applyTheme(themeId) {
+  const link = document.getElementById('theme-stylesheet');
+  if (!link) return;
+  const theme = (themeManifest || []).find(t => t.id === themeId);
+  if (!theme) {
+    link.href = '';
+    link.disabled = true;
+    return;
+  }
+  link.href = `./themes/${theme.file}`;
+  link.disabled = false;
+}
+
+async function populateConfigThemeSelect(selectedId) {
+  const select = document.getElementById('config-f-theme');
+  if (!select) return;
+  const themes = await loadThemeManifest();
+  select.innerHTML = `<option value="">${t('config_theme_default')}</option>` +
+    themes.map(theme => `<option value="${esc(theme.id)}">${esc(theme.label)}</option>`).join('');
+  select.value = selectedId || '';
+}
+
+function onConfigThemeChange(themeId) {
+  universeConfigState.theme_name = themeId;
+  applyTheme(themeId);
+}
 
 function canConfigureUniverse() {
   return currentUniverse?.role === 'owner';
@@ -596,10 +644,12 @@ function openUniverseConfigView() {
     description: currentUniverse.description || '',
     illustration_url: currentUniverse.illustration_url || '',
     illustration_position: currentUniverse.illustration_position || 0,
+    theme_name: currentUniverse.theme_name || '',
   };
   document.getElementById('config-f-name').value = universeConfigState.name;
   document.getElementById('config-f-description').value = universeConfigState.description;
   setConfigIllusPreview(universeConfigState.illustration_url, universeConfigState.illustration_position);
+  populateConfigThemeSelect(universeConfigState.theme_name);
   const errEl = document.getElementById('config-error');
   if (errEl) errEl.classList.remove('show');
   const inviteErrEl = document.getElementById('config-invite-error');
@@ -775,9 +825,10 @@ async function saveUniverseConfig() {
       description,
       illustration_url: universeConfigState.illustration_url || '',
       illustration_position: universeConfigState.illustration_position || 0,
+      theme_name: universeConfigState.theme_name || '',
     })
     .eq('id', currentUniverse.id)
-    .select('id, owner_id, name, description, illustration_url, illustration_position, created_at, updated_at')
+    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, created_at, updated_at')
     .single();
 
   if (error) {
@@ -800,6 +851,7 @@ function onSignedOut() {
   chars = {};
   charSecrets = {};
   updateConfigNavVisibility();
+  applyTheme('');
   document.getElementById('loading-overlay').classList.remove('active');
   document.getElementById('universe-screen')?.classList.remove('active');
   document.getElementById('auth-screen').classList.add('active');
@@ -812,6 +864,7 @@ function onSignedOut() {
 
 function showView(view) {
   if (view === 'config' && !canConfigureUniverse()) view = 'list';
+  if (view !== 'config' && currentUniverse) applyTheme(currentUniverse.theme_name || '');
 
   const views = [
     'list', 'editor', 'shared',

@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8420"],
       "port": 8420
+    },
+    {
+      "name": "static-server-ps",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": ["-NoProfile", "-Command", "$Root='D:\\GitHub\\Camply-Portal'; $listener=New-Object System.Net.HttpListener; $listener.Prefixes.Add('http://127.0.0.1:8420/'); $listener.Start(); $mime=@{'.html'='text/html';'.js'='application/javascript';'.css'='text/css';'.json'='application/json';'.svg'='image/svg+xml';'.png'='image/png';'.ico'='image/x-icon';'.webmanifest'='application/manifest+json';'.jpg'='image/jpeg';'.jpeg'='image/jpeg';'.gif'='image/gif'}; while($listener.IsListening){$ctx=$listener.GetContext();$req=$ctx.Request;$path=$req.Url.LocalPath;if($path -eq '/'){$path='/index.html'};$file=Join-Path $Root ($path.TrimStart('/') -replace '/','\\'); $res=$ctx.Response; try{ if(Test-Path $file -PathType Leaf){ $bytes=[System.IO.File]::ReadAllBytes($file); $ext=[System.IO.Path]::GetExtension($file).ToLower(); $ct=$mime[$ext]; if(-not $ct){$ct='application/octet-stream'}; $res.ContentType=$ct; $res.ContentLength64=$bytes.Length; $res.OutputStream.Write($bytes,0,$bytes.Length) } else { $res.StatusCode=404 } } catch { $res.StatusCode=500 } finally { $res.OutputStream.Close() } }"],
+      "port": 8420
     }
   ]
 }
