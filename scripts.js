@@ -80,6 +80,7 @@ async function doDiscordLogin() {
   errEl.classList.remove('show');
   btn.disabled = true;
   btn.innerHTML = `<span style="opacity:0.7">${t('auth_redirecting')}</span>`;
+  if (window.location.hash) sessionStorage.setItem('camply_pending_hash', window.location.hash);
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'discord',
     options: { redirectTo: window.location.origin + window.location.pathname }
@@ -117,6 +118,7 @@ async function doEmailLogin() {
     return;
   }
 
+  if (window.location.hash) sessionStorage.setItem('camply_pending_hash', window.location.hash);
   const { error } = await sb.auth.signInWithOtp({
     email,
     options: {
@@ -332,6 +334,11 @@ async function init() {
     const installationOk = await installAssistant.runChecks();
     if (!installationOk) return;
   }
+  const pendingHash = sessionStorage.getItem('camply_pending_hash');
+  if (pendingHash) {
+    sessionStorage.removeItem('camply_pending_hash');
+    if (!window.location.hash) history.replaceState(null, '', pendingHash);
+  }
   const safetyTimer = setTimeout(() => onSignedOut(), 5000);
   try {
     const { data: { session } } = await sb.auth.getSession();
@@ -361,7 +368,7 @@ async function onSignedIn(user) {
   document.getElementById('loading-overlay').classList.add('active');
   await loadUniversesFromDB();
   document.getElementById('loading-overlay').classList.remove('active');
-  showUniverseScreen();
+  if (!navigateFromHash()) showUniverseScreen();
 }
 
 async function loadUniversesFromDB() {
@@ -1457,15 +1464,30 @@ function navigateFromHash() {
   }
 }
 
+// Bascule vers l'univers propriétaire de l'objet partagé si nécessaire.
+// Retourne true si un changement d'univers a été lancé (l'appelant doit
+// s'arrêter là : loadUniverseData() ré-invoquera navigateFromHash() une
+// fois le nouvel univers chargé).
+async function switchUniverseIfNeeded(rowUniverseId) {
+  if (rowUniverseId === currentUniverse?.id) return false;
+  const target = userUniverses.find(u => u.id === rowUniverseId);
+  if (!target) return 'not_member';
+  await enterUniverse(target.id);
+  return true;
+}
+
 function navigateToChar(id) {
   if (!id) return false;
   if (chars[id])         { editChar(id); return true; }
   if (followedChars[id]) { showSharedChar(followedChars[id]); return true; }
   sb.from('characters')
-    .select('id, name, rank, is_public, data, user_id')
-    .eq('id', id).eq('universe_id', currentUniverse.id).single()
+    .select('id, name, rank, is_public, data, user_id, universe_id')
+    .eq('id', id).single()
     .then(async ({ data: row, error }) => {
-      if (error || !row) { showToast(t('toast_char_not_found')); showView('list'); renderList(); return; }
+      if (error || !row) { showToast(t('toast_char_not_found')); if (currentUniverse) { showView('list'); renderList(); } else showUniverseScreen(); return; }
+      const switched = await switchUniverseIfNeeded(row.universe_id);
+      if (switched === 'not_member') { showToast(t('toast_char_not_found')); showUniverseScreen(); return; }
+      if (switched) return;
       const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
       const charData = {
         ...row.data, name: row.name, rank: row.rank,
@@ -1481,10 +1503,13 @@ function navigateToChr(id) {
   if (chronicles[id])         { showChrDetail(id); return true; }
   if (followedChronicles[id]) { showChrDetail(id); return true; }
   sb.from('chronicles')
-    .select('id, title, description, is_public, illustration_url, illustration_position, updated_at, user_id')
-    .eq('id', id).eq('universe_id', currentUniverse.id).single()
+    .select('id, title, description, is_public, illustration_url, illustration_position, updated_at, user_id, universe_id')
+    .eq('id', id).single()
     .then(async ({ data: row, error }) => {
-      if (error || !row) { showToast(t('toast_chr_not_found')); showView('chronicles'); return; }
+      if (error || !row) { showToast(t('toast_chr_not_found')); if (currentUniverse) showView('chronicles'); else showUniverseScreen(); return; }
+      const switched = await switchUniverseIfNeeded(row.universe_id);
+      if (switched === 'not_member') { showToast(t('toast_chr_not_found')); showUniverseScreen(); return; }
+      if (switched) return;
       const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
       followedChronicles[row.id] = { ...row, _followed: true, _owner_name: profile?.username || '?', entry_count: 0 };
       showChrDetail(row.id);
@@ -1519,10 +1544,13 @@ function navigateToDoc(id) {
   if (documents[id])         { openDocReader(id); return true; }
   if (followedDocuments[id]) { openDocReader(id); return true; }
   sb.from('documents')
-    .select('id, title, content, is_public, illustration_url, illustration_position, updated_at, user_id')
-    .eq('id', id).eq('universe_id', currentUniverse.id).single()
+    .select('id, title, content, is_public, illustration_url, illustration_position, updated_at, user_id, universe_id')
+    .eq('id', id).single()
     .then(async ({ data: row, error }) => {
-      if (error || !row) { showToast(t('toast_doc_not_found')); showView('documents'); return; }
+      if (error || !row) { showToast(t('toast_doc_not_found')); if (currentUniverse) showView('documents'); else showUniverseScreen(); return; }
+      const switched = await switchUniverseIfNeeded(row.universe_id);
+      if (switched === 'not_member') { showToast(t('toast_doc_not_found')); showUniverseScreen(); return; }
+      if (switched) return;
       const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
       followedDocuments[row.id] = { ...row, _followed: true, _owner_name: profile?.username || '?' };
       openDocReader(row.id);
