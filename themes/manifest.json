@@ -1,9 +1,9 @@
 [
-  { "id": "dark-fantasy",        "file": "theme-dark-fantasy.css",        "label": "Grimoire — Dark Fantasy médiéval" },
-  { "id": "elder-scrolls",       "file": "theme-elder-scrolls.css",       "label": "The Elder Scrolls — Tamriel" },
-  { "id": "forgotten-realms",    "file": "theme-forgotten-realms.css",    "label": "The Forgotten Realms — AD&D 2e" },
-  { "id": "hirondelles",         "file": "theme-hirondelles.css",         "label": "Les Hirondelles — Cité fluviale" },
+  { "id": "dark-fantasy",        "file": "theme-dark-fantasy.css",        "label": "Dark Grimoire" },
+  { "id": "elder-scrolls",       "file": "theme-elder-scrolls.css",       "label": "The Elder Scrolls" },
+  { "id": "forgotten-realms",    "file": "theme-forgotten-realms.css",    "label": "The Forgotten Realms" },
+  { "id": "hirondelles",         "file": "theme-hirondelles.css",         "label": "Les Hirondelles" },
   { "id": "mystic-falls",        "file": "theme_mystic_falls.css",        "label": "Mystic Falls" },
-  { "id": "superhero",           "file": "theme_superhero.css",           "label": "Super-héros" },
+  { "id": "superhero",           "file": "theme_superhero.css",           "label": "Energy Heroes" },
   { "id": "tales-from-the-loop", "file": "theme_tales_from_the_loop.css", "label": "Tales From the Loop" }
 ]

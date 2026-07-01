@@ -163,10 +163,10 @@ html, body {
 
 .config-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 420px;
   gap: 24px;
   align-items: start;
-  max-width: 1040px;
+  max-width: 1140px;
 }
 .config-main    { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .config-sidebar { display: flex; flex-direction: column; gap: 20px; }
@@ -225,7 +225,7 @@ html, body {
 
 .char-card .card-name {
   font-size: 16px; font-weight: 600; letter-spacing: -0.01em;
-  color: var(--text); margin-bottom: 2px;
+  color: var(--text); margin-bottom: 2px; text-transform: uppercase;
 }
 .char-card .card-sub { color: var(--text3); font-size: 12px; margin-bottom: 12px; }
 .char-card .card-rank {

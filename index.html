@@ -958,6 +958,15 @@
               <label data-i18n="config_field_description">Description courte</label>
               <textarea id="config-f-description"></textarea>
             </div>
+			
+			<div class="form-section-title" data-i18n="config_section_theme">Thème</div>
+            <p class="config-block-hint" data-i18n="config_theme_hint">
+              Choisissez l'habillage visuel appliqué à cet univers.
+            </p>
+            <div class="field" style="margin-bottom:0">
+              <label data-i18n="config_field_theme">Thème visuel</label>
+              <select id="config-f-theme" onchange="onConfigThemeChange(this.value)"></select>
+            </div>
 
             <div id="config-error" class="auth-error"></div>
 
@@ -971,16 +980,7 @@
             </div>
           </div>
 
-          <div class="config-block">
-            <div class="form-section-title" data-i18n="config_section_theme">Thème</div>
-            <p class="config-block-hint" data-i18n="config_theme_hint">
-              Choisissez l'habillage visuel appliqué à cet univers.
-            </p>
-            <div class="field" style="margin-bottom:0">
-              <label data-i18n="config_field_theme">Thème visuel</label>
-              <select id="config-f-theme" onchange="onConfigThemeChange(this.value)"></select>
-            </div>
-          </div>
+    
 
           <div class="config-block">
             <div class="form-section-title" data-i18n="config_section_maps">Cartes</div>
