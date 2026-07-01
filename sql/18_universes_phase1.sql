@@ -28,14 +28,19 @@ $$;
 -- ══════════════════════════════════════════════════════════════
 
 CREATE TABLE IF NOT EXISTS public.universes (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  name        TEXT NOT NULL CHECK (length(trim(name)) > 0),
-  description TEXT NOT NULL DEFAULT '',
-  join_code   CHAR(8) UNIQUE,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id               UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name                   TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  description            TEXT NOT NULL DEFAULT '',
+  illustration_url       TEXT NOT NULL DEFAULT '',
+  illustration_position  INT NOT NULL DEFAULT 0,
+  join_code              CHAR(8) UNIQUE,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE public.universes ADD COLUMN IF NOT EXISTS illustration_url TEXT NOT NULL DEFAULT '';
+ALTER TABLE public.universes ADD COLUMN IF NOT EXISTS illustration_position INT NOT NULL DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS universes_owner_idx ON public.universes(owner_id);
 CREATE INDEX IF NOT EXISTS universes_join_code_idx ON public.universes(join_code) WHERE join_code IS NOT NULL;
@@ -121,7 +126,12 @@ AS $$
   );
 $$;
 
-CREATE OR REPLACE FUNCTION public.create_universe(p_name TEXT, p_description TEXT DEFAULT '')
+CREATE OR REPLACE FUNCTION public.create_universe(
+  p_name TEXT,
+  p_description TEXT DEFAULT '',
+  p_illustration_url TEXT DEFAULT '',
+  p_illustration_position INT DEFAULT 0
+)
 RETURNS public.universes
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -134,8 +144,8 @@ BEGIN
     RAISE EXCEPTION 'Authentication required';
   END IF;
 
-  INSERT INTO public.universes (owner_id, name, description)
-  VALUES (auth.uid(), trim(p_name), COALESCE(p_description, ''))
+  INSERT INTO public.universes (owner_id, name, description, illustration_url, illustration_position)
+  VALUES (auth.uid(), trim(p_name), COALESCE(p_description, ''), COALESCE(p_illustration_url, ''), COALESCE(p_illustration_position, 0))
   RETURNING * INTO created_universe;
 
   INSERT INTO public.universe_members (universe_id, user_id, role)
@@ -146,7 +156,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.create_universe(TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_universe(TEXT, TEXT, TEXT, INT) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_universe_member(UUID, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.has_universe_role(UUID, TEXT[], UUID) TO authenticated;
 

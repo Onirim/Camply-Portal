@@ -261,6 +261,7 @@ html, body {
 .field textarea { resize: vertical; min-height: 60px; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
 .field select option { background: var(--bg3); }
+.field input:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .attr-row            { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .attr-row .attr-name { width: 130px; font-size: 12px; color: var(--text2); flex-shrink: 0; }
@@ -517,7 +518,7 @@ html, body {
 .universe-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 22px; }
 .universe-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 .universe-empty { border: 1px dashed var(--border2); border-radius: 10px; padding: 22px; color: var(--text3); text-align: center; font-size: 13px; line-height: 1.6; }
-.universe-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: left; color: var(--text); cursor: pointer; transition: all 0.15s; }
+.universe-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; text-align: left; color: var(--text); cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
 .universe-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
 .universe-card-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 6px; }
 .universe-card-desc { color: var(--text3); font-size: 12px; line-height: 1.5; min-height: 18px; margin-bottom: 12px; }
