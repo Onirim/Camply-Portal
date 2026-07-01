@@ -174,7 +174,7 @@ async function exportVisibleData() {
 
     for (const c of allChars) {
       const name = _safeName(c.name, 'personnage');
-      const objDir = personnages.folder(`${name}_${c.share_code || c._db_id || ''}`);
+      const objDir = personnages.folder(`${name}_${c._db_id || ''}`);
       objDir.file('personnage.md', `# ${c.name || 'Personnage'}\n\n${_renderObjectMarkdown(c)}`);
       await _appendImages(objDir, [c.illustration_url]);
     }
@@ -193,14 +193,13 @@ async function exportVisibleData() {
 
     for (const chr of allChronicles) {
       const name = _safeName(chr.title, 'chronique');
-      const objDir = chroniquesDir.folder(`${name}_${chr.share_code || chr.id || ''}`);
+      const objDir = chroniquesDir.folder(`${name}_${chr.id || ''}`);
       const head = [
         `# ${chr.title || 'Chronique'}`,
         '',
         chr.description || '',
         '',
         `- Source: ${chr._source === 'owned' ? 'propriétaire' : 'abonné'}`,
-        `- Code: ${chr.share_code || '—'}`,
         `- Dernière mise à jour: ${_fmtDate(chr.updated_at)}`,
         ''
       ].join('\n');
@@ -224,12 +223,11 @@ async function exportVisibleData() {
 
     for (const d of allDocs) {
       const name = _safeName(d.title, 'document');
-      const objDir = documentsDir.folder(`${name}_${d.share_code || d.id || ''}`);
+      const objDir = documentsDir.folder(`${name}_${d.id || ''}`);
       const md = [
         `# ${d.title || 'Document'}`,
         '',
         `- Source: ${d._source === 'owned' ? 'propriétaire' : 'abonné'}`,
-        `- Code: ${d.share_code || '—'}`,
         `- Dernière mise à jour: ${_fmtDate(d.updated_at)}`,
         '',
         d.content || '',
@@ -254,14 +252,13 @@ async function exportVisibleData() {
     for (const item of [...ownLayers, ...followedLayers]) {
       const layer = item.layer || {};
       const name = _safeName(layer.title || layer.map_key || 'carte', 'carte');
-      const objDir = cartesDir.folder(`${name}_${layer.share_code || layer.id || ''}`);
+      const objDir = cartesDir.folder(`${name}_${layer.id || ''}`);
       const mapLabel = (MAP_CONFIG.maps || []).find(m => m.key === layer.map_key)?.name || layer.map_key || 'default';
       const lines = [
         `# ${layer.title || 'Couche de carte'}`,
         '',
         `- Source: ${item.source === 'owned' ? 'propriétaire' : 'abonné'}`,
         `- Carte: ${mapLabel}`,
-        `- Code: ${layer.share_code || '—'}`,
         '',
         '## Marqueurs',
         ''

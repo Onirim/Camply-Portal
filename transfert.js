@@ -10,37 +10,35 @@ const TRANSFER_TYPES = () => [
     label: t('transfer_type_char'),
     icon:  '👤',
     color: 'var(--accent)',
-    hint:  t('transfer_code_hint_char'),
   },
   {
     value: 'chr',
     label: t('transfer_type_chr'),
     icon:  '📖',
     color: 'var(--sup)',
-    hint:  t('transfer_code_hint_chr'),
   },
   {
     value: 'doc',
     label: t('transfer_type_doc'),
     icon:  '📄',
     color: 'var(--def)',
-    hint:  t('transfer_code_hint_doc'),
   },
   {
-    value: 'campaign',
-    label: t('transfer_type_campaign'),
-    icon:  '🗂',
-    color: 'var(--accent)',
-    hint:  t('transfer_code_hint_campaign'),
-  },
-    {
     value: 'map',
     label: t('transfer_type_map'),
     icon:  '🗺️',
     color: 'var(--mov)',
-    hint:  t('transfer_code_hint_map'),
   },
 ];
+
+// Liste des objets possédés par l'utilisateur pour le type sélectionné.
+function _ownItemsOfType(type) {
+  if (type === 'char') return Object.values(chars).map(c => ({ id: c._db_id, name: c.name || '—' }));
+  if (type === 'chr')  return Object.values(chronicles).map(c => ({ id: c.id, name: c.title || '—' }));
+  if (type === 'doc')  return Object.values(documents).map(d => ({ id: d.id, name: d.title || '—' }));
+  if (type === 'map')  return Object.values(mapOwnLayers || {}).map(l => ({ id: l.id, name: l.title || l.map_key || '—' }));
+  return [];
+}
 
 const TRANSFER_ERRORS = () => ({
   not_authenticated:  t('transfer_error_not_auth'),
@@ -110,7 +108,10 @@ function _renderTransferModal() {
       <span class="transfer-type-label">${tp.label}</span>
     </button>`).join('');
 
-  const currentType = types.find(tp => tp.value === _transferSelectedType);
+  const ownItems = _ownItemsOfType(_transferSelectedType);
+  const optionsHtml = ownItems.length
+    ? ownItems.map(it => `<option value="${it.id}">${esc(it.name)}</option>`).join('')
+    : '';
 
   document.getElementById('transfer-modal-panel').innerHTML = `
     <div class="transfer-header">
@@ -131,16 +132,15 @@ function _renderTransferModal() {
 
     <div class="transfer-section-label">${t('transfer_step2')}</div>
     <div class="transfer-field-wrap">
-      <input
-        type="text"
-        id="transfer-code-input"
+      ${ownItems.length ? `
+      <select
+        id="transfer-item-select"
         class="transfer-code-input"
-        placeholder="${currentType?.hint || ''}"
-        maxlength="8"
-        oninput="this.value=this.value.toUpperCase();_onTransferCodeInput(this.value)"
-        autocomplete="off"
-        spellcheck="false">
-      <div id="transfer-item-preview" class="transfer-item-preview" style="display:none"></div>
+        onchange="_refreshTransferConfirmState()">
+        <option value="">${t('transfer_item_select_ph')}</option>
+        ${optionsHtml}
+      </select>` : `
+      <div class="transfer-item-preview not-found" style="display:flex">${t('transfer_item_none')}</div>`}
     </div>
 
     <div class="transfer-section-label">${t('transfer_step3')}</div>
@@ -199,71 +199,20 @@ function selectTransferType(type) {
   _armTransferGuard();
   _renderTransferModal();
   requestAnimationFrame(() => {
-    document.getElementById('transfer-code-input')?.focus();
+    document.getElementById('transfer-item-select')?.focus();
   });
 }
 
-let _transferCodeTimer = null;
-function _onTransferCodeInput(val) {
-  clearTimeout(_transferCodeTimer);
-  _clearTransferError();
-  document.getElementById('transfer-item-preview').style.display = 'none';
-  _refreshTransferConfirmState();
-  if (val.length === 8) {
-    _transferCodeTimer = setTimeout(() => _lookupTransferItem(val), 300);
-  }
-}
-
-function _lookupTransferItem(code) {
-  const clean = code.trim().toUpperCase();
-  let found = null;
-  let name  = null;
-
-  if (_transferSelectedType === 'char') {
-    const c = Object.values(chars).find(x => x.share_code === clean);
-    if (c) { found = c; name = c.name; }
-  } else if (_transferSelectedType === 'chr') {
-    const c = Object.values(chronicles).find(x => x.share_code === clean);
-    if (c) { found = c; name = c.title; }
-  } else if (_transferSelectedType === 'doc') {
-    const d = Object.values(documents).find(x => x.share_code === clean);
-    if (d) { found = d; name = d.title; }
-  } else if (_transferSelectedType === 'campaign') {
-    const c = Object.values(campaigns).find(x => x.share_code === clean);
-    if (c) { found = c; name = c.title; }
-  }
-
-  const preview = document.getElementById('transfer-item-preview');
-  if (found && name) {
-    preview.innerHTML = `
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
-        <polyline points="2,8 6,12 14,4"/>
-      </svg>
-      ${esc(name)}`;
-    preview.className = 'transfer-item-preview found';
-  } else {
-    preview.innerHTML = `
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
-        <line x1="3" y1="3" x2="13" y2="13"/>
-        <line x1="13" y1="3" x2="3" y2="13"/>
-      </svg>
-      ${t('transfer_item_not_yours')}`;
-    preview.className = 'transfer-item-preview not-found';
-  }
-  preview.style.display = 'flex';
-  _refreshTransferConfirmState();
-}
-
 function _refreshTransferConfirmState() {
-  const codeInput  = document.getElementById('transfer-code-input');
+  const itemSelect = document.getElementById('transfer-item-select');
   const userInput  = document.getElementById('transfer-username-input');
   const confirmBtn = document.getElementById('transfer-confirm-btn');
   const warning    = document.getElementById('transfer-warning');
-  if (!codeInput || !confirmBtn) return;
+  if (!confirmBtn) return;
 
-  const codeOk = codeInput.value.trim().length === 8;
+  const itemOk = !!itemSelect?.value;
   const userOk = (userInput?.value.trim().length ?? 0) > 0;
-  const ready  = codeOk && userOk;
+  const ready  = itemOk && userOk;
 
   confirmBtn.disabled = !ready;
   if (warning) warning.style.display = ready ? 'flex' : 'none';
@@ -290,16 +239,16 @@ function _resetTransferForm() {
 // ══════════════════════════════════════════════════════════════
 
 async function confirmTransfer() {
-  const codeInput  = document.getElementById('transfer-code-input');
+  const itemSelect = document.getElementById('transfer-item-select');
   const userInput  = document.getElementById('transfer-username-input');
   const confirmBtn = document.getElementById('transfer-confirm-btn');
 
-  if (!codeInput || !userInput) return;
+  if (!itemSelect || !userInput) return;
 
-  const shareCode = codeInput.value.trim().toUpperCase();
-  const username  = userInput.value.trim();
+  const itemId   = itemSelect.value;
+  const username = userInput.value.trim();
 
-  if (shareCode.length !== 8 || !username) return;
+  if (!itemId || !username) return;
 
   _clearTransferError();
   confirmBtn.disabled = true;
@@ -310,7 +259,7 @@ async function confirmTransfer() {
   try {
     const { data, error } = await sb.rpc('transfer_item', {
       p_item_type:   _transferSelectedType,
-      p_share_code:  shareCode,
+      p_item_id:     itemId,
       p_to_username: username,
     });
 
@@ -353,19 +302,16 @@ function _restoreConfirmBtn() {
     ${t('transfer_btn_confirm')}`;
 }
 
-function _removeFromLocalStores(type, shareCode) {
+function _removeFromLocalStores(type, itemId) {
   if (type === 'char') {
-    const id = Object.keys(chars).find(k => chars[k].share_code === shareCode);
-    if (id) { delete chars[id]; delete charTagMap[id]; }
+    delete chars[itemId]; delete charTagMap[itemId];
   } else if (type === 'chr') {
-    const id = Object.keys(chronicles).find(k => chronicles[k].share_code === shareCode);
-    if (id) { delete chronicles[id]; delete chrEntries[id]; }
+    delete chronicles[itemId]; delete chrEntries[itemId];
   } else if (type === 'doc') {
-    const id = Object.keys(documents).find(k => documents[k].share_code === shareCode);
-    if (id) { delete documents[id]; delete docTagMap[id]; }
-  } else if (type === 'campaign') {
-    const id = Object.keys(campaigns).find(k => campaigns[k].share_code === shareCode);
-    if (id) { delete campaigns[id]; delete campaignItems[id]; }
+    delete documents[itemId]; delete docTagMap[itemId];
+  } else if (type === 'map') {
+    const key = Object.keys(mapOwnLayers || {}).find(k => mapOwnLayers[k].id === itemId);
+    if (key) delete mapOwnLayers[key];
   }
 }
 
@@ -399,25 +345,21 @@ const TRANSFER_I18N = {
     transfer_modal_title:          'Transférer un élément',
     transfer_modal_desc:           'Cède la propriété d\'un de vos éléments à un autre joueur. Cette action est irréversible.',
     transfer_step1:                'Étape 1 — Type d\'élément',
-    transfer_step2:                'Étape 2 — Code de partage',
+    transfer_step2:                'Étape 2 — Élément à transférer',
     transfer_step3:                'Étape 3 — Destinataire',
     transfer_type_char:            'Personnage',
     transfer_type_chr:             'Chronique',
     transfer_type_doc:             'Document',
-    transfer_type_campaign:        'Campagne',
-    transfer_code_hint_char:       'Code du personnage (8 car.)',
-    transfer_code_hint_chr:        'Code de la chronique (8 car.)',
-    transfer_code_hint_doc:        'Code du document (8 car.)',
-    transfer_code_hint_campaign:   'Code de la campagne (8 car.)',
+    transfer_item_select_ph:       'Choisissez un élément…',
+    transfer_item_none:            'Aucun élément possédé de ce type',
     transfer_username_ph:          'Nom du joueur destinataire',
-    transfer_item_not_yours:       'Code introuvable ou élément non public',
     transfer_warning_irreversible: 'Ce transfert est définitif. Vous perdrez la propriété de cet élément.',
     transfer_btn_confirm:          'Transférer',
     transfer_btn_in_progress:      'Transfert…',
     transfer_error_not_auth:       'Vous devez être connecté.',
     transfer_error_user_not_found: 'Joueur introuvable. Vérifiez le nom exact.',
     transfer_error_same_user:      'Vous ne pouvez pas vous transférer un élément à vous-même.',
-    transfer_error_item_not_found: 'Code introuvable. Vérifiez le code de partage.',
+    transfer_error_item_not_found: 'Élément introuvable.',
     transfer_error_not_owner:      'Vous n\'êtes pas le propriétaire de cet élément.',
     transfer_error_invalid_type:   'Type d\'élément invalide.',
     transfer_error_network:        'Erreur réseau :',
@@ -429,25 +371,21 @@ const TRANSFER_I18N = {
     transfer_modal_title:          'Transfer an item',
     transfer_modal_desc:           'Give ownership of one of your items to another player. This action is irreversible.',
     transfer_step1:                'Step 1 — Item type',
-    transfer_step2:                'Step 2 — Share code',
+    transfer_step2:                'Step 2 — Item to transfer',
     transfer_step3:                'Step 3 — Recipient',
     transfer_type_char:            'Character',
     transfer_type_chr:             'Chronicle',
     transfer_type_doc:             'Document',
-    transfer_type_campaign:        'Campaign',
-    transfer_code_hint_char:       'Character code (8 chars)',
-    transfer_code_hint_chr:        'Chronicle code (8 chars)',
-    transfer_code_hint_doc:        'Document code (8 chars)',
-    transfer_code_hint_campaign:   'Campaign code (8 chars)',
+    transfer_item_select_ph:       'Choose an item…',
+    transfer_item_none:            'No item of this type owned',
     transfer_username_ph:          'Recipient player name',
-    transfer_item_not_yours:       'Code not found or item is not public',
     transfer_warning_irreversible: 'This transfer is permanent. You will lose ownership of this item.',
     transfer_btn_confirm:          'Transfer',
     transfer_btn_in_progress:      'Transferring…',
     transfer_error_not_auth:       'You must be logged in.',
     transfer_error_user_not_found: 'Player not found. Check the exact name.',
     transfer_error_same_user:      'You cannot transfer an item to yourself.',
-    transfer_error_item_not_found: 'Code not found. Check the share code.',
+    transfer_error_item_not_found: 'Item not found.',
     transfer_error_not_owner:      'You are not the owner of this item.',
     transfer_error_invalid_type:   'Invalid item type.',
     transfer_error_network:        'Network error:',

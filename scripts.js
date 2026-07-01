@@ -15,7 +15,6 @@ let allTags          = [];
 let activeTagFilters = [];
 let charTagMap       = {};
 let followedChars    = {};
-let followedIds      = [];
 let followedTagMap   = {};
 let filterFollowed   = false;
 let charSecrets = {}; 
@@ -157,22 +156,33 @@ function updateUserUI(user) {
 async function loadCharsFromDB() {
   const { data, error } = await sb
     .from('characters')
-    .select('id, name, rank, is_public, share_code, data, updated_at')
-    .eq('user_id', currentUser.id)
+    .select('id, name, rank, is_public, user_id, data, updated_at')
     .eq('universe_id', currentUniverse.id)
     .order('updated_at', { ascending: false });
   if (error) { console.error('Erreur chargement:', error); return; }
+
+  const ownerIds = [...new Set((data || []).filter(r => r.user_id !== currentUser.id).map(r => r.user_id))];
+  let ownerMap = {};
+  if (ownerIds.length) {
+    const { data: profiles } = await sb.from('profiles').select('id, username').in('id', ownerIds);
+    (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
+  }
+
   chars = {};
+  followedChars = {};
   (data || []).forEach(row => {
-    chars[row.id] = {
+    const entry = {
       ...row.data,
       name: row.name, rank: row.rank,
-      is_public: row.is_public, share_code: row.share_code,
-      _db_id: row.id,
+      is_public: row.is_public, _db_id: row.id,
     };
+    if (row.user_id === currentUser.id) {
+      chars[row.id] = entry;
+    } else {
+      followedChars[row.id] = { ...entry, _followed: true, _owner_name: ownerMap[row.user_id] || '?', _owner_id: row.user_id };
+    }
   });
   await loadTagsFromDB();
-  await loadFollowedCharsFromDB();
 }
 
 async function saveCharToDB() {
@@ -188,16 +198,15 @@ async function saveCharToDB() {
   const isValidUUID = editingId &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingId);
   const result = isValidUUID
-    ? await sb.from('characters').update(payload).eq('id', editingId).eq('universe_id', currentUniverse.id).select('id, share_code').single()
-    : await sb.from('characters').insert({ ...payload, user_id: currentUser.id, universe_id: currentUniverse.id }).select('id, share_code').single();
+    ? await sb.from('characters').update(payload).eq('id', editingId).eq('universe_id', currentUniverse.id).select('id').single()
+    : await sb.from('characters').insert({ ...payload, user_id: currentUser.id, universe_id: currentUniverse.id }).select('id').single();
   if (!isValidUUID && editingId) editingId = null;
   if (result.error) {
     setSaveIndicator('error', t('save_error'));
     showToast(t('toast_char_save_error'));
     return;
   }
-  editingId        = result.data.id;
-  state.share_code = result.data.share_code;
+  editingId = result.data.id;
   await saveCharSecretToDB(editingId, currentSecretDraft);
   if (!isEditingFollowedChar) {
     await saveCharTagsToDB(editingId);
@@ -209,14 +218,7 @@ async function saveCharToDB() {
       ...state,
       _db_id: editingId,
       _owner_id: followedChars[editingId]._owner_id || null,
-      share_code: result.data.share_code,
     };
-  }
-  const scBox = document.getElementById('share-code-box');
-  const scVal = document.getElementById('share-code-val');
-  if (scBox && scVal && state.is_public && state.share_code) {
-    scVal.textContent  = state.share_code;
-    scBox.style.display = 'flex';
   }
   setSaveIndicator('saved', t('save_saved'));
   showToast(t('toast_char_saved'));
@@ -270,91 +272,6 @@ async function loadTagsFromDB() {
     if (!followedTagMap[character_id]) followedTagMap[character_id] = [];
     followedTagMap[character_id].push(tag_id);
   });
-}
-
-// ══════════════════════════════════════════════════════════════
-// DB — SUIVI DE PERSONNAGES
-// ══════════════════════════════════════════════════════════════
-
-async function loadFollowedCharsFromDB() {
-  const { data: followed } = await sb.from('followed_characters')
-    .select('character_id').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id);
-  followedIds = (followed || []).map(r => r.character_id);
-  if (!followedIds.length) { followedChars = {}; return; }
-  const { data: chars_data } = await sb.from('characters')
-    .select('id, name, rank, is_public, share_code, data, user_id')
-    .in('id', followedIds).eq('is_public', true).eq('universe_id', currentUniverse.id);
-  const ownerIds = [...new Set((chars_data || []).map(r => r.user_id))];
-  let ownerMap = {};
-  if (ownerIds.length) {
-    const { data: profiles } = await sb.from('profiles')
-      .select('id, username').in('id', ownerIds);
-    (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
-  }
-  followedChars = {};
-  (chars_data || []).forEach(row => {
-    followedChars[row.id] = {
-      ...row.data, name: row.name, rank: row.rank,
-      is_public: row.is_public, share_code: row.share_code, _db_id: row.id,
-      _followed: true, _owner_name: ownerMap[row.user_id] || '?', _owner_id: row.user_id,
-    };
-  });
-}
-
-async function followCharByCode(code) {
-  if (!code.trim()) return;
-  const clean = code.trim().toUpperCase();
-  const { data, error } = await sb.from('characters')
-    .select('id, name, user_id, is_public')
-    .eq('share_code', clean).eq('is_public', true).eq('universe_id', currentUniverse.id).single();
-  if (error || !data) { showToast(t('toast_char_not_found')); return; }
-  if (data.user_id === currentUser.id) { showToast(t('toast_char_own')); return; }
-  if (followedIds.includes(data.id))  { showToast(t('toast_char_already_followed')); return; }
-
-  const { error: insertError } = await sb.from('followed_characters')
-    .insert({ user_id: currentUser.id, character_id: data.id, universe_id: currentUniverse.id });
-  if (insertError) { showToast(t('toast_char_follow_error')); return; }
- 
-  followedIds.push(data.id);
-  await syncOwnerTagsToMe('char', data.id);   // ← sync tags propriétaire
-  await loadFollowedCharsFromDB();
-  await loadTagsFromDB();
-  document.getElementById('follow-code-input').value = '';
-  renderList();
-  showToast(ti('toast_char_added', { name: data.name }));
-}
-
-async function unfollowChar(charId) {
-  const char = followedChars[charId];
-  const blockingCampaigns = await getFollowedCampaignTitlesByItem('char', char?.share_code);
-  if (blockingCampaigns.length) {
-    showToast(ti('toast_unfollow_blocked_by_campaigns', {
-      type: t('campaign_type_char'),
-      campaigns: blockingCampaigns.join(', ')
-    }));
-    return;
-  }
-  // 1. Supprime les tags locaux liés à ce personnage
-  await sb.from('followed_character_tags')
-    .delete()
-    .eq('user_id', currentUser.id)
-    .eq('character_id', charId)
-    .eq('universe_id', currentUniverse.id);
-
-  // 2. Désabonnement
-  await sb.from('followed_characters')
-    .delete().eq('user_id', currentUser.id).eq('character_id', charId).eq('universe_id', currentUniverse.id);
- 
-  followedIds = followedIds.filter(id => id !== charId);
-  delete followedChars[charId];
-  delete followedTagMap[charId];
- 
-  // 3. Purge les tags orphelins dans `tags`
-  await cleanupOrphanTags('char');
-  await loadTagsFromDB();   // rafraîchit allTags + charTagMap + followedTagMap
- 
-  renderList();
-  showToast(t('toast_char_unfollowed'));
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -835,22 +752,6 @@ function showView(view) {
   const showLangSelect = !isMobileTopbar || listViews.includes(view);
   if (langSelect) langSelect.style.display = showLangSelect ? '' : 'none';
 
-  // Boutons de partage
-  const shareButtons = {
-    'share-btn':              view === 'editor',
-    'chr-share-btn':          view === 'chr-editor',
-    'doc-share-btn':          view === 'doc-editor',
-    'campaign-share-btn':     view === 'campaign-editor',
-    'chr-detail-share-btn':   view === 'chr-detail',
-    'entry-reader-share-btn': view === 'entry-reader',
-    'doc-reader-share-btn':   view === 'doc-reader',
-    'shared-char-share-btn':  view === 'shared',
-  };
-  Object.entries(shareButtons).forEach(([id, visible]) => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = visible ? 'flex' : 'none';
-  });
-
   const si = document.getElementById('save-indicator');
   if (si) si.classList.remove('show');
 
@@ -922,10 +823,6 @@ function cardHTML(id, c, isFollowed = false) {
             <path d="M1 4h14M1 8h10M1 12h6"/>
           </svg>
         </button>
-        <button class="icon-btn danger" onclick="event.stopPropagation();unfollowChar('${id}')"
-          title="${t('card_unfollow')}">
-          ${_trashIcon()}
-        </button>
       </div>
       ${body}
       ${cardTags ? `<div class="card-tags">${cardTags}</div>` : ''}
@@ -991,8 +888,6 @@ function _trashIcon() {
 // VUE PARTAGÉE (personnage suivi en lecture seule)
 // ══════════════════════════════════════════════════════════════
 
-let currentSharedCharCode = null;
-
 function showSharedChar(data) {
   const sharedCharacterId = data?._db_id || null;
   if (sharedCharacterId) unreadMarkers.markCharacterRead(sharedCharacterId);
@@ -1010,8 +905,7 @@ function showSharedChar(data) {
   `;
   showView('shared');
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
-  currentSharedCharCode = data.share_code || null;
-  if (data.share_code) setHash('char', data.share_code);
+  if (sharedCharacterId) setHash('char', sharedCharacterId);
   if (sharedCharacterId) _fillSecretNoteBlock(sharedCharacterId);
 }
 
@@ -1213,17 +1107,6 @@ function pipRow(val, cls, max) {
 //          #doc/CODE  | #campaign/CODE
 // ══════════════════════════════════════════════════════════════
 
-function buildShareUrl(type, ...ids) {
-  const base = window.location.href.split('#')[0];
-  return `${base}#${type}/${ids.join('/')}`;
-}
-
-function copyUrl(url) {
-  navigator.clipboard.writeText(url)
-    .then(() => showToast(t('toast_url_copied')))
-    .catch(() => prompt(t('share_code_prompt_short'), url));
-}
-
 function setHash(type, ...ids) {
   history.replaceState(null, '', `#${type}/${ids.join('/')}`);
 }
@@ -1246,35 +1129,32 @@ function navigateFromHash() {
   }
 }
 
-function navigateToChar(shareCode) {
-  if (!shareCode) return false;
-  const ownChar  = Object.values(chars).find(c => c.share_code === shareCode);
-  if (ownChar)   { editChar(ownChar._db_id); return true; }
-  const followed = Object.values(followedChars).find(c => c.share_code === shareCode);
-  if (followed)  { showSharedChar(followed); return true; }
+function navigateToChar(id) {
+  if (!id) return false;
+  if (chars[id])         { editChar(id); return true; }
+  if (followedChars[id]) { showSharedChar(followedChars[id]); return true; }
   sb.from('characters')
-    .select('id, name, rank, is_public, share_code, data, user_id')
-    .eq('share_code', shareCode).eq('is_public', true).eq('universe_id', currentUniverse.id).single()
-    .then(({ data: row, error }) => {
+    .select('id, name, rank, is_public, data, user_id')
+    .eq('id', id).eq('universe_id', currentUniverse.id).single()
+    .then(async ({ data: row, error }) => {
       if (error || !row) { showToast(t('toast_char_not_found')); showView('list'); renderList(); return; }
+      const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
       const charData = {
         ...row.data, name: row.name, rank: row.rank,
-        is_public: row.is_public, share_code: row.share_code, _db_id: row.id,
+        is_public: row.is_public, _db_id: row.id, _owner_id: row.user_id, _owner_name: profile?.username || '?',
       };
       showSharedChar(charData);
     });
   return true;
 }
 
-function navigateToChr(chrCode) {
-  if (!chrCode) return false;
-  const inOwn      = Object.values(chronicles).find(c => c.share_code === chrCode);
-  const inFollowed = Object.values(followedChronicles).find(c => c.share_code === chrCode);
-  if (inOwn)      { showChrDetail(inOwn.id);      return true; }
-  if (inFollowed) { showChrDetail(inFollowed.id); return true; }
+function navigateToChr(id) {
+  if (!id) return false;
+  if (chronicles[id])         { showChrDetail(id); return true; }
+  if (followedChronicles[id]) { showChrDetail(id); return true; }
   sb.from('chronicles')
-    .select('id, title, description, is_public, share_code, illustration_url, illustration_position, updated_at, user_id')
-    .eq('share_code', chrCode).eq('is_public', true).eq('universe_id', currentUniverse.id).single()
+    .select('id, title, description, is_public, illustration_url, illustration_position, updated_at, user_id')
+    .eq('id', id).eq('universe_id', currentUniverse.id).single()
     .then(async ({ data: row, error }) => {
       if (error || !row) { showToast(t('toast_chr_not_found')); showView('chronicles'); return; }
       const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
@@ -1284,41 +1164,35 @@ function navigateToChr(chrCode) {
   return true;
 }
 
-function navigateToEntry(chrCode, entryId) {
-  if (!chrCode || !entryId) return false;
-  const resolveChrId = () => {
-    const inOwn      = Object.values(chronicles).find(c => c.share_code === chrCode);
-    const inFollowed = Object.values(followedChronicles).find(c => c.share_code === chrCode);
-    return inOwn?.id || inFollowed?.id || null;
-  };
-  const openEntry = (chrId) => {
-    activeChrId = chrId;
-    loadEntriesForChronicle(chrId).then(() => {
-      const entry = (chrEntries[chrId] || []).find(e => e.id === entryId);
+function navigateToEntry(chrId, entryId) {
+  if (!chrId || !entryId) return false;
+  const resolveChrId = () => (chronicles[chrId] || followedChronicles[chrId]) ? chrId : null;
+  const openEntry = (id) => {
+    activeChrId = id;
+    loadEntriesForChronicle(id).then(() => {
+      const entry = (chrEntries[id] || []).find(e => e.id === entryId);
       if (!entry) { showToast(t('toast_entry_not_found')); showView('chronicles'); return; }
       openEntryReader(entryId);
     });
   };
-  const chrId = resolveChrId();
-  if (chrId) { openEntry(chrId); return true; }
-  navigateToChr(chrCode);
+  const resolved = resolveChrId();
+  if (resolved) { openEntry(resolved); return true; }
+  navigateToChr(chrId);
   const wait = setInterval(() => {
-    const resolved = resolveChrId();
-    if (resolved) { clearInterval(wait); openEntry(resolved); }
+    const r = resolveChrId();
+    if (r) { clearInterval(wait); openEntry(r); }
   }, 100);
   setTimeout(() => clearInterval(wait), 5000);
   return true;
 }
 
-function navigateToDoc(docCode) {
-  if (!docCode) return false;
-  const inOwn      = Object.values(documents).find(d => d.share_code === docCode);
-  const inFollowed = Object.values(followedDocuments).find(d => d.share_code === docCode);
-  if (inOwn)      { openDocReader(inOwn.id);     return true; }
-  if (inFollowed) { openDocReader(inFollowed.id); return true; }
+function navigateToDoc(id) {
+  if (!id) return false;
+  if (documents[id])         { openDocReader(id); return true; }
+  if (followedDocuments[id]) { openDocReader(id); return true; }
   sb.from('documents')
-    .select('id, title, content, is_public, share_code, illustration_url, illustration_position, updated_at, user_id')
-    .eq('share_code', docCode).eq('is_public', true).eq('universe_id', currentUniverse.id).single()
+    .select('id, title, content, is_public, illustration_url, illustration_position, updated_at, user_id')
+    .eq('id', id).eq('universe_id', currentUniverse.id).single()
     .then(async ({ data: row, error }) => {
       if (error || !row) { showToast(t('toast_doc_not_found')); showView('documents'); return; }
       const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
@@ -1328,21 +1202,9 @@ function navigateToDoc(docCode) {
   return true;
 }
 
-function navigateToCampaign(campaignCode) {
-  if (!campaignCode) return false;
-  const inOwn      = Object.values(campaigns).find(c => c.share_code === campaignCode);
-  const inFollowed = Object.values(followedCampaigns).find(c => c.share_code === campaignCode);
-  if (inOwn)      { showCampaignDetail(inOwn.id);      return true; }
-  if (inFollowed) { showCampaignDetail(inFollowed.id); return true; }
-  sb.from('campaigns')
-    .select('id, title, description, is_public, share_code, updated_at, user_id')
-    .eq('share_code', campaignCode).eq('is_public', true).eq('universe_id', currentUniverse.id).single()
-    .then(async ({ data: row, error }) => {
-      if (error || !row) { showToast(t('toast_campaign_not_found')); showView('campaigns'); return; }
-      const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
-      followedCampaigns[row.id] = { ...row, _followed: true, _owner_name: profile?.username || '?' };
-      showCampaignDetail(row.id);
-    });
+function navigateToCampaign(id) {
+  if (!id || !campaigns[id]) return false;
+  showCampaignDetail(id);
   return true;
 }
 

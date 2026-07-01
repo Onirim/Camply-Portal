@@ -5,7 +5,6 @@
 // ── État ──────────────────────────────────────────────────────
 let chronicles         = {};
 let followedChronicles = {};
-let followedChrIds     = [];
 let chrEntries         = {};
 
 let activeChrId        = null;
@@ -21,80 +20,43 @@ let entryState         = null;
 async function loadChroniclesFromDB() {
   const { data, error } = await sb
     .from('chronicles')
-    .select('id, title, description, is_public, share_code, illustration_url, illustration_position, updated_at')
-    .eq('user_id', currentUser.id)
+    .select('id, title, description, is_public, user_id, illustration_url, illustration_position, updated_at')
     .eq('universe_id', currentUniverse.id)
     .order('updated_at', { ascending: false });
   if (error) { console.error('Erreur chargement chroniques:', error); return; }
 
   const ids = (data || []).map(r => r.id);
   let countMap = {};
-  if (ids.length) {
-    const { data: counts } = await sb
-      .from('chronicle_entries')
-      .select('chronicle_id')
-      .in('chronicle_id', ids);
-    (counts || []).forEach(r => {
-      countMap[r.chronicle_id] = (countMap[r.chronicle_id] || 0) + 1;
-    });
-  }
-
-  chronicles = {};
-  (data || []).forEach(r => {
-    chronicles[r.id] = { ...r, entry_count: countMap[r.id] || 0 };
-  });
-  await loadFollowedChroniclesFromDB();
-}
-
-async function loadFollowedChroniclesFromDB() {
-  const { data: followed } = await sb
-    .from('followed_chronicles')
-    .select('chronicle_id')
-    .eq('user_id', currentUser.id)
-    .eq('universe_id', currentUniverse.id);
-  followedChrIds = (followed || []).map(r => r.chronicle_id);
-  if (!followedChrIds.length) { followedChronicles = {}; return; }
-
-  const { data } = await sb
-    .from('chronicles')
-    .select('id, title, description, is_public, share_code, illustration_url, illustration_position, updated_at, user_id')
-    .in('id', followedChrIds)
-    .eq('is_public', true)
-    .eq('universe_id', currentUniverse.id);
-
-  const ownerIds = [...new Set((data || []).map(r => r.user_id))];
-  let ownerMap = {};
-  if (ownerIds.length) {
-    const { data: profiles } = await sb
-      .from('profiles')
-      .select('id, username')
-      .in('id', ownerIds);
-    (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
-  }
-
-  const ids = (data || []).map(r => r.id);
-  let countMap = {};
+  let entryIdsByChronicle = {};
   if (ids.length) {
     const { data: entries } = await sb
       .from('chronicle_entries')
       .select('id, chronicle_id')
       .in('chronicle_id', ids);
-    const entryIdsByChronicle = {};
     (entries || []).forEach(e => {
       countMap[e.chronicle_id] = (countMap[e.chronicle_id] || 0) + 1;
       if (!entryIdsByChronicle[e.chronicle_id]) entryIdsByChronicle[e.chronicle_id] = [];
       entryIdsByChronicle[e.chronicle_id].push(e.id);
     });
-    ids.forEach(id => unreadMarkers.syncChronicleEntries(id, entryIdsByChronicle[id] || []));
   }
 
+  const ownerIds = [...new Set((data || []).filter(r => r.user_id !== currentUser.id).map(r => r.user_id))];
+  let ownerMap = {};
+  if (ownerIds.length) {
+    const { data: profiles } = await sb.from('profiles').select('id, username').in('id', ownerIds);
+    (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
+  }
+
+  chronicles = {};
   followedChronicles = {};
   (data || []).forEach(r => {
-    followedChronicles[r.id] = {
-      ...r, _followed: true,
-      _owner_name: ownerMap[r.user_id] || '?',
-      entry_count: countMap[r.id] || 0,
-    };
+    const entry = { ...r, entry_count: countMap[r.id] || 0 };
+    if (r.user_id === currentUser.id) {
+      chronicles[r.id] = entry;
+    } else {
+      followedChronicles[r.id] = { ...entry, _followed: true, _owner_name: ownerMap[r.user_id] || '?' };
+      unreadMarkers.syncChronicleEntries(r.id, entryIdsByChronicle[r.id] || []);
+    }
   });
 }
 
@@ -130,18 +92,16 @@ async function saveChronicleToDB() {
   let result;
   if (isUUID) {
     result = await sb.from('chronicles').update(payload)
-      .eq('id', editingChrId).eq('universe_id', currentUniverse.id).select('id, share_code').single();
+      .eq('id', editingChrId).eq('universe_id', currentUniverse.id).select('id').single();
   } else {
     editingChrId = null;
     result = await sb.from('chronicles').insert(payload)
-      .select('id, share_code').single();
+      .select('id').single();
   }
   if (result.error) { showToast(t('toast_chr_save_error')); return; }
 
   editingChrId = result.data.id;
-  chrState.share_code = result.data.share_code;
   chronicles[editingChrId] = { ...chrState, id: editingChrId };
-  updateChrShareCodeBox();
   showToast(t('toast_chr_saved'));
 }
 
@@ -215,55 +175,6 @@ async function deleteEntryFromDB(entryId) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// ABONNEMENT
-// ══════════════════════════════════════════════════════════════
-
-async function followChrByCode(code) {
-  if (!code.trim()) return;
-  const clean = code.trim().toUpperCase();
-  const { data, error } = await sb
-    .from('chronicles')
-    .select('id, title, user_id, is_public')
-    .eq('share_code', clean)
-    .eq('is_public', true)
-    .eq('universe_id', currentUniverse.id)
-    .single();
-  if (error || !data) { showToast(t('toast_chr_not_found')); return; }
-  if (data.user_id === currentUser.id) { showToast(t('toast_chr_own')); return; }
-  if (followedChrIds.includes(data.id)) { showToast(t('toast_chr_already_followed')); return; }
-
-  const { error: err } = await sb.from('followed_chronicles')
-    .insert({ user_id: currentUser.id, chronicle_id: data.id, universe_id: currentUniverse.id });
-  if (err) { showToast(t('toast_chr_follow_error')); return; }
-
-  followedChrIds.push(data.id);
-  await loadFollowedChroniclesFromDB();
-  document.getElementById('chr-follow-input').value = '';
-  renderChroniclesList();
-  showToast(ti('toast_chr_subscribed', { title: data.title }));
-}
-
-async function unfollowChronicle(id) {
-  const chr = followedChronicles[id];
-  const blockingCampaigns = await getFollowedCampaignTitlesByItem('chr', chr?.share_code);
-  if (blockingCampaigns.length) {
-    showToast(ti('toast_unfollow_blocked_by_campaigns', {
-      type: t('campaign_type_chr'),
-      campaigns: blockingCampaigns.join(', ')
-    }));
-    return;
-  }
-  await sb.from('followed_chronicles')
-    .delete().eq('user_id', currentUser.id).eq('chronicle_id', id).eq('universe_id', currentUniverse.id);
-  followedChrIds = followedChrIds.filter(i => i !== id);
-  delete followedChronicles[id];
-  renderChroniclesList();
-  showToast(t('toast_chr_unsubscribed'));
-}
-
-
-
-// ══════════════════════════════════════════════════════════════
 // RENDU — LISTE DES CHRONIQUES
 // ══════════════════════════════════════════════════════════════
 
@@ -313,11 +224,6 @@ function chrCardHTML(id, c, isFollowed) {
     const showUnread = unreadMarkers.isChronicleUnread(id, false) || hasUnreadEntry;
     return `<div class="chr-card" onclick="showChrDetail('${id}')">${unreadMarkers.cardDotHTML(showUnread)}
       ${c.illustration_url ? `<img class="card-illus" src="${esc(c.illustration_url)}" style="object-position:center ${c.illustration_position||0}%" onclick="event.stopPropagation();openLightbox('${esc(c.illustration_url)}')" alt="">` : ''}
-      <div class="chr-card-actions">
-        <button class="icon-btn danger" onclick="event.stopPropagation();unfollowChronicle('${id}')" title="${t('btn_unsubscribe')}">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,4 13,4"/><path d="M5 4V2h6v2M6 7v5M10 7v5"/><path d="M4 4l1 10h6l1-10"/></svg>
-        </button>
-      </div>
       <div class="chr-card-title">${esc(c.title) || 'Sans titre'}</div>
       ${desc ? `<div class="chr-card-desc">${esc(desc)}</div>` : ''}
       ${metaHtml}
@@ -362,8 +268,7 @@ async function showChrDetail(chrId) {
   showView('chr-detail');
   if (!chronicles[chrId]) unreadMarkers.markChronicleRead(chrId);
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
-  const chr = chronicles[chrId] || followedChronicles[chrId];
-  if (chr?.share_code) setHash('chr', chr.share_code);
+  setHash('chr', chrId);
 }
 
 function renderChrDetail() {
@@ -437,7 +342,7 @@ function entryRowHTML(e, isOwn, chrId) {
 
 function newChronicle() {
   editingChrId = null;
-  chrState = { title: '', description: '', is_public: false, share_code: null,
+  chrState = { title: '', description: '', is_public: false,
                illustration_url: '', illustration_position: 0 };
   showView('chr-editor');
   populateChrEditor();
@@ -458,7 +363,6 @@ function populateChrEditor() {
   document.getElementById('chr-public-label').textContent =
     pub.checked ? t('share_code_active_chr') : t('share_code_inactive_chr');
   setChrIllusPreview(chrState.illustration_url || '', chrState.illustration_position || 0);
-  updateChrShareCodeBox();
 }
 
 function updateChrForm() {
@@ -467,54 +371,6 @@ function updateChrForm() {
   chrState.is_public   = document.getElementById('chr-f-public').checked;
   document.getElementById('chr-public-label').textContent =
     chrState.is_public ? t('share_code_active_chr') : t('share_code_inactive_chr');
-  updateChrShareCodeBox();
-}
-
-function updateChrShareCodeBox() {
-  const box = document.getElementById('chr-share-code-box');
-  const val = document.getElementById('chr-share-code-val');
-  if (!box || !val) return;
-  const code = chrState?.share_code ||
-    (editingChrId && chronicles[editingChrId]?.share_code) || null;
-  if (chrState?.is_public && code) { val.textContent = code; box.style.display = 'flex'; }
-  else box.style.display = 'none';
-}
-
-function copyChrShareCode() {
-  const code = document.getElementById('chr-share-code-val')?.textContent;
-  if (!code || code === '—') return;
-  navigator.clipboard.writeText(code)
-    .then(() => showToast(ti('toast_code_copied', { code })))
-    .catch(() => prompt(t('share_code_prompt_short'), code));
-}
-
-function shareChrBtn() {
-  if (!chrState?.is_public) { showToast(t('toast_chr_share_need_public')); return; }
-  const code = chrState?.share_code || (editingChrId && chronicles[editingChrId]?.share_code);
-  if (!code) { showToast(t('toast_chr_share_need_save')); return; }
-  copyUrl(buildShareUrl('chr', code));
-}
-
-function shareChrDetailBtn() {
-  if (!activeChrId) return;
-  const chr = chronicles[activeChrId] || followedChronicles[activeChrId];
-  if (!chr?.is_public) { showToast(t('toast_chr_share_need_public')); return; }
-  const code = chr.share_code;
-  if (!code) { showToast(t('toast_chr_share_need_save')); return; }
-  copyUrl(buildShareUrl('chr', code));
-}
-
-function shareEntryReaderBtn() {
-  if (!activeChrId) return;
-  const chr = chronicles[activeChrId] || followedChronicles[activeChrId];
-  if (!chr?.is_public) { showToast(t('toast_chr_share_need_public')); return; }
-  const chrCode = chr.share_code;
-  if (!chrCode) return;
-  const hash = window.location.hash.slice(1);
-  if (hash.startsWith('entry/')) {
-    const entryId = hash.split('/')[2];
-    copyUrl(buildShareUrl('entry', chrCode, entryId));
-  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -591,8 +447,7 @@ function openEntryReader(entryId) {
   showView('entry-reader');
   if (!chronicles[activeChrId]) unreadMarkers.markEntryRead(activeChrId, entryId);
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
-  const chrShareCode = (chronicles[activeChrId] || followedChronicles[activeChrId])?.share_code;
-  if (chrShareCode) setHash('entry', chrShareCode, entryId);
+  setHash('entry', activeChrId, entryId);
 }
 
 // ══════════════════════════════════════════════════════════════
