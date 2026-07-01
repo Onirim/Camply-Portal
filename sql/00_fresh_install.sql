@@ -3615,3 +3615,201 @@ WHERE p.id IS NULL;
 -- ==================================================
 -- END sql/22_backfill_missing_profiles.sql
 -- ==================================================
+
+-- ==================================================
+-- BEGIN sql/23_maps_config.sql
+-- ==================================================
+-- ══════════════════════════════════════════════════════════════
+-- Camply Portal — Configuration des cartes via l'interface
+--
+-- Remplace map-config.js : chaque carte (image, nom, dimensions,
+-- libellés des couleurs de marqueurs) devient une ligne de
+-- public.maps, gérée depuis Configuration > Cartes (owner
+-- de l'univers uniquement).
+--
+-- Le partage des marqueurs/couches (map_markers / map_layers,
+-- cf. sql/16_map_sharing.sql plus haut dans ce fichier) référence
+-- déjà map_key comme un simple texte sans clé étrangère : cette
+-- migration ne touche à aucune policy existante sur ces tables,
+-- elle fournit uniquement les métadonnées de rendu (image, nom,
+-- libellés de couleurs) que le client associe par correspondance
+-- de map_key.
+-- ══════════════════════════════════════════════════════════════
+
+-- ── 1. Table principale ──────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.maps (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  universe_id   UUID NOT NULL REFERENCES public.universes(id) ON DELETE CASCADE,
+  created_by    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  map_key       TEXT NOT NULL,
+  name          TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  image_url     TEXT NOT NULL DEFAULT '',
+  image_width   INT  NOT NULL CHECK (image_width  > 0),
+  image_height  INT  NOT NULL CHECK (image_height > 0),
+  marker_colors JSONB NOT NULL DEFAULT '[]'::jsonb, -- [{color:'#e05c5c', label:'Rouge'}, ...]
+  sort_order    INT  NOT NULL DEFAULT 0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (universe_id, map_key)
+);
+
+CREATE INDEX IF NOT EXISTS maps_universe_idx ON public.maps(universe_id);
+
+DROP TRIGGER IF EXISTS on_maps_updated ON public.maps;
+CREATE TRIGGER on_maps_updated
+  BEFORE UPDATE ON public.maps
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- ── 2. Génération automatique de map_key (slug) à la création ──
+-- Le slug n'est jamais saisi par l'utilisateur : il est dérivé du
+-- nom, avec gestion des collisions au sein d'un même univers
+-- (même principe que set_universe_join_code plus haut).
+CREATE OR REPLACE FUNCTION public.set_map_key()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  base_slug TEXT;
+  candidate TEXT;
+  attempt   INT := 1;
+BEGIN
+  base_slug := lower(translate(
+    NEW.name,
+    'àâäáãåèêëéìîïíòôöóõùûüúñçÀÂÄÁÃÅÈÊËÉÌÎÏÍÒÔÖÓÕÙÛÜÚÑÇ',
+    'aaaaaaeeeeiiiiooooouuuuncAAAAAAEEEEIIIIOOOOOUUUUNC'
+  ));
+  base_slug := regexp_replace(base_slug, '[^a-z0-9]+', '-', 'g');
+  base_slug := trim(both '-' from base_slug);
+  IF base_slug = '' THEN base_slug := 'carte'; END IF;
+
+  candidate := base_slug;
+  LOOP
+    EXIT WHEN NOT EXISTS (
+      SELECT 1 FROM public.maps m
+      WHERE m.universe_id = NEW.universe_id AND m.map_key = candidate
+    );
+    attempt := attempt + 1;
+    candidate := base_slug || '-' || attempt;
+    IF attempt > 200 THEN
+      RAISE EXCEPTION 'Could not generate unique map_key';
+    END IF;
+  END LOOP;
+
+  NEW.map_key := candidate;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS set_map_key ON public.maps;
+CREATE TRIGGER set_map_key
+  BEFORE INSERT ON public.maps
+  FOR EACH ROW EXECUTE FUNCTION public.set_map_key();
+
+-- Le map_key ne doit plus jamais changer après création : des
+-- lignes map_markers/map_layers peuvent déjà le référencer.
+CREATE OR REPLACE FUNCTION public.lock_map_key()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.map_key := OLD.map_key;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS lock_map_key ON public.maps;
+CREATE TRIGGER lock_map_key
+  BEFORE UPDATE ON public.maps
+  FOR EACH ROW EXECUTE FUNCTION public.lock_map_key();
+
+-- ── 3. RLS ────────────────────────────────────────────────────
+ALTER TABLE public.maps ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "maps_select" ON public.maps;
+CREATE POLICY "maps_select" ON public.maps FOR SELECT
+  USING (public.is_universe_member(universe_id));
+
+DROP POLICY IF EXISTS "maps_insert_owner" ON public.maps;
+CREATE POLICY "maps_insert_owner" ON public.maps FOR INSERT
+  WITH CHECK (
+    created_by = auth.uid()
+    AND public.has_universe_role(universe_id, ARRAY['owner'])
+  );
+
+DROP POLICY IF EXISTS "maps_update_owner" ON public.maps;
+CREATE POLICY "maps_update_owner" ON public.maps FOR UPDATE
+  USING (public.has_universe_role(universe_id, ARRAY['owner']))
+  WITH CHECK (public.has_universe_role(universe_id, ARRAY['owner']));
+
+DROP POLICY IF EXISTS "maps_delete_owner" ON public.maps;
+CREATE POLICY "maps_delete_owner" ON public.maps FOR DELETE
+  USING (public.has_universe_role(universe_id, ARRAY['owner']));
+
+-- ── 4. Bucket Storage pour les images de carte ─────────────────
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('map-images', 'map-images', true, 15728640, ARRAY['image/jpeg'])
+ON CONFLICT (id) DO NOTHING;
+
+-- Vérifie que le 1er segment du chemin de stockage (universe_id)
+-- est bien géré par un owner. Échoue proprement (FALSE) au lieu
+-- de lever une erreur SQL si le segment n'est pas un UUID valide.
+CREATE OR REPLACE FUNCTION public.storage_path_universe_role(p_name TEXT, p_roles TEXT[])
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_universe_id UUID;
+BEGIN
+  BEGIN
+    v_universe_id := ((storage.foldername(p_name))[1])::uuid;
+  EXCEPTION WHEN invalid_text_representation THEN
+    RETURN FALSE;
+  END;
+  RETURN public.has_universe_role(v_universe_id, p_roles);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.storage_path_universe_role(TEXT, TEXT[]) TO authenticated;
+
+DROP POLICY IF EXISTS "map_images_public_read" ON storage.objects;
+CREATE POLICY "map_images_public_read"
+  ON storage.objects FOR SELECT
+  TO public
+  USING (bucket_id = 'map-images');
+
+DROP POLICY IF EXISTS "map_images_insert_owner" ON storage.objects;
+CREATE POLICY "map_images_insert_owner"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id = 'map-images'
+    AND public.storage_path_universe_role(name, ARRAY['owner'])
+  );
+
+DROP POLICY IF EXISTS "map_images_update_owner" ON storage.objects;
+CREATE POLICY "map_images_update_owner"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (
+    bucket_id = 'map-images'
+    AND public.storage_path_universe_role(name, ARRAY['owner'])
+  );
+
+DROP POLICY IF EXISTS "map_images_delete_owner" ON storage.objects;
+CREATE POLICY "map_images_delete_owner"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = 'map-images'
+    AND public.storage_path_universe_role(name, ARRAY['owner'])
+  );
+
+-- ══════════════════════════════════════════════════════════════
+-- Chemin de stockage : map-images/{universe_id}/{map_id|tmp_xxx}.jpg
+-- ══════════════════════════════════════════════════════════════
+
+-- ==================================================
+-- END sql/23_maps_config.sql
+-- ==================================================

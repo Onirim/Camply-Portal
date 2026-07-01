@@ -72,7 +72,7 @@ In site.webmanifest:
 ```
 
 6. **Set a campaign map** (optional)
-    Edit map-config.js and add your maps if you want to use them in the application. 
+    Maps are no longer configured by editing a file. Once the app is running and connected to Supabase, sign in as a universe owner and go to **Configuration > Cartes** to upload map images and configure them from the UI.
 
 ## Installation assistant (in-app)
 

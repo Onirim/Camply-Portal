@@ -987,6 +987,18 @@
 
         <div id="config-members-list"></div>
       </div>
+
+      <div class="config-view-inner" style="margin-top:8px">
+        <div class="form-section-title" data-i18n="config_section_maps">Cartes</div>
+        <p style="font-size:12px;color:var(--text3);margin:-8px 0 14px;line-height:1.6"
+          data-i18n="config_maps_hint">
+          Ajoutez et gérez les cartes disponibles dans l'onglet Carte de cet univers.
+        </p>
+
+        <button class="btn-follow-chr" style="margin-bottom:14px" onclick="openMapAdminForm(null)" data-i18n="config_maps_new_btn">+ Nouvelle carte</button>
+
+        <div id="config-maps-list"></div>
+      </div>
     </div>
 
     <!-- VUE CARTE -->
@@ -1108,7 +1120,88 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- Modale ajout / édition carte (Configuration > Cartes) -->
+    <div id="map-admin-modal">
+      <div id="map-admin-modal-panel">
+        <div class="map-modal-header">
+          <div class="map-modal-title">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+              width="15" height="15">
+              <rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/>
+              <path d="M1.5 10.5l4-4 3 3 3.5-3.5 3 3"/>
+              <circle cx="5" cy="6" r="1"/>
+            </svg>
+            <span id="map-admin-modal-title-text" data-i18n="map_admin_modal_title_new">Nouvelle carte</span>
+          </div>
+          <button class="map-modal-close" onclick="closeMapAdminForm()">✕</button>
+        </div>
+
+        <div class="map-modal-body">
+          <!-- Nom -->
+          <div class="map-modal-field">
+            <label data-i18n="map_admin_field_name">Nom</label>
+            <input type="text" id="map-admin-f-name"
+              data-i18n="map_admin_name_ph" data-i18n-attr="placeholder"
+              placeholder="Ex : Carte du monde"
+              maxlength="80"
+              autocomplete="off">
+          </div>
+
+          <!-- Image -->
+          <div class="map-modal-field">
+            <label data-i18n="map_admin_field_image">Image</label>
+            <div class="illus-upload-zone" id="map-admin-illus-zone" onclick="mapAdminIllusZoneClick()">
+              <div class="illus-upload-placeholder" id="map-admin-illus-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="M21 15l-5-5L5 21"/>
+                </svg>
+                <span data-i18n="editor_illus_placeholder">Cliquez pour ajouter une illustration</span>
+              </div>
+              <img id="map-admin-illus-preview-img" style="display:none">
+              <div class="illus-overlay" id="map-admin-illus-overlay">
+                <button class="illus-overlay-btn" onclick="event.stopPropagation();document.getElementById('map-admin-illus-input').click()" data-i18n="editor_illus_change">Changer</button>
+                <button class="illus-overlay-btn danger" onclick="event.stopPropagation();removeMapAdminImage()" data-i18n="editor_illus_remove">Supprimer</button>
+              </div>
+              <div class="illus-uploading" id="map-admin-illus-uploading">
+                <div class="spinner"></div>
+                <span data-i18n="editor_illus_uploading">Upload en cours…</span>
+              </div>
+            </div>
+            <div id="map-admin-dimensions" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+            <input type="file" id="map-admin-illus-input"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              style="display:none" onchange="uploadMapAdminImage(this)">
+            <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6" data-i18n="map_admin_image_hint">
+              L'image est automatiquement convertie en JPEG (qualité 90%). Largeur/hauteur détectées automatiquement.
+            </p>
+          </div>
+
+          <!-- Libellés des couleurs de marqueurs -->
+          <div class="map-modal-field">
+            <label data-i18n="map_admin_field_colors">Libellés des couleurs de marqueurs</label>
+            <p style="font-size:11px;color:var(--text3);margin:0 0 8px;line-height:1.6" data-i18n="map_admin_colors_hint">
+              Laissez vide pour masquer une couleur de la légende.
+            </p>
+            <div id="map-admin-colors"></div>
+          </div>
+        </div>
+
+        <div class="map-modal-footer">
+          <button class="btn-cancel" onclick="closeMapAdminForm()" data-i18n="btn_cancel">Annuler</button>
+          <button class="map-modal-save-btn" onclick="saveMapAdmin()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
+              width="12" height="12">
+              <polyline points="2,8 6,12 14,4"/>
+            </svg>
+            <span data-i18n="btn_save">Enregistrer</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /main -->
 </div><!-- /app -->
 
@@ -1190,6 +1283,7 @@
 <script src="app-config.js"></script>
 <script src="map-config.js"></script>
 <script src="map.js"></script>
+<script src="map-admin.js"></script>
 <script src="export.js"></script>
 <script src="scripts.js"></script>
   <div id="transfer-modal">

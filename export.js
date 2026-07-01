@@ -253,7 +253,7 @@ async function exportVisibleData() {
       const layer = item.layer || {};
       const name = _safeName(layer.title || layer.map_key || 'carte', 'carte');
       const objDir = cartesDir.folder(`${name}_${layer.id || ''}`);
-      const mapLabel = (MAP_CONFIG.maps || []).find(m => m.key === layer.map_key)?.name || layer.map_key || 'default';
+      const mapLabel = (mapsConfig || []).find(m => m.key === layer.map_key)?.name || layer.map_key || 'default';
       const lines = [
         `# ${layer.title || 'Couche de carte'}`,
         '',

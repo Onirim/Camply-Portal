@@ -607,6 +607,7 @@ function openUniverseConfigView() {
   const inviteInput = document.getElementById('config-invite-input');
   if (inviteInput) inviteInput.value = '';
   loadUniverseMembersForConfig();
+  loadMapsForConfig();
 }
 
 // ══════════════════════════════════════════════════════════════

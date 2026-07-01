@@ -12,6 +12,55 @@ let mapLoaded         = false;
 let mapAccessByKey    = {};
 let mapColorFilter = {};   // mapKey → Set des couleurs masquées
 
+// Configuration des cartes (chargée depuis public.maps, univers courant).
+// Chaque entrée : { key, name, image, imageWidth, imageHeight, markerColorLabels }
+let mapsConfig       = [];
+let mapsConfigLoaded = false;
+
+/** Charge (ou recharge) la liste des cartes de l'univers courant depuis la DB. */
+async function _loadMapsConfig() {
+  if (!currentUniverse) { mapsConfig = []; return; }
+  const { data, error } = await sb.from('maps')
+    .select('id, map_key, name, image_url, image_width, image_height, marker_colors, sort_order')
+    .eq('universe_id', currentUniverse.id)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+  if (error) { console.error('Erreur chargement cartes:', error); mapsConfig = []; return; }
+  mapsConfig = (data || []).map(row => ({
+    key:         row.map_key,
+    name:        row.name,
+    image:       row.image_url,
+    imageWidth:  row.image_width,
+    imageHeight: row.image_height,
+    markerColorLabels: Object.fromEntries((row.marker_colors || []).map(mc => [mc.color, mc.label])),
+  }));
+  mapsConfigLoaded = true;
+}
+
+/** Recharge la config des cartes et met à jour l'affichage courant (appelé après un ajout/édition/suppression dans Configuration > Cartes). */
+async function refreshMapsConfigAndRerender() {
+  await _loadMapsConfig();
+  _recomputeMapAccess();
+  if (!mapLoaded) return;
+  _buildMapSelector();
+  _refreshMapSelectorAccess();
+
+  if (!mapsConfig.some(m => m.key === currentMapKey)) {
+    currentMapKey = _firstAccessibleMapKey();
+  }
+  _closePopup();
+  const oldImg = _mapCanvas?.querySelector('img.map-image');
+  if (oldImg) oldImg.remove();
+  const oldErr = _mapCanvas?.querySelector('.map-image-error');
+  if (oldErr) oldErr.remove();
+  _mapImage = null;
+  if (currentMapKey) _buildMapImage();
+  _renderAllMarkers();
+  _renderLayerPanel();
+  _renderMapAccessState();
+  _renderMapLegend();
+}
+
 // Transformation courante
 let mapTransform = { x: 0, y: 0, scale: 1 };
 
@@ -34,7 +83,7 @@ let _mapImage    = null;
 
 /** Retourne la config de la carte actuellement affichée. */
 function _getCurrentMapConfig() {
-  const maps = MAP_CONFIG.maps || [];
+  const maps = mapsConfig || [];
   return maps.find(m => m.key === currentMapKey) || maps[0] || null;
 }
 
@@ -179,7 +228,7 @@ function _isMapAdmin() {
 }
 
 function _recomputeMapAccess() {
-  const keys = (MAP_CONFIG.maps || []).map(m => m.key);
+  const keys = (mapsConfig || []).map(m => m.key);
   const canSeeAll = _isMapAdmin();
   mapAccessByKey = {};
 
@@ -201,7 +250,7 @@ function _canAccessMap(mapKey = currentMapKey) {
 }
 
 function _firstAccessibleMapKey() {
-  const maps = MAP_CONFIG.maps || [];
+  const maps = mapsConfig || [];
   const first = maps.find(m => _canAccessMap(m.key));
   return first?.key || null;
 }
@@ -229,7 +278,8 @@ function _renderMapAccessState() {
 // ══════════════════════════════════════════════════════════════
 
 async function initMap() {
-  const maps = MAP_CONFIG.maps || [];
+  await _loadMapsConfig();
+  const maps = mapsConfig || [];
   if (!maps.length) return;
 
   _mapViewport = document.getElementById('map-viewport');
@@ -267,7 +317,7 @@ async function initMap() {
 // ── Sélecteur de carte ────────────────────────────────────────
 
 function _buildMapSelector() {
-  const maps = MAP_CONFIG.maps || [];
+  const maps = mapsConfig || [];
   if (maps.length <= 1) return; // pas de sélecteur pour une seule carte
 
   const toolbar = document.querySelector('.map-toolbar');
@@ -294,7 +344,7 @@ function _buildMapSelector() {
 function _refreshMapSelectorAccess() {
   const sel = document.getElementById('map-selector');
   if (!sel) return;
-  const maps = MAP_CONFIG.maps || [];
+  const maps = mapsConfig || [];
   const accessibleMaps = maps.filter(m => _canAccessMap(m.key));
   const previous = currentMapKey;
 
