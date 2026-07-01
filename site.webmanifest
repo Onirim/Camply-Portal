@@ -4,7 +4,7 @@
   "description": "Tabletop RPG Campaign Manager",
   "lang": "fr",
   "start_url": "./",
-  "scope": "/Camply/",
+  "scope": "/Camply-Portal/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#0e0f13",
