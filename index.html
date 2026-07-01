@@ -90,7 +90,7 @@
     </button>
   </div>
 
-  <!-- Panneau Email 
+  <!-- Panneau Email  -->
   <div id="auth-panel-email" style="display:none">
     <div style="margin-bottom:12px">
       <label style="display:block;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">
@@ -115,7 +115,7 @@
     <div class="auth-success" id="email-success">
       📬 Lien envoyé ! Vérifiez votre boîte mail.
     </div>
-  </div> -->
+  </div>
 
   <div class="auth-error" id="discord-error"></div>
 </div>
@@ -219,7 +219,7 @@
 
   <!-- Top bar -->
   <div id="topbar">
-    <div class="logo">CAMPLY <span>Portal</span></div>
+    <div class="logo" onclick="showUniverseScreen()" role="button" tabindex="0" onkeydown="if(event.key==='Enter') showUniverseScreen()">CAMPLY <span>Portal</span></div>
 
     <nav>
       <button id="nav-list" class="active" onclick="showView('list')" data-i18n="nav_characters">Personnages</button>

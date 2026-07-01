@@ -105,7 +105,9 @@ html, body {
 #topbar .logo {
   font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
   color: var(--text); white-space: nowrap;
+  cursor: pointer; transition: opacity 0.15s;
 }
+#topbar .logo:hover { opacity: 0.8; }
 #topbar .logo span { color: var(--text3); font-weight: 400; }
 
 #topbar nav button {
