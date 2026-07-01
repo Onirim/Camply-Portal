@@ -63,7 +63,8 @@ async function loadCampaignMembers(campaignId) {
   const userIds = (data || []).map(r => r.user_id);
   let ownerMap = {};
   if (userIds.length) {
-    const { data: profiles } = await sb.from('profiles').select('id, username').in('id', userIds);
+    const { data: profiles, error: profilesError } = await sb.from('profiles').select('id, username').in('id', userIds);
+    if (profilesError) console.error('Erreur chargement profils membres:', profilesError);
     (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
   }
   campaignMembersMap[campaignId] = userIds
@@ -81,7 +82,8 @@ async function loadUniverseMemberOptions() {
   const userIds = (data || []).map(r => r.user_id).filter(id => id !== currentUniverse.owner_id);
   let ownerMap = {};
   if (userIds.length) {
-    const { data: profiles } = await sb.from('profiles').select('id, username').in('id', userIds);
+    const { data: profiles, error: profilesError } = await sb.from('profiles').select('id, username').in('id', userIds);
+    if (profilesError) console.error('Erreur chargement profils univers:', profilesError);
     (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
   }
   universeMemberOptions = userIds
