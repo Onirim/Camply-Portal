@@ -139,7 +139,8 @@ async function _collectChronicleEntries(chronicleIds) {
 async function _collectOwnMapMarkers() {
   const { data, error } = await sb.from('map_markers')
     .select('id, x, y, name, description, color, map_key')
-    .eq('user_id', currentUser.id);
+    .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id);
   if (error) throw new Error(error.message || 'Erreur de chargement des marqueurs de carte');
   return data || [];
 }

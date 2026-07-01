@@ -574,6 +574,7 @@ async function loadMapMarkersFromDB() {
     .select('id, x, y, name, description, color, map_key')
     .eq('user_id', currentUser.id)
     .eq('map_key', currentMapKey)
+    .eq('universe_id', currentUniverse.id)
     .order('created_at', { ascending: true });
   mapMarkers = {};
   if (error) { console.error('Erreur marqueurs:', error); return; }
@@ -583,7 +584,7 @@ async function loadMapMarkersFromDB() {
 async function _saveMarkerToDB(payload, ctx) {
   if (ctx.mode === 'add') {
     const { data, error } = await sb.from('map_markers')
-      .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey })
+      .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey, universe_id: currentUniverse.id })
       .select('id, x, y, name, description, color, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapMarkers[data.id] = data;
@@ -592,7 +593,7 @@ async function _saveMarkerToDB(payload, ctx) {
     showToast(t('map_toast_added'));
   } else {
     const { data, error } = await sb.from('map_markers')
-      .update(payload).eq('id', ctx.id)
+      .update(payload).eq('id', ctx.id).eq('universe_id', currentUniverse.id)
       .select('id, x, y, name, description, color, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapMarkers[data.id] = data;
@@ -603,7 +604,7 @@ async function _saveMarkerToDB(payload, ctx) {
 
 async function deleteMapMarker(id) {
   if (!confirm(t('map_confirm_delete_marker'))) return;
-  const { error } = await sb.from('map_markers').delete().eq('id', id);
+  const { error } = await sb.from('map_markers').delete().eq('id', id).eq('universe_id', currentUniverse.id);
   if (error) { showToast(t('map_toast_error')); return; }
   delete mapMarkers[id];
   document.getElementById('marker-' + id)?.remove();
@@ -621,7 +622,8 @@ async function loadAllOwnLayersFromDB() {
   if (!currentUser) return;
   const { data } = await sb.from('map_layers')
     .select('id, title, description, is_public, share_code, map_key')
-    .eq('user_id', currentUser.id);
+    .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id);
   mapOwnLayers = {};
   (data || []).forEach(l => { mapOwnLayers[l.map_key] = l; });
 }
@@ -635,13 +637,13 @@ async function saveOwnLayerToDB() {
   const layer = _ownLayer();
   if (layer?.id) {
     const { data, error } = await sb.from('map_layers')
-      .update(payload).eq('id', layer.id)
+      .update(payload).eq('id', layer.id).eq('universe_id', currentUniverse.id)
       .select('id, title, description, is_public, share_code, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapOwnLayers[data.map_key] = data;
   } else {
     const { data, error } = await sb.from('map_layers')
-      .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey })
+      .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey, universe_id: currentUniverse.id })
       .select('id, title, description, is_public, share_code, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapOwnLayers[data.map_key] = data;
@@ -661,13 +663,13 @@ async function saveOwnLayerToDB() {
 async function loadFollowedLayersFromDB() {
   if (!currentUser) return;
   const { data: follows } = await sb.from('followed_map_layers')
-    .select('layer_id').eq('user_id', currentUser.id);
+    .select('layer_id').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id);
   mapFollowedIds = (follows || []).map(r => r.layer_id);
   if (!mapFollowedIds.length) { mapFollowedLayers = {}; return; }
 
   const { data: layers } = await sb.from('map_layers')
     .select('id, title, description, is_public, share_code, user_id, map_key')
-    .in('id', mapFollowedIds).eq('is_public', true);
+    .in('id', mapFollowedIds).eq('is_public', true).eq('universe_id', currentUniverse.id);
 
   const ownerIds = [...new Set((layers || []).map(l => l.user_id))];
   let ownerMap = {};
@@ -680,7 +682,8 @@ async function loadFollowedLayersFromDB() {
   for (const layer of (layers || [])) {
     // Charge tous les marqueurs du propriétaire (toutes cartes) pour ne pas refaire des requêtes au switch
     const { data: markers } = await sb.from('map_markers')
-      .select('id, x, y, name, description, color, map_key').eq('user_id', layer.user_id);
+      .select('id, x, y, name, description, color, map_key')
+      .eq('user_id', layer.user_id).eq('universe_id', currentUniverse.id);
     mapFollowedLayers[layer.id] = {
       layer: { ...layer, _owner_name: ownerMap[layer.user_id] || '?' },
       markers: Object.fromEntries((markers || []).map(m => [m.id, { ...m, map_key: _normalizeMapKey(m.map_key) }])),
@@ -702,13 +705,14 @@ async function _ensureFollowedLayerRow(layerId) {
     .select('layer_id')
     .eq('user_id', currentUser.id)
     .eq('layer_id', layerId)
+    .eq('universe_id', currentUniverse.id)
     .maybeSingle();
 
   if (checkError) return { ok: false, already: false, error: checkError };
   if (existing) return { ok: true, already: true, error: null };
 
   const { error: insertError } = await sb.from('followed_map_layers')
-    .insert({ user_id: currentUser.id, layer_id: layerId });
+    .insert({ user_id: currentUser.id, layer_id: layerId, universe_id: currentUniverse.id });
   if (insertError) return { ok: false, already: false, error: insertError };
 
   return { ok: true, already: false, error: null };
@@ -719,7 +723,7 @@ async function followMapLayerByCode(code) {
   const clean = code.trim().toUpperCase();
   const { data, error } = await sb.from('map_layers')
     .select('id, title, user_id, is_public, map_key')
-    .eq('share_code', clean).eq('is_public', true).single();
+    .eq('share_code', clean).eq('is_public', true).eq('universe_id', currentUniverse.id).single();
   if (error || !data) { showToast(t('map_toast_layer_not_found')); return; }
   if (data.user_id === currentUser.id) { showToast(t('map_toast_layer_own')); return; }
   if (mapFollowedIds.includes(data.id)) { showToast(t('map_toast_layer_already_followed')); return; }
@@ -759,7 +763,7 @@ async function unfollowMapLayer(layerId) {
     }
   }
   await sb.from('followed_map_layers')
-    .delete().eq('user_id', currentUser.id).eq('layer_id', layerId);
+    .delete().eq('user_id', currentUser.id).eq('layer_id', layerId).eq('universe_id', currentUniverse.id);
   mapFollowedIds = mapFollowedIds.filter(id => id !== layerId);
   delete mapFollowedLayers[layerId];
   _recomputeMapAccess();
@@ -1180,7 +1184,7 @@ async function syncFollowedMapLayers(shareCodes) {
   if (!shareCodes || !shareCodes.length) return 0;
   const { data: layerRows } = await sb.from('map_layers')
     .select('id, title, user_id, is_public, share_code, map_key')
-    .in('share_code', shareCodes).eq('is_public', true);
+    .in('share_code', shareCodes).eq('is_public', true).eq('universe_id', currentUniverse.id);
   let added = 0;
   let shouldReload = false;
   for (const row of (layerRows || [])) {

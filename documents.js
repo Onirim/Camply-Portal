@@ -26,6 +26,7 @@ async function loadDocumentsFromDB() {
     .from('documents')
     .select('id, title, content, is_public, allow_write_share, share_code, illustration_url, illustration_position, updated_at')
     .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id)
     .order('updated_at', { ascending: false });
   if (error) { console.error('Erreur chargement documents:', error); return; }
   documents = {};
@@ -35,16 +36,20 @@ async function loadDocumentsFromDB() {
 }
 
 async function loadDocTagsFromDB() {
-  const { data: tags } = await sb.from('doc_tags').select('*').eq('user_id', currentUser.id).order('name');
+  const { data: tags } = await sb.from('doc_tags').select('*').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id).order('name');
   allDocTags = tags || [];
-  const { data: docTags } = await sb.from('document_tags').select('document_id, tag_id');
+  const ownDocIds = Object.keys(documents);
   docTagMap = {};
-  (docTags || []).forEach(({ document_id, tag_id }) => {
-    if (!docTagMap[document_id]) docTagMap[document_id] = [];
-    docTagMap[document_id].push(tag_id);
-  });
+  if (ownDocIds.length) {
+    const { data: docTags } = await sb.from('document_tags')
+      .select('document_id, tag_id').in('document_id', ownDocIds);
+    (docTags || []).forEach(({ document_id, tag_id }) => {
+      if (!docTagMap[document_id]) docTagMap[document_id] = [];
+      docTagMap[document_id].push(tag_id);
+    });
+  }
   const { data: followedTags } = await sb.from('followed_document_tags')
-    .select('document_id, tag_id').eq('user_id', currentUser.id);
+    .select('document_id, tag_id').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id);
   followedDocTagMap = {};
   (followedTags || []).forEach(({ document_id, tag_id }) => {
     if (!followedDocTagMap[document_id]) followedDocTagMap[document_id] = [];
@@ -81,7 +86,8 @@ async function loadFollowedDocumentsFromDB() {
   const { data: followed } = await sb
     .from('followed_documents')
     .select('document_id')
-    .eq('user_id', currentUser.id);
+    .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id);
   followedDocIds = (followed || []).map(r => r.document_id);
   if (!followedDocIds.length) { followedDocuments = {}; return; }
 
@@ -89,7 +95,8 @@ async function loadFollowedDocumentsFromDB() {
     .from('documents')
     .select('id, title, content, is_public, allow_write_share, share_code, illustration_url, illustration_position, updated_at, user_id')
     .in('id', followedDocIds)
-    .eq('is_public', true);
+    .eq('is_public', true)
+    .eq('universe_id', currentUniverse.id);
 
   const ownerIds = [...new Set((data || []).map(r => r.user_id))];
   let ownerMap = {};
@@ -118,6 +125,7 @@ async function saveDocumentToDB() {
   };
   if (!editingDocIsFollowed) {
     payload.user_id = currentUser.id;
+    payload.universe_id = currentUniverse.id;
     payload.is_public = docState.is_public || false;
     payload.allow_write_share = docState.allow_write_share || false;
   }
@@ -127,7 +135,7 @@ async function saveDocumentToDB() {
   let result;
   if (isUUID) {
     result = await sb.from('documents').update(payload)
-      .eq('id', editingDocId).select('id, share_code').single();
+      .eq('id', editingDocId).eq('universe_id', currentUniverse.id).select('id, share_code').single();
   } else {
     editingDocId = null;
     result = await sb.from('documents').insert(payload).select('id, share_code').single();
@@ -152,7 +160,7 @@ async function deleteDocumentFromDB(id) {
   const title = documents[id]?.title || 'ce document';
   if (!confirm(ti('confirm_delete_doc', { title }))) return;
   const illustrationUrl = documents[id]?.illustration_url || '';
-  const { error } = await sb.from('documents').delete().eq('id', id);
+  const { error } = await sb.from('documents').delete().eq('id', id).eq('universe_id', currentUniverse.id);
   if (error) { showToast(t('toast_doc_delete_error')); return; }
   const tagIds = docTagMap[id] || [];
   delete documents[id];
@@ -182,13 +190,13 @@ async function followDocByCode(code) {
   const { data, error } = await sb
     .from('documents')
     .select('id, title, user_id, is_public')
-    .eq('share_code', clean).eq('is_public', true).single();
+    .eq('share_code', clean).eq('is_public', true).eq('universe_id', currentUniverse.id).single();
   if (error || !data) { showToast(t('toast_doc_not_found')); return; }
   if (data.user_id === currentUser.id) { showToast(t('toast_doc_own')); return; }
   if (followedDocIds.includes(data.id)) { showToast(t('toast_doc_already_followed')); return; }
- 
+
   const { error: err } = await sb.from('followed_documents')
-    .insert({ user_id: currentUser.id, document_id: data.id });
+    .insert({ user_id: currentUser.id, document_id: data.id, universe_id: currentUniverse.id });
   if (err) { showToast(t('toast_doc_follow_error')); return; }
  
   followedDocIds.push(data.id);
@@ -214,11 +222,12 @@ async function unfollowDocument(id) {
   await sb.from('followed_document_tags')
     .delete()
     .eq('user_id', currentUser.id)
-    .eq('document_id', id);
- 
+    .eq('document_id', id)
+    .eq('universe_id', currentUniverse.id);
+
   // 2. Désabonnement
   await sb.from('followed_documents')
-    .delete().eq('user_id', currentUser.id).eq('document_id', id);
+    .delete().eq('user_id', currentUser.id).eq('document_id', id).eq('universe_id', currentUniverse.id);
  
   followedDocIds = followedDocIds.filter(i => i !== id);
   delete followedDocuments[id];
@@ -788,7 +797,7 @@ async function addOrCreateDocTag(name) {
   if (!tg) {
     const color = randomTagColor();
     const { data, error } = await sb.from('doc_tags')
-      .insert({ user_id: currentUser.id, name, color })
+      .insert({ user_id: currentUser.id, universe_id: currentUniverse.id, name, color })
       .select().single();
     if (error) { showToast(t('toast_tag_error')); return; }
     tg = data;
@@ -847,7 +856,8 @@ async function removeFollowedDocTag(docId, tagId) {
     .delete()
     .eq('user_id', currentUser.id)
     .eq('document_id', docId)
-    .eq('tag_id', tagId);
+    .eq('tag_id', tagId)
+    .eq('universe_id', currentUniverse.id);
  
   await cleanupOrphanTags('doc');
   await loadDocTagsFromDB();
@@ -863,7 +873,7 @@ async function addFollowedDocTag(name) {
   if (!tg) {
     const color = randomTagColor();
     const { data, error } = await sb.from('doc_tags')
-      .insert({ user_id: currentUser.id, name, color }).select().single();
+      .insert({ user_id: currentUser.id, universe_id: currentUniverse.id, name, color }).select().single();
     if (error) { showToast(t('toast_tag_error')); return; }
     tg = data;
     allDocTags.push(tg);
@@ -874,7 +884,7 @@ async function addFollowedDocTag(name) {
     if (!followedDocTagMap[docId]) followedDocTagMap[docId] = [];
     followedDocTagMap[docId].push(tg.id);
     await sb.from('followed_document_tags')
-      .insert({ user_id: currentUser.id, document_id: docId, tag_id: tg.id });
+      .insert({ user_id: currentUser.id, document_id: docId, tag_id: tg.id, universe_id: currentUniverse.id });
     renderFollowedDocTagChips(docId);
     renderDocumentsList();
   }
@@ -912,7 +922,7 @@ async function selectFollowedDocTag(tagId) {
     if (!followedDocTagMap[docId]) followedDocTagMap[docId] = [];
     followedDocTagMap[docId].push(tg.id);
     const { error } = await sb.from('followed_document_tags')
-      .insert({ user_id: currentUser.id, document_id: docId, tag_id: tg.id });
+      .insert({ user_id: currentUser.id, document_id: docId, tag_id: tg.id, universe_id: currentUniverse.id });
     if (error) {
       followedDocTagMap[docId] = followedDocTagMap[docId].filter(id => id !== tg.id);
       showToast(t('toast_tag_add_error')); return;

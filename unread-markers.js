@@ -1,6 +1,7 @@
 (function(){
   const state = {
     userId: null,
+    universeId: null,
     loaded: false,
     characters: {},
     documents: {},
@@ -21,15 +22,17 @@
     return state.chronicle_entries[chrId];
   }
 
-  async function initFromDB(userId) {
+  async function initFromDB(userId, universeId) {
     state.userId = userId || null;
+    state.universeId = universeId || null;
     resetLocalState();
-    if (!state.userId) return;
+    if (!state.userId || !state.universeId) return;
 
     const { data, error } = await sb
       .from('read_markers')
       .select('content_type, content_id, parent_id')
-      .eq('user_id', state.userId);
+      .eq('user_id', state.userId)
+      .eq('universe_id', state.universeId);
 
     if (error) {
       console.error('Erreur chargement read_markers:', error);
@@ -52,16 +55,17 @@
   }
 
   async function upsertReadMarker(contentType, contentId, parentId = null) {
-    if (!state.userId || !contentType || !contentId) return;
+    if (!state.userId || !state.universeId || !contentType || !contentId) return;
     const { error } = await sb
       .from('read_markers')
       .upsert({
         user_id: state.userId,
+        universe_id: state.universeId,
         content_type: contentType,
         content_id: contentId,
         parent_id: parentId,
         read_at: new Date().toISOString()
-      }, { onConflict: 'user_id,content_type,content_id' });
+      }, { onConflict: 'universe_id,user_id,content_type,content_id' });
 
     if (error) console.error('Erreur sauvegarde read_marker:', error);
   }

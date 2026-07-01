@@ -23,6 +23,7 @@ async function loadChroniclesFromDB() {
     .from('chronicles')
     .select('id, title, description, is_public, share_code, illustration_url, illustration_position, updated_at')
     .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id)
     .order('updated_at', { ascending: false });
   if (error) { console.error('Erreur chargement chroniques:', error); return; }
 
@@ -49,7 +50,8 @@ async function loadFollowedChroniclesFromDB() {
   const { data: followed } = await sb
     .from('followed_chronicles')
     .select('chronicle_id')
-    .eq('user_id', currentUser.id);
+    .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id);
   followedChrIds = (followed || []).map(r => r.chronicle_id);
   if (!followedChrIds.length) { followedChronicles = {}; return; }
 
@@ -57,7 +59,8 @@ async function loadFollowedChroniclesFromDB() {
     .from('chronicles')
     .select('id, title, description, is_public, share_code, illustration_url, illustration_position, updated_at, user_id')
     .in('id', followedChrIds)
-    .eq('is_public', true);
+    .eq('is_public', true)
+    .eq('universe_id', currentUniverse.id);
 
   const ownerIds = [...new Set((data || []).map(r => r.user_id))];
   let ownerMap = {};
@@ -114,6 +117,7 @@ async function saveChronicleToDB() {
   if (!chrState.title.trim()) { alert(t('alert_chr_no_title')); return; }
   const payload = {
     user_id:               currentUser.id,
+    universe_id:           currentUniverse.id,
     title:                 chrState.title.trim(),
     description:           chrState.description,
     is_public:             chrState.is_public || false,
@@ -126,7 +130,7 @@ async function saveChronicleToDB() {
   let result;
   if (isUUID) {
     result = await sb.from('chronicles').update(payload)
-      .eq('id', editingChrId).select('id, share_code').single();
+      .eq('id', editingChrId).eq('universe_id', currentUniverse.id).select('id, share_code').single();
   } else {
     editingChrId = null;
     result = await sb.from('chronicles').insert(payload)
@@ -147,7 +151,7 @@ async function deleteChronicleFromDB(id) {
 
   const illustrationUrl = chronicles[id]?.illustration_url || '';
 
-  const { error } = await sb.from('chronicles').delete().eq('id', id);
+  const { error } = await sb.from('chronicles').delete().eq('id', id).eq('universe_id', currentUniverse.id);
   if (error) { showToast(t('toast_chr_delete_error')); return; }
   delete chronicles[id];
   delete chrEntries[id];
@@ -222,13 +226,14 @@ async function followChrByCode(code) {
     .select('id, title, user_id, is_public')
     .eq('share_code', clean)
     .eq('is_public', true)
+    .eq('universe_id', currentUniverse.id)
     .single();
   if (error || !data) { showToast(t('toast_chr_not_found')); return; }
   if (data.user_id === currentUser.id) { showToast(t('toast_chr_own')); return; }
   if (followedChrIds.includes(data.id)) { showToast(t('toast_chr_already_followed')); return; }
 
   const { error: err } = await sb.from('followed_chronicles')
-    .insert({ user_id: currentUser.id, chronicle_id: data.id });
+    .insert({ user_id: currentUser.id, chronicle_id: data.id, universe_id: currentUniverse.id });
   if (err) { showToast(t('toast_chr_follow_error')); return; }
 
   followedChrIds.push(data.id);
@@ -249,7 +254,7 @@ async function unfollowChronicle(id) {
     return;
   }
   await sb.from('followed_chronicles')
-    .delete().eq('user_id', currentUser.id).eq('chronicle_id', id);
+    .delete().eq('user_id', currentUser.id).eq('chronicle_id', id).eq('universe_id', currentUniverse.id);
   followedChrIds = followedChrIds.filter(i => i !== id);
   delete followedChronicles[id];
   renderChroniclesList();

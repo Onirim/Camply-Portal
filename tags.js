@@ -108,7 +108,7 @@ async function addOrCreateTag(name) {
   if (!tg) {
     const color = randomTagColor();
     const { data, error } = await sb.from('tags')
-      .insert({ user_id: currentUser.id, name, color })
+      .insert({ user_id: currentUser.id, universe_id: currentUniverse.id, name, color })
       .select().single();
     if (error) { showToast(t('toast_tag_error')); return; }
     tg = data;
@@ -170,11 +170,12 @@ async function saveFollowedCharTagsToDB(charId, newTagIds) {
       .delete()
       .eq('user_id', currentUser.id)
       .eq('character_id', charId)
+      .eq('universe_id', currentUniverse.id)
       .in('tag_id', toRemove);
   }
   if (toAdd.length) {
     await sb.from('followed_character_tags')
-      .insert(toAdd.map(tag_id => ({ user_id: currentUser.id, character_id: charId, tag_id })));
+      .insert(toAdd.map(tag_id => ({ user_id: currentUser.id, character_id: charId, tag_id, universe_id: currentUniverse.id })));
   }
   followedTagMap[charId] = newTagIds;
 }
@@ -266,7 +267,8 @@ async function removeFollowedTag(charId, tagId) {
     .delete()
     .eq('user_id', currentUser.id)
     .eq('character_id', charId)
-    .eq('tag_id', tagId);
+    .eq('tag_id', tagId)
+    .eq('universe_id', currentUniverse.id);
  
   // 2. Purge côté serveur les tags devenus orphelins
   await cleanupOrphanTags('char');
@@ -285,7 +287,7 @@ async function addFollowedTag(name) {
   if (!tg) {
     const color = randomTagColor();
     const { data, error } = await sb.from('tags')
-      .insert({ user_id: currentUser.id, name, color })
+      .insert({ user_id: currentUser.id, universe_id: currentUniverse.id, name, color })
       .select().single();
     if (error) { showToast(t('toast_tag_error')); return; }
     tg = data;
@@ -297,7 +299,7 @@ async function addFollowedTag(name) {
     if (!followedTagMap[charId]) followedTagMap[charId] = [];
     followedTagMap[charId].push(tg.id);
     await sb.from('followed_character_tags')
-      .insert({ user_id: currentUser.id, character_id: charId, tag_id: tg.id });
+      .insert({ user_id: currentUser.id, character_id: charId, tag_id: tg.id, universe_id: currentUniverse.id });
     renderFollowedTagChips(charId);
     renderRosterFilters();
     renderList();
@@ -336,7 +338,7 @@ async function selectFollowedTag(tagId) {
     if (!followedTagMap[charId]) followedTagMap[charId] = [];
     followedTagMap[charId].push(tg.id);
     const { error } = await sb.from('followed_character_tags')
-      .insert({ user_id: currentUser.id, character_id: charId, tag_id: tg.id });
+      .insert({ user_id: currentUser.id, character_id: charId, tag_id: tg.id, universe_id: currentUniverse.id });
     if (error) {
       followedTagMap[charId] = followedTagMap[charId].filter(id => id !== tg.id);
       showToast(t('toast_tag_add_error'));

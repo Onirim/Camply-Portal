@@ -64,6 +64,7 @@ async function loadCampaignsFromDB() {
     .from('campaigns')
     .select('id, title, description, is_public, share_code, created_at, updated_at')
     .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id)
     .order('updated_at', { ascending: false });
   if (error) { console.error('Erreur chargement campagnes:', error); return; }
 
@@ -78,7 +79,8 @@ async function loadFollowedCampaignsFromDB() {
   const { data: followed } = await sb
     .from('followed_campaigns')
     .select('campaign_id')
-    .eq('user_id', currentUser.id);
+    .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id);
   followedCampaignIds = (followed || []).map(r => r.campaign_id);
   if (!followedCampaignIds.length) { followedCampaigns = {}; return; }
 
@@ -86,7 +88,8 @@ async function loadFollowedCampaignsFromDB() {
     .from('campaigns')
     .select('id, title, description, is_public, share_code, updated_at, user_id')
     .in('id', followedCampaignIds)
-    .eq('is_public', true);
+    .eq('is_public', true)
+    .eq('universe_id', currentUniverse.id);
 
   const ownerIds = [...new Set((data || []).map(r => r.user_id))];
   let ownerMap = {};
@@ -160,12 +163,13 @@ async function syncFollowedCampaignItems() {
       .from('characters')
       .select('id, name, rank, is_public, share_code, data, user_id')
       .in('share_code', toFollowChar)
-      .eq('is_public', true);
+      .eq('is_public', true)
+      .eq('universe_id', currentUniverse.id);
     for (const row of (charRows || [])) {
       if (row.user_id === currentUser.id) continue;
       if (followedIds.includes(row.id)) continue;
       const { error } = await sb.from('followed_characters')
-        .insert({ user_id: currentUser.id, character_id: row.id });
+        .insert({ user_id: currentUser.id, character_id: row.id, universe_id: currentUniverse.id });
       if (!error) {
         followedIds.push(row.id);
         newlyFollowed++;
@@ -183,12 +187,13 @@ async function syncFollowedCampaignItems() {
       .from('chronicles')
       .select('id, title, user_id, is_public, share_code')
       .in('share_code', toFollowChr)
-      .eq('is_public', true);
+      .eq('is_public', true)
+      .eq('universe_id', currentUniverse.id);
     for (const row of (chrRows || [])) {
       if (row.user_id === currentUser.id) continue;
       if (followedChrIds.includes(row.id)) continue;
       const { error } = await sb.from('followed_chronicles')
-        .insert({ user_id: currentUser.id, chronicle_id: row.id });
+        .insert({ user_id: currentUser.id, chronicle_id: row.id, universe_id: currentUniverse.id });
       if (!error) { followedChrIds.push(row.id); newlyFollowed++; }
     }
     if (chrRows?.length) await loadFollowedChroniclesFromDB();
@@ -199,12 +204,13 @@ async function syncFollowedCampaignItems() {
       .from('documents')
       .select('id, title, user_id, is_public, share_code')
       .in('share_code', toFollowDoc)
-      .eq('is_public', true);
+      .eq('is_public', true)
+      .eq('universe_id', currentUniverse.id);
     for (const row of (docRows || [])) {
       if (row.user_id === currentUser.id) continue;
       if (followedDocIds.includes(row.id)) continue;
       const { error } = await sb.from('followed_documents')
-        .insert({ user_id: currentUser.id, document_id: row.id });
+        .insert({ user_id: currentUser.id, document_id: row.id, universe_id: currentUniverse.id });
       if (!error) {
         followedDocIds.push(row.id);
         newlyFollowed++;
@@ -236,6 +242,7 @@ async function saveCampaignToDB() {
 
   const payload = {
     user_id:     currentUser.id,
+    universe_id: currentUniverse.id,
     title:       campaignState.title.trim(),
     description: campaignState.description || '',
     is_public:   campaignState.is_public || false,
@@ -247,7 +254,7 @@ async function saveCampaignToDB() {
   let result;
   if (isUUID) {
     result = await sb.from('campaigns').update(payload)
-      .eq('id', editingCampaignId).select('id, share_code').single();
+      .eq('id', editingCampaignId).eq('universe_id', currentUniverse.id).select('id, share_code').single();
   } else {
     editingCampaignId = null;
     result = await sb.from('campaigns').insert(payload).select('id, share_code').single();
@@ -313,7 +320,7 @@ async function saveCampaignItemsToDB(campaignId) {
 async function deleteCampaignFromDB(id) {
   const title = campaigns[id]?.title || 'cette campagne';
   if (!confirm(ti('confirm_delete_campaign', { title }))) return;
-  const { error } = await sb.from('campaigns').delete().eq('id', id);
+  const { error } = await sb.from('campaigns').delete().eq('id', id).eq('universe_id', currentUniverse.id);
   if (error) { showToast(t('toast_campaign_delete_error')); return; }
   delete campaigns[id];
   delete campaignItems[id];
@@ -333,13 +340,14 @@ async function followCampaignByCode(code) {
     .select('id, title, user_id, is_public')
     .eq('share_code', clean)
     .eq('is_public', true)
+    .eq('universe_id', currentUniverse.id)
     .single();
   if (error || !data) { showToast(t('toast_campaign_not_found')); return; }
   if (data.user_id === currentUser.id) { showToast(t('toast_campaign_own')); return; }
   if (followedCampaignIds.includes(data.id)) { showToast(t('toast_campaign_already_followed')); return; }
 
   const { error: err } = await sb.from('followed_campaigns')
-    .insert({ user_id: currentUser.id, campaign_id: data.id });
+    .insert({ user_id: currentUser.id, campaign_id: data.id, universe_id: currentUniverse.id });
   if (err) { showToast(t('toast_campaign_follow_error')); return; }
 
   followedCampaignIds.push(data.id);
@@ -359,7 +367,7 @@ async function followCampaignByCode(code) {
 
 async function unfollowCampaign(id) {
   await sb.from('followed_campaigns')
-    .delete().eq('user_id', currentUser.id).eq('campaign_id', id);
+    .delete().eq('user_id', currentUser.id).eq('campaign_id', id).eq('universe_id', currentUniverse.id);
   followedCampaignIds = followedCampaignIds.filter(i => i !== id);
   delete followedCampaigns[id];
   renderCampaignsList();

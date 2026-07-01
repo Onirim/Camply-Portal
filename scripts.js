@@ -159,6 +159,7 @@ async function loadCharsFromDB() {
     .from('characters')
     .select('id, name, rank, is_public, share_code, data, updated_at')
     .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id)
     .order('updated_at', { ascending: false });
   if (error) { console.error('Erreur chargement:', error); return; }
   chars = {};
@@ -187,8 +188,8 @@ async function saveCharToDB() {
   const isValidUUID = editingId &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingId);
   const result = isValidUUID
-    ? await sb.from('characters').update(payload).eq('id', editingId).select('id, share_code').single()
-    : await sb.from('characters').insert({ ...payload, user_id: currentUser.id }).select('id, share_code').single();
+    ? await sb.from('characters').update(payload).eq('id', editingId).eq('universe_id', currentUniverse.id).select('id, share_code').single()
+    : await sb.from('characters').insert({ ...payload, user_id: currentUser.id, universe_id: currentUniverse.id }).select('id, share_code').single();
   if (!isValidUUID && editingId) editingId = null;
   if (result.error) {
     setSaveIndicator('error', t('save_error'));
@@ -226,7 +227,7 @@ async function deleteCharFromDB(id) {
   if (!confirm(ti('confirm_delete_char', { name }))) return;
   const tagIds         = charTagMap[id] || [];
   const illustrationUrl = chars[id]?.illustration_url || '';
-  const { error } = await sb.from('characters').delete().eq('id', id);
+  const { error } = await sb.from('characters').delete().eq('id', id).eq('universe_id', currentUniverse.id);
   if (error) { showToast(t('toast_char_deleted_error')); return; }
   delete chars[id];
   delete charTagMap[id];
@@ -250,16 +251,20 @@ async function deleteCharFromDB(id) {
 
 async function loadTagsFromDB() {
   const { data: tags } = await sb.from('tags')
-    .select('*').eq('user_id', currentUser.id).order('name');
+    .select('*').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id).order('name');
   allTags = tags || [];
-  const { data: charTags } = await sb.from('character_tags').select('character_id, tag_id');
+  const ownCharIds = Object.keys(chars);
   charTagMap = {};
-  (charTags || []).forEach(({ character_id, tag_id }) => {
-    if (!charTagMap[character_id]) charTagMap[character_id] = [];
-    charTagMap[character_id].push(tag_id);
-  });
+  if (ownCharIds.length) {
+    const { data: charTags } = await sb.from('character_tags')
+      .select('character_id, tag_id').in('character_id', ownCharIds);
+    (charTags || []).forEach(({ character_id, tag_id }) => {
+      if (!charTagMap[character_id]) charTagMap[character_id] = [];
+      charTagMap[character_id].push(tag_id);
+    });
+  }
   const { data: followedTags } = await sb.from('followed_character_tags')
-    .select('character_id, tag_id').eq('user_id', currentUser.id);
+    .select('character_id, tag_id').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id);
   followedTagMap = {};
   (followedTags || []).forEach(({ character_id, tag_id }) => {
     if (!followedTagMap[character_id]) followedTagMap[character_id] = [];
@@ -273,12 +278,12 @@ async function loadTagsFromDB() {
 
 async function loadFollowedCharsFromDB() {
   const { data: followed } = await sb.from('followed_characters')
-    .select('character_id').eq('user_id', currentUser.id);
+    .select('character_id').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id);
   followedIds = (followed || []).map(r => r.character_id);
   if (!followedIds.length) { followedChars = {}; return; }
   const { data: chars_data } = await sb.from('characters')
     .select('id, name, rank, is_public, share_code, data, user_id')
-    .in('id', followedIds).eq('is_public', true);
+    .in('id', followedIds).eq('is_public', true).eq('universe_id', currentUniverse.id);
   const ownerIds = [...new Set((chars_data || []).map(r => r.user_id))];
   let ownerMap = {};
   if (ownerIds.length) {
@@ -301,13 +306,13 @@ async function followCharByCode(code) {
   const clean = code.trim().toUpperCase();
   const { data, error } = await sb.from('characters')
     .select('id, name, user_id, is_public')
-    .eq('share_code', clean).eq('is_public', true).single();
+    .eq('share_code', clean).eq('is_public', true).eq('universe_id', currentUniverse.id).single();
   if (error || !data) { showToast(t('toast_char_not_found')); return; }
   if (data.user_id === currentUser.id) { showToast(t('toast_char_own')); return; }
   if (followedIds.includes(data.id))  { showToast(t('toast_char_already_followed')); return; }
- 
+
   const { error: insertError } = await sb.from('followed_characters')
-    .insert({ user_id: currentUser.id, character_id: data.id });
+    .insert({ user_id: currentUser.id, character_id: data.id, universe_id: currentUniverse.id });
   if (insertError) { showToast(t('toast_char_follow_error')); return; }
  
   followedIds.push(data.id);
@@ -333,11 +338,12 @@ async function unfollowChar(charId) {
   await sb.from('followed_character_tags')
     .delete()
     .eq('user_id', currentUser.id)
-    .eq('character_id', charId);
- 
+    .eq('character_id', charId)
+    .eq('universe_id', currentUniverse.id);
+
   // 2. Désabonnement
   await sb.from('followed_characters')
-    .delete().eq('user_id', currentUser.id).eq('character_id', charId);
+    .delete().eq('user_id', currentUser.id).eq('character_id', charId).eq('universe_id', currentUniverse.id);
  
   followedIds = followedIds.filter(id => id !== charId);
   delete followedChars[charId];
@@ -362,6 +368,7 @@ async function loadCharSecret(charId) {
     .select('content')
     .eq('character_id', charId)
     .eq('user_id', currentUser.id)
+    .eq('universe_id', currentUniverse.id)
     .maybeSingle();
   if (error) { console.warn('loadCharSecret:', error.message); charSecrets[charId] = ''; return ''; }
   charSecrets[charId] = data?.content || '';
@@ -372,8 +379,8 @@ async function saveCharSecretToDB(charId, content) {
   if (!charId || !currentUser) return;
   const { error } = await sb.from('character_secrets')
     .upsert(
-      { character_id: charId, user_id: currentUser.id, content: content || '' },
-      { onConflict: 'character_id,user_id' }
+      { character_id: charId, user_id: currentUser.id, universe_id: currentUniverse.id, content: content || '' },
+      { onConflict: 'universe_id,character_id,user_id' }
     );
   if (error) { console.error('saveCharSecretToDB:', error.message); showToast(t('toast_secret_save_error')); return; }
   charSecrets[charId] = content || '';
@@ -631,7 +638,7 @@ async function loadUniverseData() {
     showUniverseScreen();
     return;
   }
-  await unreadMarkers.initFromDB(currentUser.id);
+  await unreadMarkers.initFromDB(currentUser.id, currentUniverse.id);
   await Promise.all([
     loadCharsFromDB(),
     loadChroniclesFromDB(),
@@ -1118,7 +1125,7 @@ function navigateToChar(shareCode) {
   if (followed)  { showSharedChar(followed); return true; }
   sb.from('characters')
     .select('id, name, rank, is_public, share_code, data, user_id')
-    .eq('share_code', shareCode).eq('is_public', true).single()
+    .eq('share_code', shareCode).eq('is_public', true).eq('universe_id', currentUniverse.id).single()
     .then(({ data: row, error }) => {
       if (error || !row) { showToast(t('toast_char_not_found')); showView('list'); renderList(); return; }
       const charData = {
@@ -1138,7 +1145,7 @@ function navigateToChr(chrCode) {
   if (inFollowed) { showChrDetail(inFollowed.id); return true; }
   sb.from('chronicles')
     .select('id, title, description, is_public, share_code, illustration_url, illustration_position, updated_at, user_id')
-    .eq('share_code', chrCode).eq('is_public', true).single()
+    .eq('share_code', chrCode).eq('is_public', true).eq('universe_id', currentUniverse.id).single()
     .then(async ({ data: row, error }) => {
       if (error || !row) { showToast(t('toast_chr_not_found')); showView('chronicles'); return; }
       const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
@@ -1182,7 +1189,7 @@ function navigateToDoc(docCode) {
   if (inFollowed) { openDocReader(inFollowed.id); return true; }
   sb.from('documents')
     .select('id, title, content, is_public, share_code, illustration_url, illustration_position, updated_at, user_id')
-    .eq('share_code', docCode).eq('is_public', true).single()
+    .eq('share_code', docCode).eq('is_public', true).eq('universe_id', currentUniverse.id).single()
     .then(async ({ data: row, error }) => {
       if (error || !row) { showToast(t('toast_doc_not_found')); showView('documents'); return; }
       const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
@@ -1200,7 +1207,7 @@ function navigateToCampaign(campaignCode) {
   if (inFollowed) { showCampaignDetail(inFollowed.id); return true; }
   sb.from('campaigns')
     .select('id, title, description, is_public, share_code, updated_at, user_id')
-    .eq('share_code', campaignCode).eq('is_public', true).single()
+    .eq('share_code', campaignCode).eq('is_public', true).eq('universe_id', currentUniverse.id).single()
     .then(async ({ data: row, error }) => {
       if (error || !row) { showToast(t('toast_campaign_not_found')); showView('campaigns'); return; }
       const { data: profile } = await sb.from('profiles').select('username').eq('id', row.user_id).single();
