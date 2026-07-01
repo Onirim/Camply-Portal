@@ -475,7 +475,7 @@ html, body {
 .shared-banner { display: flex; align-items: center; gap: 10px; background: rgba(124,140,255,0.07); border: 1px solid rgba(124,140,255,0.18); border-radius: 6px; padding: 10px 14px; margin-bottom: 24px; font-size: 12px; color: var(--text3); }
 .shared-banner svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
 
-#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg3); border: 1px solid var(--border2); color: var(--text); font-size: 13px; font-weight: 500; padding: 10px 20px; border-radius: 8px; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease; z-index: 100; opacity: 0; visibility: hidden; }
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg3); border: 1px solid var(--border2); color: var(--text); font-size: 13px; font-weight: 500; padding: 10px 20px; border-radius: 8px; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease; z-index: 600; opacity: 0; visibility: hidden; }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
 
 #view-sheet { display: none; flex: 1; overflow-y: auto; background: var(--bg); padding: 28px 32px; }

@@ -753,7 +753,7 @@ body::before {
 .shared-banner svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
 
 /* Toast */
-#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg2); border: 1px solid var(--border2); color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 10px 22px; border-radius: 3px; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease; z-index: 100; opacity: 0; visibility: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+#toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg2); border: 1px solid var(--border2); color: var(--text); font-family: var(--font-body); font-size: 13px; padding: 10px 22px; border-radius: 3px; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease; z-index: 600; opacity: 0; visibility: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
 
 /* ── Sheet view ── */
