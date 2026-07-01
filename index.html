@@ -25,7 +25,6 @@
 <link rel="stylesheet" href="chronicles.css" />
 <link rel="stylesheet" href="documents.css" />
 <link rel="stylesheet" href="campaigns.css" />
-<link rel="stylesheet" href="rulebook.css" />
 <link rel="stylesheet" href="map.css" />
 <link rel="stylesheet" href="transfert.css" />
 <!--<link rel="stylesheet" href="./themes/theme-forgotten-realms.css" />  Choose your theme here, optional -->
@@ -231,7 +230,7 @@
       <button id="nav-documents" onclick="showView('documents')" data-i18n="nav_documents">Documents</button>
       <button id="nav-map" onclick="showView('map')" data-i18n="nav_map">Carte</button>
       <button id="nav-campaigns" onclick="showView('campaigns')" data-i18n="nav_campaigns">Campagnes</button>
-      <button id="nav-rulebook" onclick="showView('rulebook')" data-i18n="nav_rulebook">Règles</button>
+      <button id="nav-config" onclick="showView('config')" data-i18n="nav_config" style="display:none">Configuration</button>
     </nav>
 
     <div class="topbar-right">
@@ -1092,45 +1091,62 @@
 
       </div>
     </div>
-     <!-- VUE RÈGLES DU JEU -->
-    <div id="view-rulebook">
-      <div class="rulebook-layout">
- 
-        <!-- Index latéral -->
-        <nav class="rulebook-toc">
-          <div class="rulebook-toc-header">
-            <div class="rulebook-toc-title">Index</div>
-            <button
-              id="rulebook-toc-toggle-btn"
-              class="rulebook-toc-toggle"
-              onclick="toggleRulebookToc()">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="13" height="13">
-                <line x1="1" y1="4" x2="15" y2="4"/>
-                <line x1="1" y1="8" x2="10" y2="8"/>
-                <line x1="1" y1="12" x2="7" y2="12"/>
+     <!-- VUE CONFIGURATION (univers) -->
+    <div id="view-config">
+      <div class="list-header">
+        <div>
+          <h1><span data-i18n="config_title">Configuration</span></h1>
+          <div class="count" data-i18n="config_subtitle">Paramètres de l'univers courant</div>
+        </div>
+      </div>
+
+      <div class="config-view-inner">
+        <div class="form-section" style="border-bottom:none;padding:0 0 16px">
+          <div class="form-section-title" data-i18n="config_section_illus">Bandeau</div>
+          <div class="illus-upload-zone" id="config-illus-zone" onclick="configIllusZoneClick()">
+            <div class="illus-upload-placeholder" id="config-illus-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="M21 15l-5-5L5 21"/>
               </svg>
-              Afficher l'index
-            </button>
-            <div class="rulebook-toc-search">
-              <svg class="rulebook-toc-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                <circle cx="6.5" cy="6.5" r="4"/>
-                <line x1="10" y1="10" x2="14" y2="14"/>
-              </svg>
-              <input
-                type="text"
-                placeholder="Rechercher…"
-                oninput="rulebookTocSearch(this.value)"
-                autocomplete="off">
+              <span data-i18n="editor_illus_placeholder">Cliquez pour ajouter une illustration</span>
+            </div>
+            <img id="config-illus-preview-img" style="display:none">
+            <div class="illus-overlay" id="config-illus-overlay">
+              <button class="illus-overlay-btn" onclick="event.stopPropagation();document.getElementById('config-illus-input').click()" data-i18n="editor_illus_change">Changer</button>
+              <button class="illus-overlay-btn danger" onclick="event.stopPropagation();removeConfigIllustration()" data-i18n="editor_illus_remove">Supprimer</button>
+            </div>
+            <div class="illus-uploading" id="config-illus-uploading">
+              <div class="spinner"></div>
+              <span data-i18n="editor_illus_uploading">Upload en cours…</span>
             </div>
           </div>
-          <ul class="rulebook-toc-list" id="rulebook-toc-list"></ul>
-        </nav>
- 
-        <!-- Contenu principal -->
-        <div class="rulebook-content">
-          <div class="rulebook-content-inner" id="rulebook-body"></div>
+          <div class="illus-slider-wrap" id="config-illus-slider-wrap">
+            <label data-i18n="editor_illus_slider">Cadrage</label>
+            <input type="range" id="config-illus-pos-slider" min="0" max="100" value="0"
+              oninput="updateConfigIllusPosition(this.value)">
+          </div>
+          <input type="file" id="config-illus-input"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            style="display:none" onchange="uploadConfigIllustration(this)">
         </div>
- 
+
+        <div class="field">
+          <label data-i18n="config_field_name">Nom de l'univers</label>
+          <input type="text" id="config-f-name">
+        </div>
+
+        <div class="field">
+          <label data-i18n="config_field_description">Description courte</label>
+          <textarea id="config-f-description"></textarea>
+        </div>
+
+        <div id="config-error" class="auth-error"></div>
+      </div>
+
+      <div class="form-actions" style="max-width:640px">
+        <button class="btn-save" onclick="saveUniverseConfig()" data-i18n="btn_save">Sauvegarder</button>
       </div>
     </div>
 
@@ -1329,7 +1345,6 @@
 <script src="chronicles.js"></script>
 <script src="documents.js"></script>
 <script src="campaigns.js"></script>
-<script src="rulebook.js"></script>
 <script src="tags.js"></script>
 <script src="editor.js"></script>
 <script src="transfert.js"></script>

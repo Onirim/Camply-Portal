@@ -34,9 +34,19 @@ const TRANSLATIONS = {
     nav_chronicles: 'Chroniques',
     nav_documents:  'Documents',
     nav_campaigns:  'Campagnes',
-    nav_rulebook:   'Règles',
+    nav_config:     'Configuration',
     topbar_share:   'Partager',
     nav_map: 'Cartes',
+
+    // ── Configuration univers ─────────────────────────────────
+    config_title:            'Configuration',
+    config_subtitle:         "Paramètres de l'univers courant",
+    config_section_illus:    'Bandeau',
+    config_field_name:       "Nom de l'univers",
+    config_field_description: 'Description courte',
+    config_error_name_required: "Le nom de l'univers est requis.",
+    toast_config_saved:      'Configuration enregistrée !',
+    toast_config_error:      "Erreur lors de l'enregistrement : ",
 
     // ── User menu ─────────────────────────────────────────────
     user_logout: 'Se déconnecter',
@@ -351,9 +361,19 @@ const TRANSLATIONS = {
     nav_chronicles: 'Chronicles',
     nav_documents:  'Documents',
     nav_campaigns:  'Campaigns',
-    nav_rulebook:   'Rules',
+    nav_config:     'Settings',
     topbar_share:   'Share',
     nav_map: 'Maps',
+
+    // ── Universe configuration ────────────────────────────────
+    config_title:            'Configuration',
+    config_subtitle:         'Current universe settings',
+    config_section_illus:    'Banner',
+    config_field_name:       'Universe name',
+    config_field_description: 'Short description',
+    config_error_name_required: 'The universe name is required.',
+    toast_config_saved:      'Configuration saved!',
+    toast_config_error:      'Error while saving: ',
 
     // ── User menu ─────────────────────────────────────────────
     user_logout: 'Log out',

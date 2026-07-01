@@ -623,6 +623,7 @@ async function enterUniverse(universeId) {
     return;
   }
   currentUniverse = universe;
+  updateConfigNavVisibility();
   document.getElementById('universe-screen')?.classList.remove('active');
   document.getElementById('loading-overlay').classList.add('active');
   document.getElementById('app').style.display = 'flex';
@@ -658,6 +659,131 @@ async function loadUniverseData() {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// CONFIGURATION DE L'UNIVERS COURANT (propriétaire uniquement)
+// ══════════════════════════════════════════════════════════════
+
+let universeConfigState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
+
+function canConfigureUniverse() {
+  return currentUniverse?.role === 'owner';
+}
+
+function updateConfigNavVisibility() {
+  const btn = document.getElementById('nav-config');
+  if (btn) btn.style.display = canConfigureUniverse() ? '' : 'none';
+}
+
+function openUniverseConfigView() {
+  if (!canConfigureUniverse() || !currentUniverse) return;
+  universeConfigState = {
+    name: currentUniverse.name || '',
+    description: currentUniverse.description || '',
+    illustration_url: currentUniverse.illustration_url || '',
+    illustration_position: currentUniverse.illustration_position || 0,
+  };
+  document.getElementById('config-f-name').value = universeConfigState.name;
+  document.getElementById('config-f-description').value = universeConfigState.description;
+  setConfigIllusPreview(universeConfigState.illustration_url, universeConfigState.illustration_position);
+  const errEl = document.getElementById('config-error');
+  if (errEl) errEl.classList.remove('show');
+}
+
+function configIllusZoneClick() {
+  if (!universeConfigState.illustration_url) document.getElementById('config-illus-input').click();
+}
+
+function setConfigIllusPreview(url, position) {
+  const img         = document.getElementById('config-illus-preview-img');
+  const placeholder = document.getElementById('config-illus-placeholder');
+  const zone        = document.getElementById('config-illus-zone');
+  const sliderWrap  = document.getElementById('config-illus-slider-wrap');
+  const slider      = document.getElementById('config-illus-pos-slider');
+  const pos = position !== undefined ? position : (universeConfigState.illustration_position || 0);
+  if (url) {
+    img.src = url; img.style.display = 'block';
+    img.style.objectPosition = `center ${pos}%`;
+    placeholder.style.display = 'none';
+    zone.classList.add('has-image');
+    sliderWrap.classList.add('visible'); slider.value = pos;
+  } else {
+    img.src = ''; img.style.display = 'none';
+    placeholder.style.display = 'flex';
+    zone.classList.remove('has-image');
+    sliderWrap.classList.remove('visible'); slider.value = 0;
+  }
+}
+
+function updateConfigIllusPosition(val) {
+  universeConfigState.illustration_position = parseInt(val);
+  const img = document.getElementById('config-illus-preview-img');
+  if (img) img.style.objectPosition = `center ${val}%`;
+}
+
+async function uploadConfigIllustration(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (!currentUser) { showToast(t('toast_upload_no_user')); return; }
+  if (file.size > 3 * 1024 * 1024) { showToast(t('toast_illus_too_large')); return; }
+  document.getElementById('config-illus-uploading').classList.add('active');
+  const oldUrl = universeConfigState.illustration_url || '';
+  const path   = `${currentUser.id}/universe_${currentUniverse.id}_${Date.now()}.jpg`;
+  const blob   = await compressImage(file);
+  const { error } = await sb.storage
+    .from('character-illustrations').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  document.getElementById('config-illus-uploading').classList.remove('active');
+  if (error) { showToast(t('toast_illus_upload_error') + error.message); return; }
+  if (oldUrl && !oldUrl.includes(path)) await deleteStorageFile(oldUrl);
+  const { data } = sb.storage.from('character-illustrations').getPublicUrl(path);
+  universeConfigState.illustration_url      = `${data.publicUrl}?v=${Date.now()}`;
+  universeConfigState.illustration_position = 0;
+  setConfigIllusPreview(universeConfigState.illustration_url, 0);
+  showToast(t('toast_illus_added'));
+  input.value = '';
+}
+
+async function removeConfigIllustration() {
+  if (!universeConfigState.illustration_url) return;
+  await deleteStorageFile(universeConfigState.illustration_url);
+  universeConfigState.illustration_url      = '';
+  universeConfigState.illustration_position = 0;
+  setConfigIllusPreview('', 0);
+}
+
+async function saveUniverseConfig() {
+  if (!canConfigureUniverse()) return;
+  const errEl = document.getElementById('config-error');
+  const name  = document.getElementById('config-f-name').value.trim();
+  if (!name) {
+    if (errEl) { errEl.textContent = t('config_error_name_required'); errEl.classList.add('show'); }
+    return;
+  }
+  const description = document.getElementById('config-f-description').value.trim();
+  if (errEl) errEl.classList.remove('show');
+
+  const { data, error } = await sb.from('universes')
+    .update({
+      name,
+      description,
+      illustration_url: universeConfigState.illustration_url || '',
+      illustration_position: universeConfigState.illustration_position || 0,
+    })
+    .eq('id', currentUniverse.id)
+    .select('id, owner_id, name, description, illustration_url, illustration_position, created_at, updated_at')
+    .single();
+
+  if (error) {
+    if (errEl) { errEl.textContent = t('toast_config_error') + error.message; errEl.classList.add('show'); }
+    return;
+  }
+
+  currentUniverse = { ...currentUniverse, ...data };
+  const idx = userUniverses.findIndex(u => u.id === currentUniverse.id);
+  if (idx >= 0) userUniverses[idx] = { ...userUniverses[idx], ...data };
+
+  showToast(t('toast_config_saved'));
+}
+
 function onSignedOut() {
   currentUser = null;
   currentUniverse = null;
@@ -665,6 +791,7 @@ function onSignedOut() {
   unreadMarkers.resetCache();
   chars = {};
   charSecrets = {};
+  updateConfigNavVisibility();
   document.getElementById('loading-overlay').classList.remove('active');
   document.getElementById('universe-screen')?.classList.remove('active');
   document.getElementById('auth-screen').classList.add('active');
@@ -676,13 +803,15 @@ function onSignedOut() {
 // ══════════════════════════════════════════════════════════════
 
 function showView(view) {
+  if (view === 'config' && !canConfigureUniverse()) view = 'list';
+
   const views = [
     'list', 'editor', 'shared',
     'chronicles', 'chr-detail', 'chr-editor', 'entry-editor', 'entry-reader',
     'documents', 'doc-editor', 'doc-reader',
     'campaigns', 'campaign-detail', 'campaign-editor',
     'map',
-    'rulebook',
+    'config',
   ];
   views.forEach(v => document.getElementById('view-' + v)?.classList.toggle('active', v === view));
 
@@ -691,16 +820,16 @@ function showView(view) {
   const inDoc      = ['documents', 'doc-editor', 'doc-reader'].includes(view);
   const inCampaign = ['campaigns', 'campaign-detail', 'campaign-editor'].includes(view);
   const inMap = view === 'map';
-  const inRulebook = view === 'rulebook';
+  const inConfig = view === 'config';
 
   document.getElementById('nav-list').classList.toggle('active', inPer);
   document.getElementById('nav-chronicles').classList.toggle('active', inChr);
   document.getElementById('nav-documents').classList.toggle('active', inDoc);
   document.getElementById('nav-campaigns').classList.toggle('active', inCampaign);
   document.getElementById('nav-map')?.classList.toggle('active', inMap);
-  document.getElementById('nav-rulebook')?.classList.toggle('active', inRulebook);
+  document.getElementById('nav-config')?.classList.toggle('active', inConfig);
 
-  const listViews = ['list', 'chronicles', 'documents', 'campaigns', 'map', 'rulebook'];
+  const listViews = ['list', 'chronicles', 'documents', 'campaigns', 'map', 'config'];
   const langSelect = document.getElementById('lang-select');
   const isMobileTopbar = window.matchMedia('(max-width: 768px)').matches;
   const showLangSelect = !isMobileTopbar || listViews.includes(view);
@@ -739,7 +868,7 @@ function showView(view) {
   if (view === 'chr-editor')      clearHash();
   if (view === 'campaign-editor') clearHash();
   if (view === 'map') { clearHash(); initMap(); }
-  if (view === 'rulebook') { clearHash(); loadRulebook(); }
+  if (view === 'config') { clearHash(); openUniverseConfigView(); }
   applyTranslations();
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
 }
