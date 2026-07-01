@@ -967,6 +967,26 @@
       <div class="form-actions" style="max-width:640px">
         <button class="btn-save" onclick="saveUniverseConfig()" data-i18n="btn_save">Sauvegarder</button>
       </div>
+
+      <div class="config-view-inner" style="margin-top:8px">
+        <div class="form-section-title" data-i18n="config_section_members">Membres de l'univers</div>
+        <p style="font-size:12px;color:var(--text3);margin:-8px 0 14px;line-height:1.6"
+          data-i18n="config_members_hint">
+          Invitez un utilisateur du site en entrant son nom d'utilisateur. Il aura alors accès à cet univers.
+        </p>
+
+        <div class="chr-follow-wrap" style="margin-bottom:16px">
+          <input type="text" id="config-invite-input"
+            data-i18n="config_invite_placeholder" data-i18n-attr="placeholder"
+            placeholder="Nom d'utilisateur"
+            onkeydown="if(event.key==='Enter') inviteUniverseMember()">
+          <button class="btn-follow-chr" onclick="inviteUniverseMember()" data-i18n="config_invite_btn">+ Inviter</button>
+        </div>
+
+        <div id="config-invite-error" class="auth-error"></div>
+
+        <div id="config-members-list"></div>
+      </div>
     </div>
 
     <!-- VUE CARTE -->

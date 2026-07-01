@@ -75,7 +75,7 @@ ALTER TABLE public.documents   DROP COLUMN IF EXISTS share_code;
 ALTER TABLE public.map_layers  DROP COLUMN IF EXISTS share_code;
 ALTER TABLE public.map_markers DROP COLUMN IF EXISTS share_code;
 ALTER TABLE public.campaigns   DROP COLUMN IF EXISTS share_code;
-ALTER TABLE public.campaigns   DROP COLUMN IF EXISTS is_public;
+ALTER TABLE public.campaigns   DROP COLUMN IF EXISTS is_public CASCADE;
 
 -- guard_document_shared_update référençait share_code : on la
 -- redéfinit sans cette colonne (allow_write_share reste protégée

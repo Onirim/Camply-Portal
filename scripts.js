@@ -604,6 +604,96 @@ function openUniverseConfigView() {
   setConfigIllusPreview(universeConfigState.illustration_url, universeConfigState.illustration_position);
   const errEl = document.getElementById('config-error');
   if (errEl) errEl.classList.remove('show');
+  const inviteErrEl = document.getElementById('config-invite-error');
+  if (inviteErrEl) inviteErrEl.classList.remove('show');
+  const inviteInput = document.getElementById('config-invite-input');
+  if (inviteInput) inviteInput.value = '';
+  loadUniverseMembersForConfig();
+}
+
+// ══════════════════════════════════════════════════════════════
+// MEMBRES DE L'UNIVERS (configuration)
+// ══════════════════════════════════════════════════════════════
+
+async function loadUniverseMembersForConfig() {
+  if (!currentUniverse) return;
+  const { data, error } = await sb.from('universe_members')
+    .select('user_id, role, joined_at')
+    .eq('universe_id', currentUniverse.id)
+    .order('joined_at', { ascending: true });
+  if (error) { console.error('Erreur chargement membres:', error); return; }
+
+  const userIds = (data || []).map(r => r.user_id);
+  let ownerMap = {};
+  if (userIds.length) {
+    const { data: profiles } = await sb.from('profiles').select('id, username').in('id', userIds);
+    (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
+  }
+
+  renderUniverseMembersList((data || []).map(r => ({ ...r, username: ownerMap[r.user_id] || '?' })));
+}
+
+function renderUniverseMembersList(members) {
+  const container = document.getElementById('config-members-list');
+  if (!container) return;
+  if (!members.length) {
+    container.innerHTML = `<div style="color:var(--text3);font-size:13px;font-style:italic;padding:8px 0">${t('config_members_empty')}</div>`;
+    return;
+  }
+  container.innerHTML = members.map(m => {
+    const isOwner = m.user_id === currentUniverse.owner_id;
+    return `<div class="campaign-item-row">
+      <div class="campaign-member-avatar">${esc((m.username || '?').slice(0, 1).toUpperCase())}</div>
+      <div class="campaign-item-row-name">${esc(m.username)}${isOwner ? ` <span class="campaign-owner-label">${t('campaign_owner_tag')}</span>` : ''}</div>
+      ${!isOwner ? `<button class="icon-btn danger" onclick="removeUniverseMember('${m.user_id}')" title="${t('btn_delete')}">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
+          <line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/>
+        </svg>
+      </button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function inviteUniverseMember() {
+  if (!canConfigureUniverse() || !currentUniverse) return;
+  const input  = document.getElementById('config-invite-input');
+  const errEl  = document.getElementById('config-invite-error');
+  const username = input?.value.trim();
+  if (errEl) errEl.classList.remove('show');
+  if (!username) return;
+
+  const { data: profile, error: profileError } = await sb.from('profiles')
+    .select('id, username').ilike('username', username).maybeSingle();
+  if (profileError || !profile) {
+    if (errEl) { errEl.textContent = t('toast_invite_user_not_found'); errEl.classList.add('show'); }
+    return;
+  }
+  if (profile.id === currentUser.id) {
+    if (errEl) { errEl.textContent = t('toast_invite_self'); errEl.classList.add('show'); }
+    return;
+  }
+
+  const { error: insertError } = await sb.from('universe_members')
+    .insert({ universe_id: currentUniverse.id, user_id: profile.id, role: 'player' });
+  if (insertError) {
+    const msg = insertError.code === '23505' ? t('toast_invite_already_member') : t('toast_invite_error');
+    if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
+    return;
+  }
+
+  if (input) input.value = '';
+  await loadUniverseMembersForConfig();
+  showToast(ti('toast_invite_success', { username: profile.username }));
+}
+
+async function removeUniverseMember(userId) {
+  if (!canConfigureUniverse() || !currentUniverse) return;
+  if (!confirm(t('confirm_remove_member'))) return;
+  const { error } = await sb.from('universe_members')
+    .delete().eq('universe_id', currentUniverse.id).eq('user_id', userId);
+  if (error) { showToast(t('toast_member_remove_error')); return; }
+  await loadUniverseMembersForConfig();
+  showToast(t('toast_member_removed'));
 }
 
 function configIllusZoneClick() {
