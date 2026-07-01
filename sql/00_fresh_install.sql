@@ -2572,6 +2572,7 @@ CREATE TABLE IF NOT EXISTS public.universes (
   description            TEXT NOT NULL DEFAULT '',
   illustration_url       TEXT NOT NULL DEFAULT '',
   illustration_position  INT NOT NULL DEFAULT 0,
+  theme_name             TEXT NOT NULL DEFAULT '',
   join_code              CHAR(8) UNIQUE,
   created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -2579,6 +2580,7 @@ CREATE TABLE IF NOT EXISTS public.universes (
 
 ALTER TABLE public.universes ADD COLUMN IF NOT EXISTS illustration_url TEXT NOT NULL DEFAULT '';
 ALTER TABLE public.universes ADD COLUMN IF NOT EXISTS illustration_position INT NOT NULL DEFAULT 0;
+ALTER TABLE public.universes ADD COLUMN IF NOT EXISTS theme_name TEXT NOT NULL DEFAULT '';
 
 CREATE INDEX IF NOT EXISTS universes_owner_idx ON public.universes(owner_id);
 CREATE INDEX IF NOT EXISTS universes_join_code_idx ON public.universes(join_code) WHERE join_code IS NOT NULL;

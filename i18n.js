@@ -61,6 +61,12 @@ const TRANSLATIONS = {
     toast_member_removed:    'Membre retiré de l\'univers.',
     toast_member_remove_error: 'Erreur lors du retrait du membre.',
 
+    // ── Configuration du thème ─────────────────────────────────
+    config_section_theme:    'Thème',
+    config_field_theme:      'Thème visuel',
+    config_theme_hint:       'Choisissez l\'habillage visuel appliqué à cet univers.',
+    config_theme_default:    'Camply (par défaut)',
+
     // ── Configuration des cartes ──────────────────────────────
     config_section_maps:     'Cartes',
     config_maps_hint:        'Ajoutez et gérez les cartes disponibles dans l\'onglet Carte de cet univers.',
@@ -362,6 +368,12 @@ const TRANSLATIONS = {
     confirm_remove_member:   'Remove this member from the universe?',
     toast_member_removed:    'Member removed from the universe.',
     toast_member_remove_error: 'Error while removing the member.',
+
+    // ── Theme configuration ─────────────────────────────────────
+    config_section_theme:    'Theme',
+    config_field_theme:      'Visual theme',
+    config_theme_hint:       'Choose the visual skin applied to this universe.',
+    config_theme_default:    'Camply (default)',
 
     // ── Map configuration ──────────────────────────────────────
     config_section_maps:     'Maps',

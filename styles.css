@@ -160,7 +160,30 @@ html, body {
 /* ══════════════════ CONFIGURATION (univers) ══════════════════ */
 #view-config { display: none; flex: 1; flex-direction: column; padding: 28px 32px; overflow-y: auto; }
 #view-config.active { display: flex; }
-.config-view-inner { max-width: 640px; width: 100%; }
+
+.config-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+  max-width: 1040px;
+}
+.config-main    { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.config-sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+.config-block {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px 24px;
+}
+.config-block .form-section-title { margin-top: 0; }
+.config-block-hint { font-size: 12px; color: var(--text3); margin: -8px 0 14px; line-height: 1.6; }
+
+@media (max-width: 860px) {
+  .config-layout   { grid-template-columns: 1fr; }
+  .config-sidebar  { order: 2; }
+}
 
 .list-header {
   display: flex; align-items: flex-end; justify-content: space-between;
