@@ -119,11 +119,17 @@ async function doEmailLogin() {
 
   const { error } = await sb.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.origin + window.location.pathname }
+    options: {
+      shouldCreateUser: false,
+      emailRedirectTo: window.location.origin + window.location.pathname
+    }
   });
 
   if (error) {
-    errEl.textContent = 'Erreur : ' + error.message;
+    const noAccount = error.message && /signup|not allowed|not found/i.test(error.message);
+    errEl.textContent = noAccount
+      ? 'Aucun compte associé à cet email. Connecte-toi d\'abord via Discord.'
+      : 'Erreur : ' + error.message;
     errEl.classList.add('show');
   } else {
     sucEl.classList.add('show');
