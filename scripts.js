@@ -342,7 +342,7 @@ async function onSignedIn(user) {
   isAppReady = false;
   updateUserUI(currentUser);
   const username = getDiscordUsername(user);
-  await sb.from('profiles').update({ username }).eq('id', user.id);
+  await sb.from('profiles').upsert({ id: user.id, username });
   document.getElementById('auth-screen').classList.remove('active');
   document.getElementById('app').style.display = 'none';
   document.getElementById('loading-overlay').classList.add('active');
