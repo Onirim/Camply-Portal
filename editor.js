@@ -337,6 +337,12 @@ function renderSecretPreviewBlock() {
 
 function saveChar() { saveCharToDB(); }
 
+function shareChar() {
+  if (!editingId) { showToast(t('toast_share_need_public')); return; }
+  if (!state.is_public) { showToast(t('toast_share_need_public')); return; }
+  copyUrl(buildShareUrl('char', editingId));
+}
+
 
 // ══════════════════════════════════════════════════════════════
 // MOBILE TABS

@@ -278,6 +278,13 @@ async function showChrDetail(chrId) {
   setHash('chr', chrId);
 }
 
+function shareChrDetailBtn() {
+  if (!activeChrId) return;
+  const chr = chronicles[activeChrId] || followedChronicles[activeChrId];
+  if (!chr?.is_public) { showToast(t('toast_chr_share_need_public')); return; }
+  copyUrl(buildShareUrl('chr', activeChrId));
+}
+
 function renderChrDetail() {
   const chr = chronicles[activeChrId] || followedChronicles[activeChrId];
   if (!chr) return;
@@ -459,6 +466,17 @@ function openEntryReader(entryId) {
   if (!chronicles[activeChrId]) unreadMarkers.markEntryRead(activeChrId, entryId);
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
   setHash('entry', activeChrId, entryId);
+}
+
+function shareEntryReaderBtn() {
+  if (!activeChrId) return;
+  const chr = chronicles[activeChrId] || followedChronicles[activeChrId];
+  if (!chr?.is_public) { showToast(t('toast_chr_share_need_public')); return; }
+  const hash = window.location.hash.slice(1);
+  if (hash.startsWith('entry/')) {
+    const entryId = hash.split('/')[2];
+    copyUrl(buildShareUrl('entry', activeChrId, entryId));
+  }
 }
 
 // ══════════════════════════════════════════════════════════════

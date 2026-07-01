@@ -479,6 +479,15 @@ function openDocReader(id) {
   }
 }
 
+function shareDocReaderBtn() {
+  const hash = window.location.hash.slice(1);
+  if (!hash.startsWith('doc/')) return;
+  const docId = hash.split('/')[1];
+  const d = documents[docId] || followedDocuments[docId];
+  if (!d?.is_public) { showToast(t('toast_doc_share_need_public')); return; }
+  copyUrl(buildShareUrl('doc', docId));
+}
+
 function docTocScrollTo(id) {
   const target = document.getElementById(id);
   if (!target) return;

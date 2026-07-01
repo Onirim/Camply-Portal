@@ -236,6 +236,46 @@
         <option value="fr">FR</option>
         <option value="en">EN</option>
       </select>
+      <!-- Partage personnage -->
+      <button class="share-btn" id="share-btn" onclick="shareChar()" style="display:none">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
+          <line x1="5.5" y1="7" x2="10.5" y2="4.3"/><line x1="5.5" y1="9" x2="10.5" y2="11.7"/>
+        </svg>
+        <span data-i18n="topbar_share">Partager</span>
+      </button>
+      <!-- Partage personnage en lecture seule -->
+      <button class="share-btn" id="shared-char-share-btn" onclick="shareSharedChar()" style="display:none">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
+          <line x1="5.5" y1="7" x2="10.5" y2="4.3"/><line x1="5.5" y1="9" x2="10.5" y2="11.7"/>
+        </svg>
+        <span data-i18n="topbar_share">Partager</span>
+      </button>
+      <!-- Partage chronique -->
+      <button class="share-btn" id="chr-detail-share-btn" onclick="shareChrDetailBtn()" style="display:none">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
+          <line x1="5.5" y1="7" x2="10.5" y2="4.3"/><line x1="5.5" y1="9" x2="10.5" y2="11.7"/>
+        </svg>
+        <span data-i18n="topbar_share">Partager</span>
+      </button>
+      <!-- Partage entrée de chronique -->
+      <button class="share-btn" id="entry-reader-share-btn" onclick="shareEntryReaderBtn()" style="display:none">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
+          <line x1="5.5" y1="7" x2="10.5" y2="4.3"/><line x1="5.5" y1="9" x2="10.5" y2="11.7"/>
+        </svg>
+        <span data-i18n="topbar_share">Partager</span>
+      </button>
+      <!-- Partage document -->
+      <button class="share-btn" id="doc-reader-share-btn" onclick="shareDocReaderBtn()" style="display:none">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
+          <line x1="5.5" y1="7" x2="10.5" y2="4.3"/><line x1="5.5" y1="9" x2="10.5" y2="11.7"/>
+        </svg>
+        <span data-i18n="topbar_share">Partager</span>
+      </button>
       <div class="user-menu-wrap" id="user-menu-wrap">
         <button class="user-btn" onclick="toggleUserMenu()">
           <div class="avatar" id="user-avatar">?</div>

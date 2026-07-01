@@ -1045,6 +1045,18 @@ function showView(view) {
   document.getElementById('nav-map')?.classList.toggle('active', inMap);
   document.getElementById('nav-config')?.classList.toggle('active', inConfig);
 
+  const shareBtnMap = {
+    'share-btn':              view === 'editor',
+    'shared-char-share-btn':  view === 'shared',
+    'chr-detail-share-btn':   view === 'chr-detail',
+    'entry-reader-share-btn': view === 'entry-reader',
+    'doc-reader-share-btn':   view === 'doc-reader',
+  };
+  Object.entries(shareBtnMap).forEach(([id, show]) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  });
+
   const listViews = ['list', 'chronicles', 'documents', 'campaigns', 'map', 'config'];
   const langSelect = document.getElementById('lang-select');
   const isMobileTopbar = window.matchMedia('(max-width: 768px)').matches;
@@ -1206,6 +1218,12 @@ function showSharedChar(data) {
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
   if (sharedCharacterId) setHash('char', sharedCharacterId);
   if (sharedCharacterId) _fillSecretNoteBlock(sharedCharacterId);
+}
+
+function shareSharedChar() {
+  const hash = window.location.hash.slice(1);
+  if (!hash.startsWith('char/')) return;
+  copyUrl(buildShareUrl('char', hash.split('/')[1]));
 }
 
 // ── Bloc note secrète réutilisable (vue partagée) ──────────────
@@ -1405,6 +1423,17 @@ function pipRow(val, cls, max) {
 // Format : #char/CODE | #chr/CODE | #entry/CHR_CODE/ENTRY_ID
 //          #doc/CODE  | #campaign/CODE
 // ══════════════════════════════════════════════════════════════
+
+function buildShareUrl(type, ...ids) {
+  const base = window.location.href.split('#')[0];
+  return `${base}#${type}/${ids.join('/')}`;
+}
+
+function copyUrl(url) {
+  navigator.clipboard.writeText(url)
+    .then(() => showToast(t('toast_url_copied')))
+    .catch(() => prompt(t('share_url_prompt'), url));
+}
 
 function setHash(type, ...ids) {
   history.replaceState(null, '', `#${type}/${ids.join('/')}`);
