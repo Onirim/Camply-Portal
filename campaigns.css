@@ -76,6 +76,15 @@
   font-size: 11px; color: var(--text3); font-style: italic;
 }
 
+.member-role-select {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text2); font-family: var(--font-body); font-size: 12px;
+  padding: 5px 8px; border-radius: 4px; cursor: pointer; flex-shrink: 0;
+}
+.member-role-other {
+  font-size: 11px; color: var(--text3); font-style: italic; flex-shrink: 0;
+}
+
 /* ── Champ abonnement ── */
 .campaign-follow-wrap {
   display: flex; gap: 8px; align-items: center; margin-bottom: 20px;

@@ -59,6 +59,13 @@ function isAppAdmin() {
   return names.some(n => admins.includes(n));
 }
 
+// MJ de l'univers courant (ou propriétaire, ou admin site legacy) :
+// droit d'édition sur les objets publics partagés via une campagne
+// commune, en plus de ses propres objets.
+function isUniverseGM() {
+  return isAppAdmin() || currentUniverse?.role === 'gm' || currentUniverse?.role === 'owner';
+}
+
 // ══════════════════════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════════════════════
@@ -194,7 +201,7 @@ async function loadCharsFromDB() {
 async function saveCharToDB() {
   if (!state.name.trim()) { alert(t('alert_char_no_name')); return; }
   setSaveIndicator('saving', t('save_saving'));
-  const isEditingFollowedChar = !!(editingId && followedChars[editingId] && isAppAdmin());
+  const isEditingFollowedChar = !!(editingId && followedChars[editingId] && isUniverseGM());
   const payload = {
     name:      state.name.trim(),
     rank:      state.rank,
@@ -679,7 +686,129 @@ async function loadUniverseMembersForConfig() {
     (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
   }
 
-  renderUniverseMembersList((data || []).map(r => ({ ...r, username: ownerMap[r.user_id] || '?' })));
+  const members = (data || []).map(r => ({ ...r, username: ownerMap[r.user_id] || '?' }));
+  renderUniverseMembersList(members);
+  populateTransferSelect(members);
+}
+
+function populateTransferSelect(members) {
+  const select = document.getElementById('config-transfer-select');
+  if (!select) return;
+  const candidates = members.filter(m => m.user_id !== currentUniverse.owner_id);
+  if (!candidates.length) {
+    select.innerHTML = `<option value="">${t('config_transfer_empty')}</option>`;
+    select.disabled = true;
+    return;
+  }
+  select.disabled = false;
+  select.innerHTML = `<option value="">${t('config_transfer_select_placeholder')}</option>` +
+    candidates.map(m => `<option value="${esc(m.user_id)}">${esc(m.username)}</option>`).join('');
+}
+
+async function transferUniverseOwnership() {
+  if (!canConfigureUniverse() || !currentUniverse) return;
+  const select = document.getElementById('config-transfer-select');
+  const errEl  = document.getElementById('config-transfer-error');
+  if (errEl) errEl.classList.remove('show');
+  const newOwnerId = select?.value;
+  if (!newOwnerId) return;
+  const username = select.options[select.selectedIndex]?.textContent || '';
+
+  if (!confirm(ti('confirm_transfer_ownership', { username }))) return;
+
+  const { error } = await sb.rpc('transfer_universe_ownership', {
+    p_universe_id: currentUniverse.id,
+    p_new_owner_id: newOwnerId,
+  });
+  if (error) {
+    if (errEl) { errEl.textContent = error.message; errEl.classList.add('show'); }
+    return;
+  }
+
+  showToast(ti('toast_transfer_success', { username }));
+  await loadUniversesFromDB();
+  currentUniverse = userUniverses.find(u => u.id === currentUniverse.id) || null;
+  updateConfigNavVisibility();
+  showView('list');
+}
+
+// ══════════════════════════════════════════════════════════════
+// SUPPRESSION DE L'UNIVERS
+// ══════════════════════════════════════════════════════════════
+
+function openDeleteUniverseModal() {
+  if (!canConfigureUniverse() || !currentUniverse) return;
+  const input = document.getElementById('delete-universe-confirm-input');
+  const errEl = document.getElementById('delete-universe-error-msg');
+  const label = document.getElementById('delete-universe-type-label');
+  if (input) input.value = '';
+  if (errEl) errEl.style.display = 'none';
+  if (label) label.textContent = ti('delete_universe_type_label', { name: currentUniverse.name });
+  _refreshDeleteUniverseConfirmState();
+  document.getElementById('delete-universe-modal').style.display = 'flex';
+}
+
+function closeDeleteUniverseModal() {
+  const modal = document.getElementById('delete-universe-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function _refreshDeleteUniverseConfirmState() {
+  const input = document.getElementById('delete-universe-confirm-input');
+  const btn   = document.getElementById('delete-universe-confirm-btn');
+  if (!btn || !currentUniverse) return;
+  btn.disabled = (input?.value || '') !== currentUniverse.name;
+}
+
+function _extractStoragePath(url, bucket) {
+  if (!url) return null;
+  const match = url.match(new RegExp(bucket + '/([^?#]+)'));
+  return match ? match[1] : null;
+}
+
+async function confirmDeleteUniverse() {
+  if (!canConfigureUniverse() || !currentUniverse) return;
+  const input = document.getElementById('delete-universe-confirm-input');
+  const errEl = document.getElementById('delete-universe-error-msg');
+  const btn   = document.getElementById('delete-universe-confirm-btn');
+  if ((input?.value || '') !== currentUniverse.name) return;
+  if (errEl) errEl.style.display = 'none';
+
+  const universeId   = currentUniverse.id;
+  const universeName = currentUniverse.name;
+  if (btn) btn.disabled = true;
+
+  // Le RPC (SECURITY DEFINER) supprime l'univers en cascade et renvoie
+  // toutes les URLs d'illustration à nettoyer côté storage, y compris
+  // celles des éléments privés créés par d'autres membres.
+  const { data: illustrationUrls, error } = await sb.rpc('delete_universe', { p_universe_id: universeId });
+  if (error) {
+    if (errEl) { errEl.textContent = error.message; errEl.style.display = 'flex'; }
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  // Nettoyage du storage en best-effort : la ligne univers est déjà supprimée.
+  const charPaths = [...new Set((illustrationUrls || [])
+    .map(u => _extractStoragePath(u, 'character-illustrations'))
+    .filter(Boolean))];
+  if (charPaths.length) {
+    sb.storage.from('character-illustrations').remove(charPaths)
+      .catch(e => console.warn('Nettoyage storage character-illustrations:', e));
+  }
+  sb.storage.from('map-images').list(universeId).then(({ data }) => {
+    const paths = (data || []).map(f => `${universeId}/${f.name}`);
+    if (paths.length) {
+      sb.storage.from('map-images').remove(paths)
+        .catch(e => console.warn('Nettoyage storage map-images:', e));
+    }
+  }).catch(e => console.warn('Listage storage map-images:', e));
+
+  closeDeleteUniverseModal();
+  currentUniverse = null;
+  await loadUniversesFromDB();
+  showUniverseScreen();
+  showToast(ti('toast_universe_deleted', { name: universeName }));
 }
 
 function renderUniverseMembersList(members) {
@@ -691,9 +820,18 @@ function renderUniverseMembersList(members) {
   }
   container.innerHTML = members.map(m => {
     const isOwner = m.user_id === currentUniverse.owner_id;
+    const roleControl = isOwner
+      ? `<span class="campaign-owner-label">${t('campaign_owner_tag')}</span>`
+      : (m.role === 'player' || m.role === 'gm')
+        ? `<select class="member-role-select" onchange="updateUniverseMemberRole('${m.user_id}', this.value)">
+            <option value="player" ${m.role === 'player' ? 'selected' : ''}>${t('role_player')}</option>
+            <option value="gm" ${m.role === 'gm' ? 'selected' : ''}>${t('role_gm')}</option>
+          </select>`
+        : `<span class="member-role-other">${esc(m.role)}</span>`;
     return `<div class="campaign-item-row">
       <div class="campaign-member-avatar">${esc((m.username || '?').slice(0, 1).toUpperCase())}</div>
-      <div class="campaign-item-row-name">${esc(m.username)}${isOwner ? ` <span class="campaign-owner-label">${t('campaign_owner_tag')}</span>` : ''}</div>
+      <div class="campaign-item-row-name">${esc(m.username)}</div>
+      ${roleControl}
       ${!isOwner ? `<button class="icon-btn danger" onclick="removeUniverseMember('${m.user_id}')" title="${t('btn_delete')}">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
           <line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/>
@@ -701,6 +839,17 @@ function renderUniverseMembersList(members) {
       </button>` : ''}
     </div>`;
   }).join('');
+}
+
+async function updateUniverseMemberRole(userId, role) {
+  if (!canConfigureUniverse() || !currentUniverse) return;
+  const { error } = await sb.from('universe_members')
+    .update({ role })
+    .eq('universe_id', currentUniverse.id)
+    .eq('user_id', userId);
+  if (error) { showToast(t('toast_role_update_error')); await loadUniverseMembersForConfig(); return; }
+  showToast(t('toast_role_update_success'));
+  await loadUniverseMembersForConfig();
 }
 
 async function inviteUniverseMember() {
@@ -951,7 +1100,7 @@ function cardHTML(id, c, isFollowed = false) {
   const cardTags = _buildTagChips(id, isFollowed ? followedTagMap : charTagMap);
 
   if (isFollowed) {
-    const canAdminEdit = isAppAdmin();
+    const canAdminEdit = isUniverseGM();
     const unreadDot = unreadMarkers.cardDotHTML(unreadMarkers.isCharacterUnread(id, false));
     return `<div class="char-card" onclick="${canAdminEdit ? `editSharedFollowedChar('${id}')` : `showSharedChar(followedChars['${id}'])`}">${unreadDot}
       ${c.illustration_url ? _cardIllus(c) : ''}
@@ -998,7 +1147,7 @@ function cardHTML(id, c, isFollowed = false) {
 }
 
 function editSharedFollowedChar(id) {
-  if (!isAppAdmin()) { showSharedChar(followedChars[id]); return; }
+  if (!isUniverseGM()) { showSharedChar(followedChars[id]); return; }
   const shared = followedChars[id];
   if (!shared) return;
   unreadMarkers.markCharacterRead(id);

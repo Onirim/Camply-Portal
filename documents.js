@@ -245,7 +245,7 @@ function docCardHTML(id, d, isFollowed) {
     return `<div class="doc-card" onclick="openDocReader('${id}')">${unreadDot}
       ${d.illustration_url ? `<img class="card-illus" src="${esc(d.illustration_url)}" style="object-position:center ${d.illustration_position||0}%" onclick="event.stopPropagation();openLightbox('${esc(d.illustration_url)}')" alt="">` : ''}
       <div class="doc-card-actions">
-        ${d.allow_write_share ? `<button class="icon-btn" onclick="event.stopPropagation();openDocEditor('${id}')" title="${t('btn_edit')}">
+        ${(d.allow_write_share || isUniverseGM()) ? `<button class="icon-btn" onclick="event.stopPropagation();openDocEditor('${id}')" title="${t('btn_edit')}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3z"/></svg>
         </button>` : ''}
         <button class="icon-btn" onclick="event.stopPropagation();editFollowedDocTags('${id}')" title="${t('card_manage_tags')}">
@@ -431,7 +431,7 @@ function openDocReader(id) {
         onclick="openLightbox('${esc(d.illustration_url)}')" alt="">` : '';
 
   // ── Bannière ───────────────────────────────────────────
-  const canEdit = isOwn || (!!followedDocuments[id] && !!d.allow_write_share);
+  const canEdit = isOwn || (!!followedDocuments[id] && (!!d.allow_write_share || isUniverseGM()));
   const bannerHtml = canEdit
     ? `<div class="doc-reader-header">
         <button class="btn-cancel" onclick="openDocEditor('${id}')">

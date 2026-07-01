@@ -216,3 +216,35 @@
   #transfer-modal-panel { max-height: 100vh; border-radius: 0; }
   .transfer-type-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Modale suppression d'univers — réutilise le chrome ci-dessus
+   ══════════════════════════════════════════════════════════════ */
+#delete-universe-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 210;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+#delete-universe-modal-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: slideUp 0.18s ease;
+}
+
+.transfer-confirm-btn.danger { background: var(--offc); color: #fff; }
+.transfer-confirm-btn.danger:not(:disabled):hover { background: #c94444; }
+
+@media (max-width: 520px) {
+  #delete-universe-modal-panel { max-height: 100vh; border-radius: 0; }
+}

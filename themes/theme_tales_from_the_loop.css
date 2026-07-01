@@ -849,7 +849,7 @@ html, body {
   color: var(--text); font-family: var(--font-body); font-size: 13px;
   padding: 10px 20px; border-radius: 6px;
   transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
-  z-index: 100;
+  z-index: 600;
   opacity: 0; visibility: hidden;
 }
 #toast.show {
