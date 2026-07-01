@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="android-chrome-192x192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="android-chrome-512x512.png">
 <link rel="manifest" href="site.webmanifest">
-<title>Camply TTRPG Manager</title>
+<title>Camply TTRPG Portal</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="styles.css" />
 <link rel="stylesheet" href="generic-editor.css" />
@@ -65,7 +65,7 @@
 <!-- Auth screen -->
 <div id="auth-screen">
   <div class="auth-box">
-    <div class="auth-logo">Camply <span>TTRPG</span></div>
+    <div class="auth-logo">CAMPLY <span>Portal</span></div>
     <div class="auth-tagline" data-i18n="app_tagline">Gestionnaire de campagne pour jeux de rôles</div>
     
      <!-- Onglets -->
@@ -90,7 +90,7 @@
     </button>
   </div>
 
-  <!-- Panneau Email -->
+  <!-- Panneau Email 
   <div id="auth-panel-email" style="display:none">
     <div style="margin-bottom:12px">
       <label style="display:block;font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">
@@ -115,7 +115,7 @@
     <div class="auth-success" id="email-success">
       📬 Lien envoyé ! Vérifiez votre boîte mail.
     </div>
-  </div>
+  </div> -->
 
   <div class="auth-error" id="discord-error"></div>
 </div>
@@ -128,7 +128,7 @@
 
     <!-- List view: choose an existing universe -->
     <div id="universe-list-view">
-      <div class="auth-tagline">Choisissez l'univers dans lequel vous souhaitez jouer</div>
+      <div class="auth-tagline">Choisissez l'univers dans lequel vous souhaitez plonger</div>
 
       <div class="universe-actions">
         <button class="btn-primary" onclick="openUniverseCreateForm()">+ Créer un univers</button>
@@ -202,7 +202,7 @@
 <div id="install-screen">
   <div class="install-box">
     <div class="install-head">
-      <div class="install-logo">Camply <span>TTRPG</span></div>
+      <div class="install-logo">CAMPLY <span>Portal</span></div>
       <div id="install-status-badge" class="install-status-badge">Vérification…</div>
     </div>
     <h2 id="install-title">Assistant d'installation</h2>
@@ -219,7 +219,7 @@
 
   <!-- Top bar -->
   <div id="topbar">
-    <div class="logo">Camply <span>TTRPG</span></div>
+    <div class="logo">CAMPLY <span>Portal</span></div>
 
     <nav>
       <button id="nav-list" class="active" onclick="showView('list')" data-i18n="nav_characters">Personnages</button>
@@ -970,7 +970,7 @@
 
             <div id="config-error" class="auth-error"></div>
 
-            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
               <button onclick="saveUniverseConfig()" data-i18n="btn_save"
                 style="background:linear-gradient(135deg,var(--accent),var(--sup));color:var(--bg);border:none;
                   font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:0.08em;
