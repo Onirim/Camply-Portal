@@ -413,6 +413,7 @@ async function loadUniversesFromDB() {
 }
 
 function showUniverseScreen() {
+  clearHash();
   document.getElementById('loading-overlay').classList.remove('active');
   document.getElementById('auth-screen').classList.remove('active');
   document.getElementById('app').style.display = 'none';
