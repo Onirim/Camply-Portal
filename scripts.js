@@ -28,6 +28,16 @@ function normalizeDiscordName(name) {
     .toLowerCase();
 }
 
+function getDiscordUsername(user) {
+  const meta = user?.user_metadata || {};
+  const raw = meta.full_name
+    || meta.name
+    || meta.username
+    || (user?.email ? user.email.split('@')[0] : '')
+    || 'Joueur';
+  return raw.replace(/#\d+$/, '');
+}
+
 function getCurrentDiscordNames() {
   if (!currentUser) return [];
   const meta = currentUser.user_metadata || {};
@@ -138,11 +148,7 @@ document.addEventListener('click', e => {
 
 function updateUserUI(user) {
   if (!user) return;
-  const username = user.user_metadata?.full_name
-    || user.user_metadata?.name
-    || user.user_metadata?.username
-    || user.email?.split('@')[0]
-    || 'Joueur';
+  const username = getDiscordUsername(user);
   document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
   document.getElementById('user-label').textContent  = username;
   document.getElementById('dd-username').textContent = username;
@@ -335,11 +341,7 @@ async function onSignedIn(user) {
   userUniverses = [];
   isAppReady = false;
   updateUserUI(currentUser);
-  const username = user.user_metadata?.full_name
-    || user.user_metadata?.name
-    || user.user_metadata?.username
-    || user.email?.split('@')[0]
-    || 'Joueur';
+  const username = getDiscordUsername(user);
   await sb.from('profiles').update({ username }).eq('id', user.id);
   document.getElementById('auth-screen').classList.remove('active');
   document.getElementById('app').style.display = 'none';
@@ -426,11 +428,7 @@ function openUniverseCreateForm() {
   universeFormState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
   document.getElementById('universe-f-name').value = '';
   document.getElementById('universe-f-description').value = '';
-  const username = currentUser?.user_metadata?.full_name
-    || currentUser?.user_metadata?.name
-    || currentUser?.user_metadata?.username
-    || currentUser?.email?.split('@')[0]
-    || 'Joueur';
+  const username = getDiscordUsername(currentUser);
   document.getElementById('universe-f-owner').value = username;
   setUniverseIllusPreview('', 0);
   const errEl = document.getElementById('universe-create-error');
@@ -662,8 +660,10 @@ async function inviteUniverseMember() {
   if (errEl) errEl.classList.remove('show');
   if (!username) return;
 
+  const escapedUsername = username.replace(/[%_\\]/g, '\\$&');
   const { data: profile, error: profileError } = await sb.from('profiles')
-    .select('id, username').ilike('username', username).maybeSingle();
+    .select('id, username').ilike('username', escapedUsername).maybeSingle();
+  if (profileError) console.error('Erreur recherche utilisateur:', profileError);
   if (profileError || !profile) {
     if (errEl) { errEl.textContent = t('toast_invite_user_not_found'); errEl.classList.add('show'); }
     return;
