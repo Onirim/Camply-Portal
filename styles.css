@@ -514,6 +514,7 @@ html, body {
   #toast { bottom: 80px; }
   .char-card { padding: 14px 16px; }
   .char-card .card-actions { opacity: 1; }
+  .universe-card .card-actions { opacity: 1; }
 }
 @media (max-width: 480px) {
   .preview-name { font-size: 22px; }
@@ -554,6 +555,9 @@ html, body {
 .universe-empty { border: 1px dashed var(--border2); border-radius: 10px; padding: 22px; color: var(--text3); text-align: center; font-size: 13px; line-height: 1.6; }
 .universe-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; text-align: left; color: var(--text); cursor: pointer; transition: all 0.15s; position: relative; overflow: hidden; }
 .universe-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
+.universe-card .card-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+.universe-card:hover .card-actions { opacity: 1; }
+.universe-card .card-illus { cursor: default; }
 .universe-card-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 6px; }
 .universe-card-desc { color: var(--text3); font-size: 12px; line-height: 1.5; min-height: 18px; margin-bottom: 12px; }
 .universe-card-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--text3); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }

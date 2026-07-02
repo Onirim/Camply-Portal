@@ -80,6 +80,10 @@ const TRANSLATIONS = {
     delete_universe_type_label: 'Tapez « ${name} » pour confirmer :',
     delete_universe_confirm_btn: 'Supprimer définitivement',
     toast_universe_deleted:  '"${name}" a été supprimé définitivement.',
+    btn_leave_universe:      'Quitter l\'univers',
+    confirm_leave_universe:  'Quitter l\'univers "${name}" ? Vous perdrez l\'accès à son contenu.',
+    toast_universe_left:     'Vous avez quitté "${name}".',
+    toast_leave_universe_error: 'Erreur lors de la sortie de l\'univers.',
 
     // ── Configuration du thème ─────────────────────────────────
     config_section_theme:    'Thème',
@@ -420,6 +424,10 @@ const TRANSLATIONS = {
     delete_universe_type_label: 'Type "${name}" to confirm:',
     delete_universe_confirm_btn: 'Delete permanently',
     toast_universe_deleted:  '"${name}" has been permanently deleted.',
+    btn_leave_universe:      'Leave universe',
+    confirm_leave_universe:  'Leave the universe "${name}"? You will lose access to its content.',
+    toast_universe_left:     'You have left "${name}".',
+    toast_leave_universe_error: 'Error while leaving the universe.',
 
     // ── Theme configuration ─────────────────────────────────────
     config_section_theme:    'Theme',
