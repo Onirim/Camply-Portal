@@ -131,11 +131,11 @@ const TRANSLATIONS = {
     visibility_public_chr:   '🔗 Publique',
     visibility_private_chr:  '🔒 Privée',
     followed_badge:          '👁 Suivi',
-    share_code_active:       'Public (lien de partage actif)',
+    share_code_active:       'Public',
     share_code_inactive:     'Privé',
-    share_code_active_chr:   'Public (abonnement actif)',
+    share_code_active_chr:   'Public',
     share_code_inactive_chr: 'Privée',
-    share_code_active_doc:   'Public (abonnement actif)',
+    share_code_active_doc:   'Public',
     share_code_inactive_doc: 'Privé',
 
     // ── Toasts ────────────────────────────────────────────────
@@ -471,11 +471,11 @@ const TRANSLATIONS = {
     visibility_public_chr:   '🔗 Public',
     visibility_private_chr:  '🔒 Private',
     followed_badge:          '👁 Following',
-    share_code_active:       'Public (share link active)',
+    share_code_active:       'Public',
     share_code_inactive:     'Private',
-    share_code_active_chr:   'Public (subscriptions open)',
+    share_code_active_chr:   'Public',
     share_code_inactive_chr: 'Private',
-    share_code_active_doc:   'Public (subscriptions open)',
+    share_code_active_doc:   'Public',
     share_code_inactive_doc: 'Private',
 
     // ── Toasts ────────────────────────────────────────────────
