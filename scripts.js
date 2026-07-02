@@ -42,10 +42,6 @@ function isUniverseGM() {
 // ══════════════════════════════════════════════════════════════
 
 async function doDiscordLogin() {
-  if (window.installAssistant) {
-    const installationOk = await installAssistant.runChecks();
-    if (!installationOk) return;
-  }
   const btn   = document.getElementById('btn-discord');
   const errEl = document.getElementById('discord-error');
   errEl.classList.remove('show');
@@ -301,10 +297,6 @@ async function saveCharSecretToDB(charId, content) {
 // ══════════════════════════════════════════════════════════════
 
 async function init() {
-  if (window.installAssistant) {
-    const installationOk = await installAssistant.runChecks();
-    if (!installationOk) return;
-  }
   const pendingHash = sessionStorage.getItem('camply_pending_hash');
   if (pendingHash) {
     sessionStorage.removeItem('camply_pending_hash');
