@@ -195,41 +195,11 @@ function _isMarkerOnCurrentMap(marker) {
   return _normalizeMapKey(marker?.map_key) === currentMapKey;
 }
 
-function _normalizeDiscordName(name) {
-  return (name || '')
-    .trim()
-    .replace(/^@+/, '')
-    .replace(/#\d+$/, '')
-    .toLowerCase();
-}
-
-function _getCurrentDiscordNames() {
-  if (!currentUser) return [];
-  const meta = currentUser.user_metadata || {};
-  // IMPORTANT: on s'aligne volontairement sur le nom affiché
-  // dans le menu utilisateur (updateUserUI dans scripts.js).
-  const displayedName = meta.full_name
-    || meta.name
-    || meta.username
-    || (currentUser.email ? currentUser.email.split('@')[0] : '');
-
-  return [displayedName]
-    .map(_normalizeDiscordName)
-    .filter(Boolean);
-}
-
-function _isMapAdmin() {
-  const admins = (globalThis.APP_CONFIG?.adminDiscordUsers || [])
-    .map(_normalizeDiscordName)
-    .filter(Boolean);
-  if (!admins.length) return false;
-  const names = _getCurrentDiscordNames();
-  return names.some(n => admins.includes(n));
-}
-
 function _recomputeMapAccess() {
   const keys = (mapsConfig || []).map(m => m.key);
-  const canSeeAll = _isMapAdmin();
+  // Le propriétaire de l'univers a accès à toutes les cartes,
+  // y compris celles dont aucune couche n'est partagée avec lui.
+  const canSeeAll = currentUniverse?.role === 'owner';
   mapAccessByKey = {};
 
   if (canSeeAll) {

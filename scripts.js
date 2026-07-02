@@ -20,14 +20,6 @@ let filterFollowed   = false;
 let charSecrets = {}; 
 let currentSecretDraft = '';
 
-function normalizeDiscordName(name) {
-  return (name || '')
-    .trim()
-    .replace(/^@+/, '')
-    .replace(/#\d+$/, '')
-    .toLowerCase();
-}
-
 function getDiscordUsername(user) {
   const meta = user?.user_metadata || {};
   const raw = meta.full_name
@@ -38,32 +30,11 @@ function getDiscordUsername(user) {
   return raw.replace(/#\d+$/, '');
 }
 
-function getCurrentDiscordNames() {
-  if (!currentUser) return [];
-  const meta = currentUser.user_metadata || {};
-  const displayedName = meta.full_name
-    || meta.name
-    || meta.username
-    || (currentUser.email ? currentUser.email.split('@')[0] : '');
-  return [displayedName]
-    .map(normalizeDiscordName)
-    .filter(Boolean);
-}
-
-function isAppAdmin() {
-  const admins = (globalThis.APP_CONFIG?.adminDiscordUsers || [])
-    .map(normalizeDiscordName)
-    .filter(Boolean);
-  if (!admins.length) return false;
-  const names = getCurrentDiscordNames();
-  return names.some(n => admins.includes(n));
-}
-
-// MJ de l'univers courant (ou propriétaire, ou admin site legacy) :
+// MJ de l'univers courant (ou propriétaire) :
 // droit d'édition sur les objets publics partagés via une campagne
 // commune, en plus de ses propres objets.
 function isUniverseGM() {
-  return isAppAdmin() || currentUniverse?.role === 'gm' || currentUniverse?.role === 'owner';
+  return currentUniverse?.role === 'gm' || currentUniverse?.role === 'owner';
 }
 
 // ══════════════════════════════════════════════════════════════
