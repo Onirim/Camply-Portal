@@ -3290,15 +3290,23 @@ SECURITY DEFINER
 STABLE
 SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.campaign_members cm1
-    JOIN public.campaign_members cm2 ON cm2.campaign_id = cm1.campaign_id
-    JOIN public.campaigns c ON c.id = cm1.campaign_id
-    WHERE c.universe_id = p_universe_id
-      AND cm1.user_id = p_owner_id
-      AND cm2.user_id = p_viewer_id
-  );
+  -- Tant qu'aucune campagne n'existe dans l'univers, celui-ci se comporte
+  -- comme une seule campagne implicite regroupant tous ses membres : le
+  -- contenu public reste visible à tous plutôt que d'être isolé en silo.
+  SELECT CASE
+    WHEN NOT EXISTS (SELECT 1 FROM public.campaigns c WHERE c.universe_id = p_universe_id)
+      THEN public.is_universe_member(p_universe_id, p_owner_id)
+       AND public.is_universe_member(p_universe_id, p_viewer_id)
+    ELSE EXISTS (
+      SELECT 1
+      FROM public.campaign_members cm1
+      JOIN public.campaign_members cm2 ON cm2.campaign_id = cm1.campaign_id
+      JOIN public.campaigns c ON c.id = cm1.campaign_id
+      WHERE c.universe_id = p_universe_id
+        AND cm1.user_id = p_owner_id
+        AND cm2.user_id = p_viewer_id
+    )
+  END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.shares_campaign_with(UUID, UUID, UUID) TO authenticated;
@@ -3323,6 +3331,158 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.can_gm_edit(UUID, UUID, UUID) TO authenticated;
+
+
+-- ══════════════════════════════════════════════════════════════
+-- 4bis. Sélection d'objets MJ visibles par campagne
+-- ══════════════════════════════════════════════════════════════
+-- Le contenu créé par le MJ (owner/gm de l'univers) peut être restreint
+-- à des campagnes précises : le MJ coche, pour chaque campagne, quels
+-- objets publics doivent être visibles par ses membres. Cette table de
+-- jonction ne s'applique qu'au contenu "côté MJ" — les personnages
+-- publics des simples joueurs restent visibles à toute leur campagne
+-- sans sélection explicite (cf. shares_campaign_with).
+
+CREATE OR REPLACE FUNCTION public.gm_owns_and_restricted(
+  p_universe_id UUID,
+  p_owner_id    UUID
+)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT public.has_universe_role(p_universe_id, ARRAY['owner', 'gm'], p_owner_id)
+     AND EXISTS (SELECT 1 FROM public.campaigns c WHERE c.universe_id = p_universe_id);
+$$;
+
+GRANT EXECUTE ON FUNCTION public.gm_owns_and_restricted(UUID, UUID) TO authenticated;
+
+CREATE TABLE IF NOT EXISTS public.campaign_visible_characters (
+  campaign_id  UUID NOT NULL REFERENCES public.campaigns(id)  ON DELETE CASCADE,
+  character_id UUID NOT NULL REFERENCES public.characters(id) ON DELETE CASCADE,
+  added_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (campaign_id, character_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.campaign_visible_chronicles (
+  campaign_id  UUID NOT NULL REFERENCES public.campaigns(id)  ON DELETE CASCADE,
+  chronicle_id UUID NOT NULL REFERENCES public.chronicles(id) ON DELETE CASCADE,
+  added_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (campaign_id, chronicle_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.campaign_visible_documents (
+  campaign_id UUID NOT NULL REFERENCES public.campaigns(id) ON DELETE CASCADE,
+  document_id UUID NOT NULL REFERENCES public.documents(id) ON DELETE CASCADE,
+  added_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (campaign_id, document_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.campaign_visible_maps (
+  campaign_id  UUID NOT NULL REFERENCES public.campaigns(id)  ON DELETE CASCADE,
+  map_layer_id UUID NOT NULL REFERENCES public.map_layers(id) ON DELETE CASCADE,
+  added_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (campaign_id, map_layer_id)
+);
+
+CREATE INDEX IF NOT EXISTS campaign_visible_characters_char_idx ON public.campaign_visible_characters(character_id);
+CREATE INDEX IF NOT EXISTS campaign_visible_chronicles_chr_idx  ON public.campaign_visible_chronicles(chronicle_id);
+CREATE INDEX IF NOT EXISTS campaign_visible_documents_doc_idx   ON public.campaign_visible_documents(document_id);
+CREATE INDEX IF NOT EXISTS campaign_visible_maps_map_idx        ON public.campaign_visible_maps(map_layer_id);
+
+ALTER TABLE public.campaign_visible_characters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.campaign_visible_chronicles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.campaign_visible_documents  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.campaign_visible_maps       ENABLE ROW LEVEL SECURITY;
+
+-- Gérées exclusivement par le propriétaire de l'univers (même pattern
+-- que campaign_members_*), mais lisibles aussi par les membres de la
+-- campagne concernée puisque les policies de contenu en dépendent.
+DROP POLICY IF EXISTS "campaign_visible_characters_select" ON public.campaign_visible_characters;
+CREATE POLICY "campaign_visible_characters_select" ON public.campaign_visible_characters FOR SELECT
+  USING (
+    EXISTS (SELECT 1 FROM public.campaign_members cm WHERE cm.campaign_id = campaign_id AND cm.user_id = auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM public.campaigns c
+      WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+    )
+  );
+
+DROP POLICY IF EXISTS "campaign_visible_characters_write" ON public.campaign_visible_characters;
+CREATE POLICY "campaign_visible_characters_write" ON public.campaign_visible_characters FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM public.campaigns c
+    WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.campaigns c
+    WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+  ));
+
+DROP POLICY IF EXISTS "campaign_visible_chronicles_select" ON public.campaign_visible_chronicles;
+CREATE POLICY "campaign_visible_chronicles_select" ON public.campaign_visible_chronicles FOR SELECT
+  USING (
+    EXISTS (SELECT 1 FROM public.campaign_members cm WHERE cm.campaign_id = campaign_id AND cm.user_id = auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM public.campaigns c
+      WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+    )
+  );
+
+DROP POLICY IF EXISTS "campaign_visible_chronicles_write" ON public.campaign_visible_chronicles;
+CREATE POLICY "campaign_visible_chronicles_write" ON public.campaign_visible_chronicles FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM public.campaigns c
+    WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.campaigns c
+    WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+  ));
+
+DROP POLICY IF EXISTS "campaign_visible_documents_select" ON public.campaign_visible_documents;
+CREATE POLICY "campaign_visible_documents_select" ON public.campaign_visible_documents FOR SELECT
+  USING (
+    EXISTS (SELECT 1 FROM public.campaign_members cm WHERE cm.campaign_id = campaign_id AND cm.user_id = auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM public.campaigns c
+      WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+    )
+  );
+
+DROP POLICY IF EXISTS "campaign_visible_documents_write" ON public.campaign_visible_documents;
+CREATE POLICY "campaign_visible_documents_write" ON public.campaign_visible_documents FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM public.campaigns c
+    WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.campaigns c
+    WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+  ));
+
+DROP POLICY IF EXISTS "campaign_visible_maps_select" ON public.campaign_visible_maps;
+CREATE POLICY "campaign_visible_maps_select" ON public.campaign_visible_maps FOR SELECT
+  USING (
+    EXISTS (SELECT 1 FROM public.campaign_members cm WHERE cm.campaign_id = campaign_id AND cm.user_id = auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM public.campaigns c
+      WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+    )
+  );
+
+DROP POLICY IF EXISTS "campaign_visible_maps_write" ON public.campaign_visible_maps;
+CREATE POLICY "campaign_visible_maps_write" ON public.campaign_visible_maps FOR ALL
+  USING (EXISTS (
+    SELECT 1 FROM public.campaigns c
+    WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.campaigns c
+    WHERE c.id = campaign_id AND public.has_universe_role(c.universe_id, ARRAY['owner'])
+  ));
 
 
 -- ══════════════════════════════════════════════════════════════
@@ -3392,12 +3552,30 @@ CREATE POLICY "campaign_members_delete_owner" ON public.campaign_members FOR DEL
 -- 6. RLS — tables de contenu (visibilité scoped par campagne)
 -- ══════════════════════════════════════════════════════════════
 
--- Personnages : lecture propriétaire OU public+campagne commune.
+-- Personnages : lecture propriétaire OU public+campagne commune. Si le
+-- propriétaire est MJ/owner et qu'au moins une campagne existe, l'objet
+-- doit en plus avoir été coché comme visible pour l'une des campagnes
+-- communes (cf. campaign_visible_characters).
 DROP POLICY IF EXISTS "characters_select" ON public.characters;
 CREATE POLICY "characters_select" ON public.characters FOR SELECT
   USING (
     auth.uid() = user_id
-    OR (is_public = TRUE AND public.shares_campaign_with(universe_id, user_id, auth.uid()))
+    OR (
+      is_public = TRUE
+      AND public.shares_campaign_with(universe_id, user_id, auth.uid())
+      AND (
+        NOT public.gm_owns_and_restricted(universe_id, user_id)
+        OR EXISTS (
+          SELECT 1
+          FROM public.campaign_members cm
+          JOIN public.campaigns c ON c.id = cm.campaign_id
+          JOIN public.campaign_visible_characters cvc ON cvc.campaign_id = c.id
+          WHERE c.universe_id = characters.universe_id
+            AND cm.user_id = auth.uid()
+            AND cvc.character_id = characters.id
+        )
+      )
+    )
   );
 
 -- Édition : propriétaire, OU membre 'gm'/'owner' de l'univers partageant
@@ -3416,7 +3594,22 @@ DROP POLICY IF EXISTS "chronicles_select" ON public.chronicles;
 CREATE POLICY "chronicles_select" ON public.chronicles FOR SELECT
   USING (
     auth.uid() = user_id
-    OR (is_public = TRUE AND public.shares_campaign_with(universe_id, user_id, auth.uid()))
+    OR (
+      is_public = TRUE
+      AND public.shares_campaign_with(universe_id, user_id, auth.uid())
+      AND (
+        NOT public.gm_owns_and_restricted(universe_id, user_id)
+        OR EXISTS (
+          SELECT 1
+          FROM public.campaign_members cm
+          JOIN public.campaigns c ON c.id = cm.campaign_id
+          JOIN public.campaign_visible_chronicles cvc ON cvc.campaign_id = c.id
+          WHERE c.universe_id = chronicles.universe_id
+            AND cm.user_id = auth.uid()
+            AND cvc.chronicle_id = chronicles.id
+        )
+      )
+    )
   );
 
 DROP POLICY IF EXISTS "chronicles_update" ON public.chronicles;
@@ -3433,7 +3626,22 @@ CREATE POLICY "entries_select" ON public.chronicle_entries FOR SELECT
     WHERE c.id = chronicle_id
       AND (
         c.user_id = auth.uid()
-        OR (c.is_public = TRUE AND public.shares_campaign_with(c.universe_id, c.user_id, auth.uid()))
+        OR (
+          c.is_public = TRUE
+          AND public.shares_campaign_with(c.universe_id, c.user_id, auth.uid())
+          AND (
+            NOT public.gm_owns_and_restricted(c.universe_id, c.user_id)
+            OR EXISTS (
+              SELECT 1
+              FROM public.campaign_members cm
+              JOIN public.campaigns cc ON cc.id = cm.campaign_id
+              JOIN public.campaign_visible_chronicles cvc ON cvc.campaign_id = cc.id
+              WHERE cc.universe_id = c.universe_id
+                AND cm.user_id = auth.uid()
+                AND cvc.chronicle_id = c.id
+            )
+          )
+        )
       )
   ));
 
@@ -3466,12 +3674,30 @@ DROP POLICY IF EXISTS "documents_select" ON public.documents;
 CREATE POLICY "documents_select" ON public.documents FOR SELECT
   USING (
     auth.uid() = user_id
-    OR (is_public = TRUE AND public.shares_campaign_with(universe_id, user_id, auth.uid()))
+    OR (
+      is_public = TRUE
+      AND public.shares_campaign_with(universe_id, user_id, auth.uid())
+      AND (
+        NOT public.gm_owns_and_restricted(universe_id, user_id)
+        OR EXISTS (
+          SELECT 1
+          FROM public.campaign_members cm
+          JOIN public.campaigns c ON c.id = cm.campaign_id
+          JOIN public.campaign_visible_documents cvd ON cvd.campaign_id = c.id
+          WHERE c.universe_id = documents.universe_id
+            AND cm.user_id = auth.uid()
+            AND cvd.document_id = documents.id
+        )
+      )
+    )
   );
 
 -- Un MJ a toujours le droit d'écriture sur un document public partagé,
 -- même si son propriétaire n'a pas activé allow_write_share (ce flag ne
--- régit que la co-édition entre simples joueurs).
+-- régit que la co-édition entre simples joueurs). Le volet co-édition
+-- (allow_write_share) reprend la même restriction de visibilité que la
+-- lecture : un joueur ne peut pas écrire sur un document MJ qu'il ne
+-- peut pas voir.
 DROP POLICY IF EXISTS "documents_update" ON public.documents;
 CREATE POLICY "documents_update" ON public.documents FOR UPDATE
   USING (
@@ -3480,6 +3706,18 @@ CREATE POLICY "documents_update" ON public.documents FOR UPDATE
       allow_write_share = TRUE
       AND is_public = TRUE
       AND public.shares_campaign_with(universe_id, user_id, auth.uid())
+      AND (
+        NOT public.gm_owns_and_restricted(universe_id, user_id)
+        OR EXISTS (
+          SELECT 1
+          FROM public.campaign_members cm
+          JOIN public.campaigns c ON c.id = cm.campaign_id
+          JOIN public.campaign_visible_documents cvd ON cvd.campaign_id = c.id
+          WHERE c.universe_id = documents.universe_id
+            AND cm.user_id = auth.uid()
+            AND cvd.document_id = documents.id
+        )
+      )
     )
     OR (is_public = TRUE AND public.can_gm_edit(universe_id, user_id, auth.uid()))
   )
@@ -3489,6 +3727,18 @@ CREATE POLICY "documents_update" ON public.documents FOR UPDATE
       allow_write_share = TRUE
       AND is_public = TRUE
       AND public.shares_campaign_with(universe_id, user_id, auth.uid())
+      AND (
+        NOT public.gm_owns_and_restricted(universe_id, user_id)
+        OR EXISTS (
+          SELECT 1
+          FROM public.campaign_members cm
+          JOIN public.campaigns c ON c.id = cm.campaign_id
+          JOIN public.campaign_visible_documents cvd ON cvd.campaign_id = c.id
+          WHERE c.universe_id = documents.universe_id
+            AND cm.user_id = auth.uid()
+            AND cvd.document_id = documents.id
+        )
+      )
     )
     OR (is_public = TRUE AND public.can_gm_edit(universe_id, user_id, auth.uid()))
   );
@@ -3498,7 +3748,22 @@ DROP POLICY IF EXISTS "map_layers_select" ON public.map_layers;
 CREATE POLICY "map_layers_select" ON public.map_layers FOR SELECT
   USING (
     auth.uid() = user_id
-    OR (is_public = TRUE AND public.shares_campaign_with(universe_id, user_id, auth.uid()))
+    OR (
+      is_public = TRUE
+      AND public.shares_campaign_with(universe_id, user_id, auth.uid())
+      AND (
+        NOT public.gm_owns_and_restricted(universe_id, user_id)
+        OR EXISTS (
+          SELECT 1
+          FROM public.campaign_members cm
+          JOIN public.campaigns c ON c.id = cm.campaign_id
+          JOIN public.campaign_visible_maps cvm ON cvm.campaign_id = c.id
+          WHERE c.universe_id = map_layers.universe_id
+            AND cm.user_id = auth.uid()
+            AND cvm.map_layer_id = map_layers.id
+        )
+      )
+    )
   );
 
 -- Un MJ peut modifier une couche de carte publique partagée avec lui
@@ -3523,6 +3788,18 @@ CREATE POLICY "map_markers_select_shared" ON public.map_markers FOR SELECT
         AND ml.map_key  = map_markers.map_key
         AND ml.is_public = TRUE
         AND public.shares_campaign_with(ml.universe_id, ml.user_id, auth.uid())
+        AND (
+          NOT public.gm_owns_and_restricted(ml.universe_id, ml.user_id)
+          OR EXISTS (
+            SELECT 1
+            FROM public.campaign_members cm
+            JOIN public.campaigns c ON c.id = cm.campaign_id
+            JOIN public.campaign_visible_maps cvm ON cvm.campaign_id = c.id
+            WHERE c.universe_id = ml.universe_id
+              AND cm.user_id = auth.uid()
+              AND cvm.map_layer_id = ml.id
+          )
+        )
     )
   );
 
