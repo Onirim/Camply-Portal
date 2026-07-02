@@ -293,7 +293,7 @@ const TRANSLATIONS = {
     campaign_subtitle: 'Collections de campagne',
     campaign_new_btn:  'Nouvelle campagne',
     campaign_empty_title: 'Aucune campagne',
-    campaign_empty_body:  'Créez votre première campagne pour regrouper vos joueurs.',
+    campaign_empty_body:  'Créez une ou plusieurs campagnes si vous désirez une gestion fine des accès aux personnages, chroniques, documents et cartes. Si vous n\'avez qu\'un seul groupe de joueur sur votre univers, il est inutile de créer une campagne.',
     campaign_empty_btn:   'Créer une campagne',
     campaign_member_plural:   'Membres',
     campaign_owner_tag:       '(MJ)',
