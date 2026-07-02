@@ -542,6 +542,7 @@ async function enterUniverse(universeId) {
     return;
   }
   currentUniverse = universe;
+  if (typeof resetMapState === 'function') resetMapState();
   updateConfigNavVisibility();
   await loadThemeManifest();
   applyTheme(currentUniverse.theme_name || '');
