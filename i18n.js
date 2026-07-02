@@ -209,9 +209,7 @@ const TRANSLATIONS = {
     editor_illus_slider:       'Cadrage',
     editor_section_identity:   'Identité',
     editor_field_name:         'Nom du personnage',
-    editor_field_name_ph:      'Ex: Kitsune',
     editor_field_subtitle:     'Identité réelle',
-    editor_field_subtitle_ph:  'Ex: Jane Doe, étudiante en art',
     editor_field_public:       'Partage public',
     editor_section_tags:       'Tags',
     editor_tag_ph:             'Ajouter un tag…',
@@ -553,9 +551,7 @@ const TRANSLATIONS = {
     editor_illus_slider:      'Framing',
     editor_section_identity:  'Identity',
     editor_field_name:        'Character name',
-    editor_field_name_ph:     'E.g. Kitsune',
     editor_field_subtitle:    'Real identity',
-    editor_field_subtitle_ph: 'E.g. Jane Doe, art student',
     editor_field_public:      'Public sharing',
     editor_section_tags:      'Tags',
     editor_tag_ph:            'Add a tag…',
@@ -737,6 +733,9 @@ function applyTranslations() {
     if (attr) el.setAttribute(attr, value);
     else el.textContent = value;
   });
+  // Ré-applique les libellés personnalisés des blocs de fiche
+  // (écrasés ci-dessus par leur défaut i18n via [data-i18n]).
+  if (typeof applyCharBlockConfig === 'function') applyCharBlockConfig();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

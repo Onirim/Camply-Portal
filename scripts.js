@@ -341,7 +341,7 @@ async function loadUniversesFromDB() {
 
   const { data: universes, error } = await sb
     .from('universes')
-    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, created_at, updated_at')
+    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, char_block_config, created_at, updated_at')
     .order('updated_at', { ascending: false });
 
   if (error) {
@@ -584,7 +584,7 @@ async function loadUniverseData() {
 // CONFIGURATION DE L'UNIVERS COURANT (propriétaire uniquement)
 // ══════════════════════════════════════════════════════════════
 
-let universeConfigState = { name: '', description: '', illustration_url: '', illustration_position: 0, theme_name: '' };
+let universeConfigState = { name: '', description: '', illustration_url: '', illustration_position: 0, theme_name: '', char_block_config: {} };
 
 // ══════════════════════════════════════════════════════════════
 // THÈME DE L'UNIVERS
@@ -648,11 +648,19 @@ function openUniverseConfigView() {
     illustration_url: currentUniverse.illustration_url || '',
     illustration_position: currentUniverse.illustration_position || 0,
     theme_name: currentUniverse.theme_name || '',
+    char_block_config: currentUniverse.char_block_config || {},
   };
   document.getElementById('config-f-name').value = universeConfigState.name;
   document.getElementById('config-f-description').value = universeConfigState.description;
   setConfigIllusPreview(universeConfigState.illustration_url, universeConfigState.illustration_position);
   populateConfigThemeSelect(universeConfigState.theme_name);
+  Object.keys(CHAR_BLOCKS).forEach(key => {
+    const cfg = universeConfigState.char_block_config[key] || {};
+    const visibleCb = document.getElementById(`config-block-${key}-visible`);
+    if (visibleCb) visibleCb.checked = cfg.visible !== false;
+    const labelInput = document.getElementById(`config-block-${key}-label`);
+    if (labelInput) labelInput.value = cfg.label || '';
+  });
   const errEl = document.getElementById('config-error');
   if (errEl) errEl.classList.remove('show');
   const inviteErrEl = document.getElementById('config-invite-error');
@@ -963,6 +971,16 @@ async function saveUniverseConfig() {
   const description = document.getElementById('config-f-description').value.trim();
   if (errEl) errEl.classList.remove('show');
 
+  const charBlockConfig = {};
+  Object.keys(CHAR_BLOCKS).forEach(key => {
+    const visibleCb = document.getElementById(`config-block-${key}-visible`);
+    const labelInput = document.getElementById(`config-block-${key}-label`);
+    charBlockConfig[key] = {
+      visible: visibleCb ? visibleCb.checked : true,
+      label: (labelInput?.value || '').trim(),
+    };
+  });
+
   const { data, error } = await sb.from('universes')
     .update({
       name,
@@ -970,9 +988,10 @@ async function saveUniverseConfig() {
       illustration_url: universeConfigState.illustration_url || '',
       illustration_position: universeConfigState.illustration_position || 0,
       theme_name: universeConfigState.theme_name || '',
+      char_block_config: charBlockConfig,
     })
     .eq('id', currentUniverse.id)
-    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, created_at, updated_at')
+    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, char_block_config, created_at, updated_at')
     .single();
 
   if (error) {
