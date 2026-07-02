@@ -381,32 +381,26 @@
           <div class="field">
             <label data-i18n="editor_field_name">Nom du personnage</label>
             <input type="text" id="f-name"
-              data-i18n="editor_field_name_ph" data-i18n-attr="placeholder"
-              placeholder="Ex : Aragorn"
               oninput="updatePreview()">
           </div>
-      
-          <div class="field">
-            <label data-i18n="editor_field_subtitle">Titre / Occupation</label>
+
+          <div class="field" id="field-subtitle-wrap">
+            <label id="lbl-subtitle" data-i18n="editor_field_subtitle">Titre / Occupation</label>
             <input type="text" id="f-sub"
-              data-i18n="editor_field_subtitle_ph" data-i18n-attr="placeholder"
-              placeholder="Ex : Guerrier, Mage, Voleur…"
               oninput="updatePreview()">
           </div>
-      
-          <div class="field">
-            <label data-i18n="editor_field_race_class">Race / Classe</label>
+
+          <div class="field" id="field-race-class-wrap">
+            <label id="lbl-race-class" data-i18n="editor_field_race_class">Race / Classe</label>
             <input type="text" id="f-race-class"
-              data-i18n="editor_field_race_class_ph" data-i18n-attr="placeholder"
-              placeholder="Ex : Elfe Rôdeur…"
               oninput="updatePreview()">
           </div>
-      
+
           <!-- Niveau -->
-          <div class="field">
-            <label data-i18n="editor_field_level">Niveau</label>
+          <div class="field" id="field-level-wrap">
+            <label id="lbl-level" data-i18n="editor_field_level">Niveau</label>
             <div class="level-ctrl">
-              <span class="lbl" data-i18n="editor_field_level">Niveau</span>
+              <span class="lbl" id="lbl-level-inline" data-i18n="editor_field_level">Niveau</span>
               <div class="score-ctrl">
                 <button onclick="changeLevel(-1,event)">−</button>
                 <div class="score-val" id="level-display"
@@ -449,8 +443,8 @@
         </div>
       
         <!-- Caractéristiques -->
-        <div class="form-section">
-          <div class="form-section-title" data-i18n="editor_section_characteristics">Caractéristiques</div>
+        <div class="form-section" id="section-characteristics-wrap">
+          <div class="form-section-title" id="lbl-characteristics" data-i18n="editor_section_characteristics">Caractéristiques</div>
           <div class="section-hint" style="margin-bottom:8px" data-i18n="editor_char_score_hint">
             Shift+clic : ±10
           </div>
@@ -458,10 +452,10 @@
           <button class="add-btn" onclick="addCharacteristic()"
             data-i18n="editor_add_characteristic">+ Ajouter une caractéristique</button>
         </div>
-      
+
         <!-- Compétences -->
-        <div class="form-section">
-          <div class="form-section-title" data-i18n="editor_section_skills">Compétences</div>
+        <div class="form-section" id="section-skills-wrap">
+          <div class="form-section-title" id="lbl-skills" data-i18n="editor_section_skills">Compétences</div>
           <div class="section-hint" style="margin-bottom:8px" data-i18n="editor_skill_score_hint">
             Shift+clic : ±10
           </div>
@@ -469,10 +463,10 @@
           <button class="add-btn" onclick="addSkill()"
             data-i18n="editor_add_skill">+ Ajouter une compétence</button>
         </div>
-      
+
         <!-- Traits (anciennement "Autres traits", sans champ type) -->
-        <div class="form-section">
-          <div class="form-section-title" data-i18n="editor_section_traits">Traits</div>
+        <div class="form-section" id="section-traits-wrap">
+          <div class="form-section-title" id="lbl-traits" data-i18n="editor_section_traits">Traits</div>
           <div id="traits-list"></div>
           <button class="add-btn" onclick="addTrait()"
             data-i18n="editor_add_trait">+ Ajouter un trait</button>
@@ -1004,6 +998,61 @@
             <div class="field" style="margin-bottom:0">
               <label data-i18n="config_field_theme">Thème visuel</label>
               <select id="config-f-theme" onchange="onConfigThemeChange(this.value)"></select>
+            </div>
+
+            <div class="form-section-title" style="margin-top:16px" data-i18n="config_section_char_blocks">Fiche de personnage</div>
+            <p class="config-block-hint" data-i18n="config_char_blocks_hint">
+              Activez ou désactivez ces blocs et renommez-les pour tous les personnages de cet univers.
+            </p>
+            <div id="config-char-blocks-list">
+              <div class="config-block-row" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:6px;min-width:180px;margin-bottom:0;cursor:pointer">
+                  <input type="checkbox" id="config-block-subtitle-visible" checked style="width:auto;accent-color:var(--accent)">
+                  <span data-i18n="editor_field_subtitle">Titre / Occupation</span>
+                </label>
+                <input type="text" id="config-block-subtitle-label" class="generic-input" style="flex:1"
+                  data-i18n="config_block_label_ph" data-i18n-attr="placeholder" placeholder="Libellé par défaut">
+              </div>
+              <div class="config-block-row" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:6px;min-width:180px;margin-bottom:0;cursor:pointer">
+                  <input type="checkbox" id="config-block-race_class-visible" checked style="width:auto;accent-color:var(--accent)">
+                  <span data-i18n="editor_field_race_class">Race / Classe</span>
+                </label>
+                <input type="text" id="config-block-race_class-label" class="generic-input" style="flex:1"
+                  data-i18n="config_block_label_ph" data-i18n-attr="placeholder" placeholder="Libellé par défaut">
+              </div>
+              <div class="config-block-row" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:6px;min-width:180px;margin-bottom:0;cursor:pointer">
+                  <input type="checkbox" id="config-block-level-visible" checked style="width:auto;accent-color:var(--accent)">
+                  <span data-i18n="editor_field_level">Niveau</span>
+                </label>
+                <input type="text" id="config-block-level-label" class="generic-input" style="flex:1"
+                  data-i18n="config_block_label_ph" data-i18n-attr="placeholder" placeholder="Libellé par défaut">
+              </div>
+              <div class="config-block-row" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:6px;min-width:180px;margin-bottom:0;cursor:pointer">
+                  <input type="checkbox" id="config-block-characteristics-visible" checked style="width:auto;accent-color:var(--accent)">
+                  <span data-i18n="section_characteristics">Caractéristiques</span>
+                </label>
+                <input type="text" id="config-block-characteristics-label" class="generic-input" style="flex:1"
+                  data-i18n="config_block_label_ph" data-i18n-attr="placeholder" placeholder="Libellé par défaut">
+              </div>
+              <div class="config-block-row" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:6px;min-width:180px;margin-bottom:0;cursor:pointer">
+                  <input type="checkbox" id="config-block-skills-visible" checked style="width:auto;accent-color:var(--accent)">
+                  <span data-i18n="section_skills">Compétences</span>
+                </label>
+                <input type="text" id="config-block-skills-label" class="generic-input" style="flex:1"
+                  data-i18n="config_block_label_ph" data-i18n-attr="placeholder" placeholder="Libellé par défaut">
+              </div>
+              <div class="config-block-row" style="display:flex;align-items:center;gap:10px;margin-bottom:0">
+                <label style="display:flex;align-items:center;gap:6px;min-width:180px;margin-bottom:0;cursor:pointer">
+                  <input type="checkbox" id="config-block-traits-visible" checked style="width:auto;accent-color:var(--accent)">
+                  <span data-i18n="section_traits">Traits</span>
+                </label>
+                <input type="text" id="config-block-traits-label" class="generic-input" style="flex:1"
+                  data-i18n="config_block_label_ph" data-i18n-attr="placeholder" placeholder="Libellé par défaut">
+              </div>
             </div>
 
             <div id="config-error" class="auth-error"></div>

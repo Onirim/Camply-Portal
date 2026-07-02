@@ -37,6 +37,26 @@ async function _loadMapsConfig() {
   mapsConfigLoaded = true;
 }
 
+/** Réinitialise entièrement l'état du module carte (appelé lors d'un changement d'univers, pour éviter d'afficher les cartes/marqueurs de l'univers précédent). */
+function resetMapState() {
+  currentMapKey     = null;
+  mapMarkers        = {};
+  mapFollowedLayers = {};
+  mapOwnLayers      = {};
+  mapAccessByKey    = {};
+  mapColorFilter    = {};
+  mapsConfig        = [];
+  mapsConfigLoaded  = false;
+  mapLoaded         = false;
+  _closePopup();
+  document.querySelector('.map-selector-wrap')?.remove();
+  if (_mapCanvas) {
+    _mapCanvas.querySelector('img.map-image')?.remove();
+    _mapCanvas.querySelector('.map-image-error')?.remove();
+  }
+  _mapImage = null;
+}
+
 /** Recharge la config des cartes et met à jour l'affichage courant (appelé après un ajout/édition/suppression dans Configuration > Cartes). */
 async function refreshMapsConfigAndRerender() {
   await _loadMapsConfig();

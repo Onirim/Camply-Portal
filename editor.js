@@ -58,6 +58,7 @@ function populateEditor() {
       pubCb.checked ? t('share_code_active') : t('share_code_inactive');
   }
 
+  applyCharBlockConfig();
   renderCharacteristics();
   renderSkills();
   renderTraits();
@@ -77,6 +78,31 @@ function populateEditor() {
   renderTagChips();
   setIllusPreview(state.illustration_url || '', state.illustration_position || 0);
   updatePreview();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// BLOCS DE FICHE CONFIGURABLES PAR UNIVERS
+// (visibilité + libellé — voir getBlockConfig()/blockLabel() dans game-system.js)
+// ══════════════════════════════════════════════════════════════
+
+function applyCharBlockConfig() {
+  const setBlock = (wrapId, labelId, key) => {
+    const wrap = document.getElementById(wrapId);
+    if (wrap) wrap.style.display = blockVisible(key) ? '' : 'none';
+    const labelEl = document.getElementById(labelId);
+    if (labelEl) labelEl.textContent = blockLabel(key);
+  };
+
+  setBlock('field-subtitle-wrap',   'lbl-subtitle',   'subtitle');
+  setBlock('field-race-class-wrap', 'lbl-race-class', 'race_class');
+  setBlock('field-level-wrap',      'lbl-level',      'level');
+  const lvlInline = document.getElementById('lbl-level-inline');
+  if (lvlInline) lvlInline.textContent = blockLabel('level');
+
+  setBlock('section-characteristics-wrap', 'lbl-characteristics', 'characteristics');
+  setBlock('section-skills-wrap',          'lbl-skills',          'skills');
+  setBlock('section-traits-wrap',          'lbl-traits',          'traits');
 }
 
 

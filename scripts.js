@@ -341,7 +341,7 @@ async function loadUniversesFromDB() {
 
   const { data: universes, error } = await sb
     .from('universes')
-    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, created_at, updated_at')
+    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, char_block_config, created_at, updated_at')
     .order('updated_at', { ascending: false });
 
   if (error) {
@@ -395,15 +395,34 @@ function renderUniverseList() {
     return;
   }
   list.innerHTML = userUniverses.map(u => `
-    <button class="universe-card" onclick="enterUniverse('${u.id}')">
+    <div class="universe-card" onclick="enterUniverse('${u.id}')">
+      ${u.role !== 'owner' ? `<div class="card-actions">
+        <button class="icon-btn danger" onclick="event.stopPropagation();leaveUniverse('${u.id}')" title="${t('btn_leave_universe')}">
+          ${_leaveIcon()}
+        </button>
+      </div>` : ''}
       ${u.illustration_url ? `<img class="card-illus" src="${esc(u.illustration_url)}" style="object-position:center ${u.illustration_position || 0}%" alt="">` : ''}
       <div class="universe-card-title">${esc(u.name)}</div>
       <div class="universe-card-desc">${esc(u.description || 'Aucune description')}</div>
       <div class="universe-card-meta">
         <span>${esc(u.role || 'membre')}</span>
       </div>
-    </button>
+    </div>
   `).join('');
+}
+
+function _leaveIcon() {
+  return `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3v12h3"/><path d="M9 8h5m0 0l-2-2m2 2l-2 2"/></svg>`;
+}
+
+async function leaveUniverse(universeId) {
+  const universe = userUniverses.find(u => u.id === universeId);
+  if (!universe) return;
+  if (!confirm(ti('confirm_leave_universe', { name: universe.name }))) return;
+  const { error } = await sb.rpc('remove_universe_member', { p_universe_id: universeId, p_user_id: currentUser.id });
+  if (error) { showToast(t('toast_leave_universe_error')); return; }
+  showToast(ti('toast_universe_left', { name: universe.name }));
+  await loadUniversesFromDB();
 }
 
 // ── Création d'univers ───────────────────────────────────────
@@ -523,6 +542,7 @@ async function enterUniverse(universeId) {
     return;
   }
   currentUniverse = universe;
+  if (typeof resetMapState === 'function') resetMapState();
   updateConfigNavVisibility();
   await loadThemeManifest();
   applyTheme(currentUniverse.theme_name || '');
@@ -565,7 +585,7 @@ async function loadUniverseData() {
 // CONFIGURATION DE L'UNIVERS COURANT (propriétaire uniquement)
 // ══════════════════════════════════════════════════════════════
 
-let universeConfigState = { name: '', description: '', illustration_url: '', illustration_position: 0, theme_name: '' };
+let universeConfigState = { name: '', description: '', illustration_url: '', illustration_position: 0, theme_name: '', char_block_config: {} };
 
 // ══════════════════════════════════════════════════════════════
 // THÈME DE L'UNIVERS
@@ -629,11 +649,19 @@ function openUniverseConfigView() {
     illustration_url: currentUniverse.illustration_url || '',
     illustration_position: currentUniverse.illustration_position || 0,
     theme_name: currentUniverse.theme_name || '',
+    char_block_config: currentUniverse.char_block_config || {},
   };
   document.getElementById('config-f-name').value = universeConfigState.name;
   document.getElementById('config-f-description').value = universeConfigState.description;
   setConfigIllusPreview(universeConfigState.illustration_url, universeConfigState.illustration_position);
   populateConfigThemeSelect(universeConfigState.theme_name);
+  Object.keys(CHAR_BLOCKS).forEach(key => {
+    const cfg = universeConfigState.char_block_config[key] || {};
+    const visibleCb = document.getElementById(`config-block-${key}-visible`);
+    if (visibleCb) visibleCb.checked = cfg.visible !== false;
+    const labelInput = document.getElementById(`config-block-${key}-label`);
+    if (labelInput) labelInput.value = cfg.label || '';
+  });
   const errEl = document.getElementById('config-error');
   if (errEl) errEl.classList.remove('show');
   const inviteErrEl = document.getElementById('config-invite-error');
@@ -866,8 +894,7 @@ async function inviteUniverseMember() {
 async function removeUniverseMember(userId) {
   if (!canConfigureUniverse() || !currentUniverse) return;
   if (!confirm(t('confirm_remove_member'))) return;
-  const { error } = await sb.from('universe_members')
-    .delete().eq('universe_id', currentUniverse.id).eq('user_id', userId);
+  const { error } = await sb.rpc('remove_universe_member', { p_universe_id: currentUniverse.id, p_user_id: userId });
   if (error) { showToast(t('toast_member_remove_error')); return; }
   await loadUniverseMembersForConfig();
   showToast(t('toast_member_removed'));
@@ -945,6 +972,16 @@ async function saveUniverseConfig() {
   const description = document.getElementById('config-f-description').value.trim();
   if (errEl) errEl.classList.remove('show');
 
+  const charBlockConfig = {};
+  Object.keys(CHAR_BLOCKS).forEach(key => {
+    const visibleCb = document.getElementById(`config-block-${key}-visible`);
+    const labelInput = document.getElementById(`config-block-${key}-label`);
+    charBlockConfig[key] = {
+      visible: visibleCb ? visibleCb.checked : true,
+      label: (labelInput?.value || '').trim(),
+    };
+  });
+
   const { data, error } = await sb.from('universes')
     .update({
       name,
@@ -952,9 +989,10 @@ async function saveUniverseConfig() {
       illustration_url: universeConfigState.illustration_url || '',
       illustration_position: universeConfigState.illustration_position || 0,
       theme_name: universeConfigState.theme_name || '',
+      char_block_config: charBlockConfig,
     })
     .eq('id', currentUniverse.id)
-    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, created_at, updated_at')
+    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, char_block_config, created_at, updated_at')
     .single();
 
   if (error) {

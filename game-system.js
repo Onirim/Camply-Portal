@@ -45,16 +45,54 @@ function _clamp(v, min, max) {
 }
 
 
+// ── Configuration des blocs de fiche (par univers) ────────────
+
+const CHAR_BLOCKS = {
+  subtitle:        'editor_field_subtitle',
+  race_class:      'editor_field_race_class',
+  level:           'editor_field_level',
+  characteristics: 'section_characteristics',
+  skills:          'section_skills',
+  traits:          'section_traits',
+};
+
+function getBlockConfig(key) {
+  const cfg = (typeof currentUniverse !== 'undefined' && currentUniverse?.char_block_config) || {};
+  const entry = cfg[key] || {};
+  return {
+    visible: entry.visible !== false,
+    label:   entry.label || '',
+  };
+}
+
+function blockVisible(key) {
+  return getBlockConfig(key).visible;
+}
+
+function blockLabel(key) {
+  const cfg = getBlockConfig(key);
+  return cfg.label || t(CHAR_BLOCKS[key]);
+}
+
+// Le niveau a un libellé "long" (label de champ éditeur, ex: "Niveau")
+// et un préfixe "court" affiché dans le rendu (ex: "Niv. "). Le libellé
+// personnalisé, s'il existe, remplace les deux.
+function levelRenderPrefix() {
+  const cfg = getBlockConfig('level');
+  return cfg.label || t('card_level');
+}
+
+
 // ══════════════════════════════════════════════════════════════
 // 4. RENDU CARTE ROSTER
 // ══════════════════════════════════════════════════════════════
 
 function renderCharCardBody(c) {
-  // Race/classe + niveau (niveau masqué si 0)
-  const rcTag = c.race_class
+  // Race/classe + niveau (niveau masqué si 0 ou si bloc désactivé)
+  const rcTag = c.race_class && blockVisible('race_class')
     ? `<span class="card-rc-tag">${esc(c.race_class)}</span>` : '';
-  const lvlTag = c.level !== undefined && c.level !== 0 && c.level !== null
-    ? `<span class="card-rank">${t('card_level')}${c.level}</span>` : '';
+  const lvlTag = c.level !== undefined && c.level !== 0 && c.level !== null && blockVisible('level')
+    ? `<span class="card-rank">${levelRenderPrefix()}${c.level}</span>` : '';
 
   // Extrait de la description (tronqué)
   const rawDescription = String(c.description || '').replace(/\s+/g, ' ').trim();
@@ -68,7 +106,7 @@ function renderCharCardBody(c) {
 
   return `
     <div class="card-name">${esc(c.name) || '—'}</div>
-    ${c.subtitle ? `<div class="card-sub">${esc(c.subtitle)}</div>` : ''}
+    ${c.subtitle && blockVisible('subtitle') ? `<div class="card-sub">${esc(c.subtitle)}</div>` : ''}
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
       ${rcTag}${lvlTag}
     </div>
@@ -91,17 +129,17 @@ function renderCharSheet(data) {
          onclick="openLightbox('${esc(data.illustration_url)}')" alt="">` : '';
 
   // ── En-tête ───────────────────────────────────────────────
-  const rcTag = data.race_class
+  const rcTag = data.race_class && blockVisible('race_class')
     ? `<span class="card-rc-tag" style="margin-top:8px">${esc(data.race_class)}</span>` : '';
 
-  // Niveau masqué si 0 ou null
-  const lvlBadge = data.level !== undefined && data.level !== 0 && data.level !== null
-    ? `<div class="preview-rank-badge">${t('card_level')}${data.level ?? 0}</div>` : '';
+  // Niveau masqué si 0, null, ou si bloc désactivé
+  const lvlBadge = data.level !== undefined && data.level !== 0 && data.level !== null && blockVisible('level')
+    ? `<div class="preview-rank-badge">${levelRenderPrefix()}${data.level ?? 0}</div>` : '';
 
   const headerHtml = `
     <div class="preview-header">
       <div class="preview-name">${esc(data.name) || '—'}</div>
-      ${data.subtitle ? `<div class="preview-sub">${esc(data.subtitle)}</div>` : ''}
+      ${data.subtitle && blockVisible('subtitle') ? `<div class="preview-sub">${esc(data.subtitle)}</div>` : ''}
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
         ${rcTag}
         ${lvlBadge}
@@ -109,9 +147,9 @@ function renderCharSheet(data) {
     </div>`;
 
   // ── Caractéristiques (toutes, sans limite) ─────────────────
-  const chars = data.characteristics || [];
+  const chars = blockVisible('characteristics') ? (data.characteristics || []) : [];
   const charsHtml = chars.length ? `
-    <div class="preview-section-title">${t('section_characteristics')}</div>
+    <div class="preview-section-title">${blockLabel('characteristics')}</div>
     <div class="preview-attrs">
       ${chars.map(ch => `
         <div class="preview-attr" style="border-left:3px solid var(--accent)">
@@ -122,9 +160,9 @@ function renderCharSheet(data) {
     </div>` : '';
 
   // ── Compétences ───────────────────────────────────────────
-  const skills = data.skills || [];
+  const skills = blockVisible('skills') ? (data.skills || []) : [];
   const skillsHtml = skills.length ? `
-    <div class="preview-section-title">${t('section_skills')}</div>
+    <div class="preview-section-title">${blockLabel('skills')}</div>
     <div class="apt-preview-grid">
       ${skills.map(sk => `
         <div class="apt-preview-row">
@@ -134,9 +172,9 @@ function renderCharSheet(data) {
     </div>` : '';
 
   // ── Traits (sans type, juste nom + score + description) ───
-  const traits = data.traits || [];
+  const traits = blockVisible('traits') ? (data.traits || []) : [];
   const traitsHtml = traits.length ? `
-    <div class="preview-section-title">${t('section_traits')}</div>
+    <div class="preview-section-title">${blockLabel('traits')}</div>
     <div class="compl-preview">
       ${traits.map(tr => `
         <div class="compl-chip" style="border-left:3px solid ${esc(tr.color || 'var(--border2)')}">
@@ -172,9 +210,7 @@ const GAME_I18N = {
   fr: {
     // Identité
     editor_field_subtitle:     'Titre / Occupation',
-    editor_field_subtitle_ph:  'Ex : Guerrier, Mage, Voleur…',
     editor_field_race_class:   'Race / Classe',
-    editor_field_race_class_ph:'Ex : Elfe Rôdeur, Humain Paladin…',
     editor_field_level:        'Niveau',
 
     // Carte roster
@@ -218,13 +254,18 @@ const GAME_I18N = {
     // Alertes
     alert_char_no_name:  'Veuillez donner un nom au personnage.',
     alert_trigram_3:     'Le trigramme doit faire exactement 3 lettres.',
+
+    // Configuration univers — blocs de fiche de personnage
+    config_section_char_blocks: 'Fiche de personnage',
+    config_char_blocks_hint:    'Activez ou désactivez ces blocs et renommez-les pour tous les personnages de cet univers.',
+    config_block_visible_col:   'Afficher',
+    config_block_label_col:     'Libellé personnalisé',
+    config_block_label_ph:      'Libellé par défaut',
   },
 
   en: {
     editor_field_subtitle:     'Title / Occupation',
-    editor_field_subtitle_ph:  'E.g. Warrior, Mage, Rogue…',
     editor_field_race_class:   'Race / Class',
-    editor_field_race_class_ph:'E.g. Elf Ranger, Human Paladin…',
     editor_field_level:        'Level',
 
     card_level: 'Lv. ',
@@ -261,6 +302,12 @@ const GAME_I18N = {
 
     alert_char_no_name:  'Please give the character a name.',
     alert_trigram_3:     'Trigram must be exactly 3 letters.',
+
+    config_section_char_blocks: 'Character sheet',
+    config_char_blocks_hint:    'Toggle these blocks on/off and rename them for every character in this universe.',
+    config_block_visible_col:   'Show',
+    config_block_label_col:     'Custom label',
+    config_block_label_ph:      'Default label',
   },
 };
 

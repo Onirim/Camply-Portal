@@ -80,6 +80,10 @@ const TRANSLATIONS = {
     delete_universe_type_label: 'Tapez « ${name} » pour confirmer :',
     delete_universe_confirm_btn: 'Supprimer définitivement',
     toast_universe_deleted:  '"${name}" a été supprimé définitivement.',
+    btn_leave_universe:      'Quitter l\'univers',
+    confirm_leave_universe:  'Quitter l\'univers "${name}" ? Vous perdrez l\'accès à son contenu.',
+    toast_universe_left:     'Vous avez quitté "${name}".',
+    toast_leave_universe_error: 'Erreur lors de la sortie de l\'univers.',
 
     // ── Configuration du thème ─────────────────────────────────
     config_section_theme:    'Thème',
@@ -205,9 +209,7 @@ const TRANSLATIONS = {
     editor_illus_slider:       'Cadrage',
     editor_section_identity:   'Identité',
     editor_field_name:         'Nom du personnage',
-    editor_field_name_ph:      'Ex: Kitsune',
     editor_field_subtitle:     'Identité réelle',
-    editor_field_subtitle_ph:  'Ex: Jane Doe, étudiante en art',
     editor_field_public:       'Partage public',
     editor_section_tags:       'Tags',
     editor_tag_ph:             'Ajouter un tag…',
@@ -291,7 +293,7 @@ const TRANSLATIONS = {
     campaign_subtitle: 'Collections de campagne',
     campaign_new_btn:  'Nouvelle campagne',
     campaign_empty_title: 'Aucune campagne',
-    campaign_empty_body:  'Créez votre première campagne pour regrouper vos joueurs.',
+    campaign_empty_body:  'Créez une ou plusieurs campagnes si vous désirez une gestion fine des accès aux personnages, chroniques, documents et cartes. Si vous n\'avez qu\'un seul groupe de joueur sur votre univers, il est inutile de créer une campagne.',
     campaign_empty_btn:   'Créer une campagne',
     campaign_member_plural:   'Membres',
     campaign_owner_tag:       '(MJ)',
@@ -325,7 +327,7 @@ const TRANSLATIONS = {
     map_marker_count_many:   '<span>${n}</span> marqueurs',
     map_selector_label:      'Carte',
     map_image_error:         'Impossible de charger l\'image de cette carte.',
-    map_access_denied:       'Cette carte n\'est pas partagée avec vous. Seuls les administrateurs peuvent y accéder.',
+    map_access_denied:       'Aucune carte disponible.',
     map_followed_empty:      'Aucune couche suivie pour cette carte.',
     map_own_layer:           'Ma couche',
     map_followed_layers:     'Couches suivies',
@@ -420,6 +422,10 @@ const TRANSLATIONS = {
     delete_universe_type_label: 'Type "${name}" to confirm:',
     delete_universe_confirm_btn: 'Delete permanently',
     toast_universe_deleted:  '"${name}" has been permanently deleted.',
+    btn_leave_universe:      'Leave universe',
+    confirm_leave_universe:  'Leave the universe "${name}"? You will lose access to its content.',
+    toast_universe_left:     'You have left "${name}".',
+    toast_leave_universe_error: 'Error while leaving the universe.',
 
     // ── Theme configuration ─────────────────────────────────────
     config_section_theme:    'Theme',
@@ -545,9 +551,7 @@ const TRANSLATIONS = {
     editor_illus_slider:      'Framing',
     editor_section_identity:  'Identity',
     editor_field_name:        'Character name',
-    editor_field_name_ph:     'E.g. Kitsune',
     editor_field_subtitle:    'Real identity',
-    editor_field_subtitle_ph: 'E.g. Jane Doe, art student',
     editor_field_public:      'Public sharing',
     editor_section_tags:      'Tags',
     editor_tag_ph:            'Add a tag…',
@@ -665,7 +669,7 @@ const TRANSLATIONS = {
     map_marker_count_many:   '<span>${n}</span> markers',
     map_selector_label:      'Map',
     map_image_error:         'Unable to load this map\'s image.',
-    map_access_denied:       'This map is not shared with you. Only admins can access it.',
+    map_access_denied:       'There is no map to show.',
     map_followed_empty:      'No followed layer for this map.',
     map_own_layer:           'My layer',
     map_followed_layers:     'Followed layers',
@@ -729,6 +733,9 @@ function applyTranslations() {
     if (attr) el.setAttribute(attr, value);
     else el.textContent = value;
   });
+  // Ré-applique les libellés personnalisés des blocs de fiche
+  // (écrasés ci-dessus par leur défaut i18n via [data-i18n]).
+  if (typeof applyCharBlockConfig === 'function') applyCharBlockConfig();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
