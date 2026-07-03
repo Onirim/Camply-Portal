@@ -217,8 +217,6 @@ const TRANSLATIONS = {
     editor_field_name:         'Nom du personnage',
     editor_field_subtitle:     'Identité réelle',
     editor_field_public:       'Partage public',
-    editor_section_tags:       'Tags',
-    editor_tag_ph:             'Ajouter un tag…',
     editor_tag_create_hint:    'Créer',
     editor_mobile_edit:        '✏️ Éditer',
     editor_mobile_preview:     '👁 Aperçu',
@@ -231,7 +229,7 @@ const TRANSLATIONS = {
     secret_preview_empty:     'Aucun secret saisi.',
 
     // ── Tags ──────────────────────────────────────────────────
-    followed_tags_modal_label: 'Tags locaux',
+    tags_modal_label:          'Tags',
     followed_tags_input_ph:    'Ajouter un tag…',
     followed_tags_close:       'Fermer',
 
@@ -565,8 +563,6 @@ const TRANSLATIONS = {
     editor_field_name:        'Character name',
     editor_field_subtitle:    'Real identity',
     editor_field_public:      'Public sharing',
-    editor_section_tags:      'Tags',
-    editor_tag_ph:            'Add a tag…',
     editor_tag_create_hint:   'Create',
     editor_mobile_edit:       '✏️ Edit',
     editor_mobile_preview:    '👁 Preview',
@@ -579,7 +575,7 @@ const TRANSLATIONS = {
     secret_preview_empty:     'No secret entered.',
 
     // ── Tags ──────────────────────────────────────────────────
-    followed_tags_modal_label: 'Local tags',
+    tags_modal_label:          'Tags',
     followed_tags_input_ph:    'Add a tag…',
     followed_tags_close:       'Close',
 

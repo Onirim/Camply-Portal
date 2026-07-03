@@ -12,7 +12,6 @@ let docState          = null;
 // ── État tags documents ───────────────────────────────────────
 let allDocTags          = [];
 let docTagMap           = {};   // docId → [tagId, ...]
-let followedDocTagMap   = {};   // docId → [tagId, ...]
 let activeDocTagFilters = [];
 let filterFollowedDocs  = false;
 
@@ -50,48 +49,13 @@ async function loadDocumentsFromDB() {
 async function loadDocTagsFromDB() {
   const { data: tags } = await sb.from('doc_tags').select('*').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id).order('name');
   allDocTags = tags || [];
-  const ownDocIds = Object.keys(documents);
-  docTagMap = {};
-  if (ownDocIds.length) {
-    const { data: docTags } = await sb.from('document_tags')
-      .select('document_id, tag_id').in('document_id', ownDocIds);
-    (docTags || []).forEach(({ document_id, tag_id }) => {
-      if (!docTagMap[document_id]) docTagMap[document_id] = [];
-      docTagMap[document_id].push(tag_id);
-    });
-  }
-  const { data: followedTags } = await sb.from('followed_document_tags')
+  const { data: docTags } = await sb.from('document_tags')
     .select('document_id, tag_id').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id);
-  followedDocTagMap = {};
-  (followedTags || []).forEach(({ document_id, tag_id }) => {
-    if (!followedDocTagMap[document_id]) followedDocTagMap[document_id] = [];
-    followedDocTagMap[document_id].push(tag_id);
+  docTagMap = {};
+  (docTags || []).forEach(({ document_id, tag_id }) => {
+    if (!docTagMap[document_id]) docTagMap[document_id] = [];
+    docTagMap[document_id].push(tag_id);
   });
-}
-
-async function saveDocTagsToDB(docId) {
-  if (!docId) return;
-  const newTagIds = (docState.tags || []).map(tg => tg.id);
-  const oldTagIds = docTagMap[docId] || [];
-  const toAdd    = newTagIds.filter(id => !oldTagIds.includes(id));
-  const toRemove = oldTagIds.filter(id => !newTagIds.includes(id));
-  if (toRemove.length) {
-    await sb.from('document_tags').delete().eq('document_id', docId).in('tag_id', toRemove);
-    for (const tagId of toRemove) {
-      const { count } = await sb.from('document_tags')
-        .select('*', { count: 'exact', head: true }).eq('tag_id', tagId);
-      const { count: followedCount } = await sb.from('followed_document_tags')
-        .select('*', { count: 'exact', head: true }).eq('tag_id', tagId);
-      if (count === 0 && followedCount === 0) {
-        await sb.from('doc_tags').delete().eq('id', tagId);
-        allDocTags = allDocTags.filter(x => x.id !== tagId);
-      }
-    }
-  }
-  if (toAdd.length) {
-    await sb.from('document_tags').insert(toAdd.map(tag_id => ({ document_id: docId, tag_id })));
-  }
-  docTagMap[docId] = newTagIds;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -126,13 +90,10 @@ async function saveDocumentToDB() {
   if (result.error) { showToast(t('toast_doc_save_error')); return; }
 
   editingDocId = result.data.id;
-  await saveDocTagsToDB(editingDocId);
-if (editingDocIsFollowed) {
+  if (editingDocIsFollowed) {
     followedDocuments[editingDocId] = { ...followedDocuments[editingDocId], ...docState, id: editingDocId };
-    followedDocTagMap[editingDocId] = (docState.tags || []).map(tg => tg.id);
   } else {
     documents[editingDocId] = { ...docState, id: editingDocId };
-    docTagMap[editingDocId] = (docState.tags || []).map(tg => tg.id);
   }
   showToast(t('toast_doc_saved'));
 }
@@ -148,15 +109,13 @@ async function deleteDocumentFromDB(id) {
   delete docTagMap[id];
   if (illustrationUrl) await deleteStorageFile(illustrationUrl);
   for (const tagId of tagIds) {
-    const { count: c1 } = await sb.from('document_tags')
-      .select('*', { count:'exact', head:true }).eq('tag_id', tagId);
-    const { count: c2 } = await sb.from('followed_document_tags')
-      .select('*', { count:'exact', head:true }).eq('tag_id', tagId);
-    if ((c1 + c2) === 0) {
+    const { count } = await sb.from('document_tags')
+      .select('*', { count:'exact', head:true }).eq('tag_id', tagId).eq('user_id', currentUser.id);
+    if (count === 0) {
       await sb.from('doc_tags').delete().eq('id', tagId);
       allDocTags = allDocTags.filter(tg => tg.id !== tagId);
     }
-}
+  }
   renderDocumentsList();
   showView('documents');
 }
@@ -174,7 +133,7 @@ function renderDocumentsList() {
   if (filterFollowedDocs) ownKeys = [];
   if (activeDocTagFilters.length) {
     ownKeys      = ownKeys.filter(id => activeDocTagFilters.every(fid => (docTagMap[id]||[]).includes(fid)));
-    followedKeys = followedKeys.filter(id => activeDocTagFilters.every(fid => (followedDocTagMap[id]||[]).includes(fid)));
+    followedKeys = followedKeys.filter(id => activeDocTagFilters.every(fid => (docTagMap[id]||[]).includes(fid)));
   }
   const total = Object.keys(documents).length + Object.keys(followedDocuments).length;
   document.getElementById('doc-count-badge').textContent = total ? `(${total})` : '';
@@ -236,21 +195,24 @@ function docCardHTML(id, d, isFollowed) {
     ? new Date(d.updated_at).toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'fr-FR', { day:'numeric', month:'short', year:'numeric' })
     : '';
 
+  const cardTags = (docTagMap[id]||[]).map(tid => {
+    const tg = allDocTags.find(x => x.id === tid);
+    return tg ? `<span class="tag-chip" style="background:${tg.color}22;color:${tg.color};border:1px solid ${tg.color}44">${esc(tg.name)}</span>` : '';
+  }).join('');
+  const tagBtn = `
+        <button class="icon-btn" onclick="event.stopPropagation();editDocTags('${id}')" title="${t('card_manage_tags')}">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h14M1 8h10M1 12h6"/></svg>
+        </button>`;
+
   if (isFollowed) {
     const unreadDot = unreadMarkers.cardDotHTML(unreadMarkers.isDocumentUnread(id, false));
-    const cardTags = (followedDocTagMap[id]||[]).map(tid => {
-      const tg = allDocTags.find(x => x.id === tid);
-      return tg ? `<span class="tag-chip" style="background:${tg.color}22;color:${tg.color};border:1px solid ${tg.color}44">${esc(tg.name)}</span>` : '';
-    }).join('');
     return `<div class="doc-card" onclick="openDocReader('${id}')">${unreadDot}
       ${d.illustration_url ? `<img class="card-illus" src="${esc(d.illustration_url)}" style="object-position:center ${d.illustration_position||0}%" onclick="event.stopPropagation();openLightbox('${esc(d.illustration_url)}')" alt="">` : ''}
       <div class="doc-card-actions">
         ${(d.allow_write_share || isUniverseGM()) ? `<button class="icon-btn" onclick="event.stopPropagation();openDocEditor('${id}')" title="${t('btn_edit')}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3z"/></svg>
         </button>` : ''}
-        <button class="icon-btn" onclick="event.stopPropagation();editFollowedDocTags('${id}')" title="${t('card_manage_tags')}">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 4h14M1 8h10M1 12h6"/></svg>
-        </button>
+        ${tagBtn}
       </div>
       <div class="doc-card-title">${esc(d.title) || 'Sans titre'}</div>
       ${previewTxt ? `<div class="doc-card-preview">${esc(previewTxt)}</div>` : ''}
@@ -266,10 +228,6 @@ function docCardHTML(id, d, isFollowed) {
   const visTag = d.is_public
     ? `<span class="card-visibility public">${t('visibility_public')}</span>`
     : `<span class="card-visibility private">${t('visibility_private')}</span>`;
-  const cardTags = (docTagMap[id]||[]).map(tid => {
-    const tg = allDocTags.find(x => x.id === tid);
-    return tg ? `<span class="tag-chip" style="background:${tg.color}22;color:${tg.color};border:1px solid ${tg.color}44">${esc(tg.name)}</span>` : '';
-  }).join('');
 
   return `<div class="doc-card" onclick="openDocReader('${id}')">
     ${d.illustration_url ? `<img class="card-illus" src="${esc(d.illustration_url)}" style="object-position:center ${d.illustration_position||0}%" onclick="event.stopPropagation();openLightbox('${esc(d.illustration_url)}')" alt="">` : ''}
@@ -277,6 +235,7 @@ function docCardHTML(id, d, isFollowed) {
       <button class="icon-btn" onclick="event.stopPropagation();openDocEditor('${id}')" title="${t('btn_edit')}">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3z"/></svg>
       </button>
+      ${tagBtn}
       <button class="icon-btn danger" onclick="event.stopPropagation();deleteDocumentFromDB('${id}')" title="${t('btn_delete')}">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,4 13,4"/><path d="M5 4V2h6v2M6 7v5M10 7v5"/><path d="M4 4l1 10h6l1-10"/></svg>
       </button>
@@ -299,7 +258,7 @@ function newDocument() {
   editingDocId = null;
   editingDocIsFollowed = false;
   docState = { title:'', content:'', is_public:false, allow_write_share:false,
-               illustration_url:'', illustration_position:0, tags:[] };
+               illustration_url:'', illustration_position:0 };
   showView('doc-editor');
   populateDocEditor();
 }
@@ -308,13 +267,7 @@ function openDocEditor(id) {
   editingDocId = id;
   editingDocIsFollowed = !!followedDocuments[id] && !documents[id];
   const sourceDoc = documents[id] || followedDocuments[id];
-  docState = { ...sourceDoc, tags:[] };
-  const tagSource = editingDocIsFollowed ? followedDocTagMap : docTagMap;
-  if (editingDocId && tagSource[editingDocId]) {
-    docState.tags = tagSource[editingDocId]
-      .map(tid => allDocTags.find(tg => tg.id === tid))
-      .filter(Boolean);
-  }
+  docState = { ...sourceDoc };
   showView('doc-editor');
   populateDocEditor();
 }
@@ -333,7 +286,6 @@ function populateDocEditor() {
   document.getElementById('doc-public-label').textContent =
     pub.checked ? t('share_code_active_doc') : t('share_code_inactive_doc');
   setDocIllusPreview(docState.illustration_url || '', docState.illustration_position || 0);
-  renderDocTagChips();
   updateDocPreview();
 }
 
@@ -591,171 +543,61 @@ async function removeDocIllustration() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// TAGS — Formulaire éditeur document
+// TAGS — Modale de gestion (carte document, au survol)
+// Gère indifféremment mes documents et ceux des autres membres :
+// un tag est une organisation personnelle, pas liée à la propriété
+// de l'objet tagué.
 // ══════════════════════════════════════════════════════════════
 
-function renderDocTagChips() {
-  const container = document.getElementById('doc-tags-chips-container');
-  if (!container) return;
-  container.innerHTML = (docState.tags || []).map((tg, i) => `
-    <span class="tag-chip" style="background:${tg.color}22;color:${tg.color};border:1px solid ${tg.color}44">
-      ${esc(tg.name)}
-      <button class="tag-remove" onclick="removeDocTagFromState(${i})" tabindex="-1">×</button>
-    </span>`).join('');
-}
+let editingTagDocId = null;
 
-function removeDocTagFromState(i) {
-  docState.tags.splice(i, 1);
-  renderDocTagChips();
-}
-
-function onDocTagInput(val) {
-  showDocTagAutocomplete(val);
-}
-
-function onDocTagKeydown(e) {
-  const ac = document.getElementById('doc-tags-autocomplete');
-  const items = ac.querySelectorAll('.tags-autocomplete-item');
-  const activeIdx = [...items].findIndex(el => el.classList.contains('active'));
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    const next = activeIdx < items.length - 1 ? activeIdx + 1 : 0;
-    items.forEach((el, i) => el.classList.toggle('active', i === next));
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    const prev = activeIdx > 0 ? activeIdx - 1 : items.length - 1;
-    items.forEach((el, i) => el.classList.toggle('active', i === prev));
-  } else if (e.key === 'Enter' || e.key === ',') {
-    e.preventDefault();
-    const activeItem = ac.querySelector('.tags-autocomplete-item.active');
-    if (activeItem) activeItem.click();
-    else { const val = e.target.value.trim(); if (val) addOrCreateDocTag(val); }
-  } else if (e.key === 'Escape') {
-    hideDocTagAutocomplete();
-  } else if (e.key === 'Backspace' && e.target.value === '') {
-    if (docState.tags && docState.tags.length) { docState.tags.pop(); renderDocTagChips(); }
-  }
-}
-
-function showDocTagAutocomplete(query) {
-  const ac = document.getElementById('doc-tags-autocomplete');
-  const q = query.trim().toLowerCase();
-  const assigned = (docState.tags || []).map(tg => tg.id);
-  const filtered = allDocTags.filter(tg =>
-    !assigned.includes(tg.id) && (!q || tg.name.toLowerCase().includes(q))
-  );
-  const exactMatch = allDocTags.find(tg => tg.name.toLowerCase() === q);
-  const showCreate = q && !exactMatch;
-  if (!filtered.length && !showCreate) { ac.style.display = 'none'; return; }
-  ac.innerHTML = [
-    ...filtered.map(tg => `
-      <div class="tags-autocomplete-item" onclick="selectExistingDocTag('${tg.id}')">
-        <span class="dot" style="background:${tg.color}"></span>
-        ${esc(tg.name)}
-      </div>`),
-    showCreate ? `
-      <div class="tags-autocomplete-item" onclick="addOrCreateDocTag('${esc(query.trim())}')">
-        <span class="dot" style="background:${randomTagColor()}"></span>
-        ${esc(query.trim())}
-        <span class="new-hint">${t('editor_tag_create_hint')}</span>
-      </div>` : ''
-  ].join('');
-  ac.style.display = 'block';
-}
-
-function hideDocTagAutocomplete() {
-  const ac = document.getElementById('doc-tags-autocomplete');
-  if (ac) ac.style.display = 'none';
-}
-
-function selectExistingDocTag(tagId) {
-  const tg = allDocTags.find(x => x.id === tagId);
-  if (!tg) return;
-  if (!docState.tags) docState.tags = [];
-  if (!docState.tags.find(x => x.id === tagId)) { docState.tags.push(tg); renderDocTagChips(); }
-  document.getElementById('doc-tag-text-input').value = '';
-  hideDocTagAutocomplete();
-}
-
-async function addOrCreateDocTag(name) {
-  name = name.trim();
-  if (!name) return;
-  let tg = allDocTags.find(x => x.name.toLowerCase() === name.toLowerCase());
-  if (!tg) {
-    const color = randomTagColor();
-    const { data, error } = await sb.from('doc_tags')
-      .insert({ user_id: currentUser.id, universe_id: currentUniverse.id, name, color })
-      .select().single();
-    if (error) { showToast(t('toast_tag_error')); return; }
-    tg = data;
-    allDocTags.push(tg);
-    allDocTags.sort((a, b) => a.name.localeCompare(b.name));
-  }
-  if (!docState.tags) docState.tags = [];
-  if (!docState.tags.find(x => x.id === tg.id)) { docState.tags.push(tg); renderDocTagChips(); }
-  document.getElementById('doc-tag-text-input').value = '';
-  hideDocTagAutocomplete();
-}
-
-document.addEventListener('click', e => {
-  const wrap = document.getElementById('doc-tags-input-wrap');
-  const ac   = document.getElementById('doc-tags-autocomplete');
-  if (wrap && ac && !wrap.contains(e.target) && !ac.contains(e.target)) hideDocTagAutocomplete();
-});
-
-// ══════════════════════════════════════════════════════════════
-// TAGS — Documents suivis (modale)
-// ══════════════════════════════════════════════════════════════
-
-let editingFollowedDocId = null;
-
-function editFollowedDocTags(docId) {
-  editingFollowedDocId = docId;
-  const d = followedDocuments[docId];
-  const tags = (followedDocTagMap[docId] || [])
+function editDocTags(docId) {
+  editingTagDocId = docId;
+  const d = documents[docId] || followedDocuments[docId];
+  const tags = (docTagMap[docId] || [])
     .map(tid => allDocTags.find(x => x.id === tid)).filter(Boolean);
-  renderFollowedDocTagChips(docId, tags);
-  document.getElementById('followed-doc-tag-modal-name').textContent = d?.title || '';
-  document.getElementById('followed-doc-tag-modal').style.display = 'flex';
-  document.getElementById('followed-doc-tag-input').value = '';
-  document.getElementById('followed-doc-tag-autocomplete').style.display = 'none';
+  renderDocTagChips(docId, tags);
+  document.getElementById('doc-tag-modal-name').textContent = d?.title || '';
+  document.getElementById('doc-tag-modal').style.display = 'flex';
+  document.getElementById('doc-tag-input').value = '';
+  document.getElementById('doc-tag-autocomplete').style.display = 'none';
 }
 
-function closeFollowedDocTagModal() {
-  document.getElementById('followed-doc-tag-modal').style.display = 'none';
-  editingFollowedDocId = null;
+function closeDocTagModal() {
+  document.getElementById('doc-tag-modal').style.display = 'none';
+  editingTagDocId = null;
 }
 
-function renderFollowedDocTagChips(docId, tags) {
-  const container = document.getElementById('followed-doc-tag-chips');
-  const list = tags || (followedDocTagMap[docId] || [])
+function renderDocTagChips(docId, tags) {
+  const container = document.getElementById('doc-tag-chips');
+  const list = tags || (docTagMap[docId] || [])
     .map(tid => allDocTags.find(x => x.id === tid)).filter(Boolean);
   container.innerHTML = list.map(tg => `
     <span class="tag-chip" style="background:${tg.color}22;color:${tg.color};border:1px solid ${tg.color}44">
       ${esc(tg.name)}
-      <button class="tag-remove" onclick="removeFollowedDocTag('${docId}','${tg.id}')" tabindex="-1">×</button>
+      <button class="tag-remove" onclick="removeDocTag('${docId}','${tg.id}')" tabindex="-1">×</button>
     </span>`).join('');
 }
 
-async function removeFollowedDocTag(docId, tagId) {
-  followedDocTagMap[docId] = (followedDocTagMap[docId] || []).filter(id => id !== tagId);
-  await sb.from('followed_document_tags')
+async function removeDocTag(docId, tagId) {
+  docTagMap[docId] = (docTagMap[docId] || []).filter(id => id !== tagId);
+  await sb.from('document_tags')
     .delete()
     .eq('user_id', currentUser.id)
     .eq('document_id', docId)
     .eq('tag_id', tagId)
     .eq('universe_id', currentUniverse.id);
- 
+
   await cleanupOrphanTags('doc');
   await loadDocTagsFromDB();
- 
-  renderFollowedDocTagChips(docId);
+
+  renderDocTagChips(docId);
   renderDocumentsList();
 }
 
-async function addFollowedDocTag(name) {
+async function addDocTag(name) {
   name = name.trim();
-  if (!name || !editingFollowedDocId) return;
+  if (!name || !editingTagDocId) return;
   let tg = allDocTags.find(x => x.name.toLowerCase() === name.toLowerCase());
   if (!tg) {
     const color = randomTagColor();
@@ -766,34 +608,34 @@ async function addFollowedDocTag(name) {
     allDocTags.push(tg);
     allDocTags.sort((a, b) => a.name.localeCompare(b.name));
   }
-  const docId = editingFollowedDocId;
-  if (!(followedDocTagMap[docId] || []).includes(tg.id)) {
-    if (!followedDocTagMap[docId]) followedDocTagMap[docId] = [];
-    followedDocTagMap[docId].push(tg.id);
-    await sb.from('followed_document_tags')
+  const docId = editingTagDocId;
+  if (!(docTagMap[docId] || []).includes(tg.id)) {
+    if (!docTagMap[docId]) docTagMap[docId] = [];
+    docTagMap[docId].push(tg.id);
+    await sb.from('document_tags')
       .insert({ user_id: currentUser.id, document_id: docId, tag_id: tg.id, universe_id: currentUniverse.id });
-    renderFollowedDocTagChips(docId);
+    renderDocTagChips(docId);
     renderDocumentsList();
   }
-  document.getElementById('followed-doc-tag-input').value = '';
-  document.getElementById('followed-doc-tag-autocomplete').style.display = 'none';
+  document.getElementById('doc-tag-input').value = '';
+  document.getElementById('doc-tag-autocomplete').style.display = 'none';
 }
 
-function onFollowedDocTagInput(val) {
-  const ac = document.getElementById('followed-doc-tag-autocomplete');
+function onDocTagInput(val) {
+  const ac = document.getElementById('doc-tag-autocomplete');
   const q = val.trim().toLowerCase();
-  const assigned = followedDocTagMap[editingFollowedDocId] || [];
+  const assigned = docTagMap[editingTagDocId] || [];
   const filtered = allDocTags.filter(tg => !assigned.includes(tg.id) && (!q || tg.name.toLowerCase().includes(q)));
   const exactMatch = allDocTags.find(tg => tg.name.toLowerCase() === q);
   const showCreate = q && !exactMatch;
   if (!filtered.length && !showCreate) { ac.style.display = 'none'; return; }
   ac.innerHTML = [
     ...filtered.map(tg => `
-      <div class="tags-autocomplete-item" onclick="selectFollowedDocTag('${tg.id}')">
+      <div class="tags-autocomplete-item" onclick="selectDocTag('${tg.id}')">
         <span class="dot" style="background:${tg.color}"></span>${esc(tg.name)}
       </div>`),
     showCreate ? `
-      <div class="tags-autocomplete-item" onclick="addFollowedDocTag('${esc(val.trim())}')">
+      <div class="tags-autocomplete-item" onclick="addDocTag('${esc(val.trim())}')">
         <span class="dot" style="background:${randomTagColor()}"></span>${esc(val.trim())}
         <span class="new-hint">${t('editor_tag_create_hint')}</span>
       </div>` : ''
@@ -801,34 +643,34 @@ function onFollowedDocTagInput(val) {
   ac.style.display = 'block';
 }
 
-async function selectFollowedDocTag(tagId) {
+async function selectDocTag(tagId) {
   const tg = allDocTags.find(x => x.id === tagId);
-  if (!tg || !editingFollowedDocId) return;
-  const docId = editingFollowedDocId;
-  if (!(followedDocTagMap[docId] || []).includes(tg.id)) {
-    if (!followedDocTagMap[docId]) followedDocTagMap[docId] = [];
-    followedDocTagMap[docId].push(tg.id);
-    const { error } = await sb.from('followed_document_tags')
+  if (!tg || !editingTagDocId) return;
+  const docId = editingTagDocId;
+  if (!(docTagMap[docId] || []).includes(tg.id)) {
+    if (!docTagMap[docId]) docTagMap[docId] = [];
+    docTagMap[docId].push(tg.id);
+    const { error } = await sb.from('document_tags')
       .insert({ user_id: currentUser.id, document_id: docId, tag_id: tg.id, universe_id: currentUniverse.id });
     if (error) {
-      followedDocTagMap[docId] = followedDocTagMap[docId].filter(id => id !== tg.id);
+      docTagMap[docId] = docTagMap[docId].filter(id => id !== tg.id);
       showToast(t('toast_tag_add_error')); return;
     }
-    renderFollowedDocTagChips(docId);
+    renderDocTagChips(docId);
     renderDocumentsList();
   }
-  document.getElementById('followed-doc-tag-input').value = '';
-  document.getElementById('followed-doc-tag-autocomplete').style.display = 'none';
+  document.getElementById('doc-tag-input').value = '';
+  document.getElementById('doc-tag-autocomplete').style.display = 'none';
 }
 
-function onFollowedDocTagKeydown(e) {
+function onDocTagKeydown(e) {
   if (e.key === 'Enter' || e.key === ',') {
     e.preventDefault();
-    const ac = document.getElementById('followed-doc-tag-autocomplete');
+    const ac = document.getElementById('doc-tag-autocomplete');
     const active = ac.querySelector('.tags-autocomplete-item.active');
     if (active) active.click();
-    else { const v = e.target.value.trim(); if (v) addFollowedDocTag(v); }
+    else { const v = e.target.value.trim(); if (v) addDocTag(v); }
   } else if (e.key === 'Escape') {
-    document.getElementById('followed-doc-tag-autocomplete').style.display = 'none';
+    document.getElementById('doc-tag-autocomplete').style.display = 'none';
   }
 }
