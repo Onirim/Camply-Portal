@@ -889,6 +889,9 @@ a:hover { color: #5bbdaa; }
 .campaign-card {
   background: var(--bg2); border: 1px solid var(--border); border-radius: 3px;
 }
+.universe-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 3px;
+}
 .campaign-card::before {
   background: linear-gradient(90deg, var(--accent), var(--def));
   height: 2px;
