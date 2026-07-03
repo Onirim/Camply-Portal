@@ -64,6 +64,18 @@ async function loadDocTagsFromDB() {
 
 async function saveDocumentToDB() {
   if (!docState.title.trim()) { alert(t('alert_doc_no_title')); return; }
+  const isUUID = editingDocId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingDocId);
+
+  let targetId = isUUID ? editingDocId : null;
+  if (docIllusStaging) {
+    if (!targetId) targetId = crypto.randomUUID();
+    docState.illustration_url = await promoteStagedIllustration(
+      'character-illustrations', docIllusStaging, `${currentUser.id}/doc_${targetId}.jpg`, docState.illustration_url
+    );
+    docIllusStaging = null;
+  }
+
   const payload = {
     title:                 docState.title.trim(),
     content:               docState.content,
@@ -75,9 +87,8 @@ async function saveDocumentToDB() {
     payload.universe_id = currentUniverse.id;
     payload.is_public = docState.is_public || false;
     payload.allow_write_share = docState.allow_write_share || false;
+    if (targetId && !isUUID) payload.id = targetId;
   }
-  const isUUID = editingDocId &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingDocId);
 
   let result;
   if (isUUID) {
@@ -254,7 +265,10 @@ function docCardHTML(id, d, isFollowed) {
 // FORMULAIRE ÉDITEUR
 // ══════════════════════════════════════════════════════════════
 
+let docIllusStaging = null; // chemin de staging en attente de sauvegarde, ou null
+
 function newDocument() {
+  if (docIllusStaging) { discardStagedIllustration('character-illustrations', docIllusStaging); docIllusStaging = null; }
   editingDocId = null;
   editingDocIsFollowed = false;
   docState = { title:'', content:'', is_public:false, allow_write_share:false,
@@ -264,6 +278,7 @@ function newDocument() {
 }
 
 function openDocEditor(id) {
+  if (docIllusStaging) { discardStagedIllustration('character-illustrations', docIllusStaging); docIllusStaging = null; }
   editingDocId = id;
   editingDocIsFollowed = !!followedDocuments[id] && !documents[id];
   const sourceDoc = documents[id] || followedDocuments[id];
@@ -517,17 +532,13 @@ async function uploadDocIllustration(input) {
   if (!currentUser) { showToast(t('toast_upload_no_user')); return; }
   if (file.size > 3 * 1024 * 1024) { showToast(t('toast_illus_too_large')); return; }
   document.getElementById('doc-illus-uploading').classList.add('active');
-  const oldUrl = docState.illustration_url || '';
-  const fileId = editingDocId || ('tmp_' + Date.now());
-  const path   = `${currentUser.id}/doc_${fileId}_${Date.now()}.jpg`;
-  const blob   = await compressImage(file);
-  const { error } = await sb.storage
-    .from('character-illustrations').upload(path, blob, { upsert:true, contentType:'image/jpeg' });
+  if (docIllusStaging) await discardStagedIllustration('character-illustrations', docIllusStaging);
+  const blob = await compressImage(file);
+  const { path, url, error } = await stageIllustrationUpload('character-illustrations', currentUser.id, blob);
   document.getElementById('doc-illus-uploading').classList.remove('active');
   if (error) { showToast(t('toast_illus_upload_error') + error.message); return; }
-  if (oldUrl && !oldUrl.includes(path)) await deleteStorageFile(oldUrl);
-  const { data } = sb.storage.from('character-illustrations').getPublicUrl(path);
-  docState.illustration_url      = data.publicUrl;
+  docIllusStaging = path;
+  docState.illustration_url      = url;
   docState.illustration_position = 0;
   setDocIllusPreview(docState.illustration_url, 0);
   showToast(t('toast_illus_added'));
@@ -536,7 +547,12 @@ async function uploadDocIllustration(input) {
 
 async function removeDocIllustration() {
   if (!docState.illustration_url) return;
-  await deleteStorageFile(docState.illustration_url);
+  if (docIllusStaging) {
+    await discardStagedIllustration('character-illustrations', docIllusStaging);
+    docIllusStaging = null;
+  } else {
+    await deleteStorageFile(docState.illustration_url);
+  }
   docState.illustration_url      = '';
   docState.illustration_position = 0;
   setDocIllusPreview('', 0);

@@ -3,6 +3,7 @@
 // ══════════════════════════════════════════════════════════════
 
 function newChar() {
+  if (charIllusStaging) { discardStagedIllustration('character-illustrations', charIllusStaging); charIllusStaging = null; }
   editingId = null;
   state     = freshState();
   currentSecretDraft = '';
@@ -11,6 +12,7 @@ function newChar() {
 }
 
 function editChar(id, dataOverride) {
+  if (charIllusStaging) { discardStagedIllustration('character-illustrations', charIllusStaging); charIllusStaging = null; }
   editingId = id;
   const src = dataOverride || (id ? chars[id] : null) || freshState();
   state = JSON.parse(JSON.stringify(src));

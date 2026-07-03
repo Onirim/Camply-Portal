@@ -78,6 +78,18 @@ async function loadEntriesForChronicle(chrId) {
 
 async function saveChronicleToDB() {
   if (!chrState.title.trim()) { alert(t('alert_chr_no_title')); return; }
+  const isUUID = editingChrId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingChrId);
+
+  let targetId = isUUID ? editingChrId : null;
+  if (chrIllusStaging) {
+    if (!targetId) targetId = crypto.randomUUID();
+    chrState.illustration_url = await promoteStagedIllustration(
+      'character-illustrations', chrIllusStaging, `${currentUser.id}/chr_${targetId}.jpg`, chrState.illustration_url
+    );
+    chrIllusStaging = null;
+  }
+
   const payload = {
     title:                 chrState.title.trim(),
     description:           chrState.description,
@@ -88,9 +100,8 @@ async function saveChronicleToDB() {
     payload.user_id     = currentUser.id;
     payload.universe_id = currentUniverse.id;
     payload.is_public   = chrState.is_public || false;
+    if (targetId && !isUUID) payload.id = targetId;
   }
-  const isUUID = editingChrId &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingChrId);
 
   let result;
   if (isUUID) {
@@ -355,7 +366,10 @@ function entryRowHTML(e, isOwn, chrId, canEdit = isOwn) {
 // FORMULAIRE — CHRONIQUE
 // ══════════════════════════════════════════════════════════════
 
+let chrIllusStaging = null; // chemin de staging en attente de sauvegarde, ou null
+
 function newChronicle() {
+  if (chrIllusStaging) { discardStagedIllustration('character-illustrations', chrIllusStaging); chrIllusStaging = null; }
   editingChrId = null;
   editingChrIsFollowed = false;
   chrState = { title: '', description: '', is_public: false,
@@ -365,6 +379,7 @@ function newChronicle() {
 }
 
 function openChrEditor(id) {
+  if (chrIllusStaging) { discardStagedIllustration('character-illustrations', chrIllusStaging); chrIllusStaging = null; }
   editingChrId = id;
   editingChrIsFollowed = !!followedChronicles[id] && !chronicles[id];
   chrState = { ...(chronicles[id] || followedChronicles[id]) };
@@ -523,22 +538,14 @@ async function uploadChrIllustration(input) {
   if (file.size > 3 * 1024 * 1024) { showToast(t('toast_illus_too_large')); return; }
 
   document.getElementById('chr-illus-uploading').classList.add('active');
-
-  const oldUrl = chrState.illustration_url || '';
-  const fileId = editingChrId || ('tmp_' + Date.now());
-  const path   = `${currentUser.id}/chr_${fileId}_${Date.now()}.jpg`;
-
+  if (chrIllusStaging) await discardStagedIllustration('character-illustrations', chrIllusStaging);
   const blob = await compressImage(file);
-  const { error } = await sb.storage
-    .from('character-illustrations')
-    .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  const { path, url, error } = await stageIllustrationUpload('character-illustrations', currentUser.id, blob);
   document.getElementById('chr-illus-uploading').classList.remove('active');
   if (error) { showToast(t('toast_illus_upload_error') + error.message); return; }
 
-  if (oldUrl && !oldUrl.includes(path)) await deleteStorageFile(oldUrl);
-
-  const { data } = sb.storage.from('character-illustrations').getPublicUrl(path);
-  chrState.illustration_url      = data.publicUrl;
+  chrIllusStaging = path;
+  chrState.illustration_url      = url;
   chrState.illustration_position = 0;
   setChrIllusPreview(chrState.illustration_url, 0);
   showToast(t('toast_illus_added'));
@@ -547,6 +554,14 @@ async function uploadChrIllustration(input) {
 
 async function removeChrIllustration() {
   if (!chrState.illustration_url) return;
+  if (chrIllusStaging) {
+    await discardStagedIllustration('character-illustrations', chrIllusStaging);
+    chrIllusStaging = null;
+    chrState.illustration_url      = '';
+    chrState.illustration_position = 0;
+    setChrIllusPreview('', 0);
+    return;
+  }
   await deleteStorageFile(chrState.illustration_url);
   chrState.illustration_url      = '';
   chrState.illustration_position = 0;
