@@ -165,10 +165,10 @@ html, body {
 
 .config-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
+  grid-template-columns: minmax(0, 1fr) 520px;
   gap: 24px;
   align-items: start;
-  max-width: 1140px;
+  max-width: 1240px;
 }
 .config-main    { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .config-sidebar { display: flex; flex-direction: column; gap: 20px; }
