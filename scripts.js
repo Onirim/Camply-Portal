@@ -397,6 +397,55 @@ function showUniverseScreen() {
   renderUniverseList();
   applyTranslations();
   applyTheme('');
+  loadUniverseUnreadFlags();
+}
+
+// ── Pastilles "non lu" sur les cards d'univers ─────────────────
+let universeUnreadMap = {};
+
+async function loadUniverseUnreadFlags() {
+  if (!currentUser || !userUniverses.length) { universeUnreadMap = {}; return; }
+  const universeIds = userUniverses.map(u => u.id);
+
+  const [charsRes, docsRes, chrsRes, markersRes] = await Promise.all([
+    sb.from('characters').select('id, universe_id, user_id').in('universe_id', universeIds),
+    sb.from('documents').select('id, universe_id, user_id').in('universe_id', universeIds),
+    sb.from('chronicles').select('id, universe_id, user_id').in('universe_id', universeIds),
+    sb.from('read_markers').select('universe_id, content_type, content_id')
+      .eq('user_id', currentUser.id).in('universe_id', universeIds),
+  ]);
+  if (charsRes.error || docsRes.error || chrsRes.error || markersRes.error) {
+    console.warn('Erreur chargement des pastilles non lu des univers');
+    return;
+  }
+
+  const chronicleRows = chrsRes.data || [];
+  const followedChronicleIds = chronicleRows.filter(r => r.user_id !== currentUser.id).map(r => r.id);
+  const entriesRes = followedChronicleIds.length
+    ? await sb.from('chronicle_entries').select('id, chronicle_id').in('chronicle_id', followedChronicleIds)
+    : { data: [] };
+
+  const readSet = new Set((markersRes.data || []).map(r => `${r.universe_id}|${r.content_type}|${r.content_id}`));
+  const chrUniverseById = {};
+  chronicleRows.forEach(r => { chrUniverseById[r.id] = r.universe_id; });
+
+  const flagged = new Set();
+  const markUnread = (row, type) => {
+    if (row.user_id === currentUser.id || flagged.has(row.universe_id)) return;
+    if (!readSet.has(`${row.universe_id}|${type}|${row.id}`)) flagged.add(row.universe_id);
+  };
+  (charsRes.data || []).forEach(r => markUnread(r, 'character'));
+  (docsRes.data || []).forEach(r => markUnread(r, 'document'));
+  chronicleRows.forEach(r => markUnread(r, 'chronicle'));
+  (entriesRes.data || []).forEach(e => {
+    const universeId = chrUniverseById[e.chronicle_id];
+    if (!universeId || flagged.has(universeId)) return;
+    if (!readSet.has(`${universeId}|chronicle_entry|${e.id}`)) flagged.add(universeId);
+  });
+
+  universeUnreadMap = {};
+  flagged.forEach(id => { universeUnreadMap[id] = true; });
+  renderUniverseList();
 }
 
 function renderUniverseList() {
@@ -421,6 +470,7 @@ function renderUniverseList() {
       : '';
     return `
     <div class="universe-card" onclick="enterUniverse('${u.id}')">
+      ${universeUnreadMap[u.id] ? unreadMarkers.cardDotHTML(true) : ''}
       ${u.illustration_url ? `<img class="card-illus" src="${esc(u.illustration_url)}" style="object-position:center ${u.illustration_position || 0}%" alt="">` : ''}
       ${u.role !== 'owner' ? `<div class="card-actions">
         <button class="icon-btn danger" onclick="event.stopPropagation();leaveUniverse('${u.id}')" title="${t('btn_leave_universe')}">
