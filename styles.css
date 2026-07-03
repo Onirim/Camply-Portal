@@ -103,14 +103,12 @@ html, body {
 }
 
 #topbar .logo {
-  display: flex; align-items: center; gap: 8px;
   font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
   color: var(--text); white-space: nowrap;
   cursor: pointer; transition: opacity 0.15s;
 }
 #topbar .logo:hover { opacity: 0.8; }
 #topbar .logo span { color: var(--text3); font-weight: 400; }
-#topbar .logo .brand-mark { border-radius: 6px; flex-shrink: 0; }
 
 #topbar nav button {
   background: none; border: none; cursor: pointer;
@@ -594,23 +592,24 @@ html, body {
 .universe-empty-desc  { font-size: 13px; line-height: 1.6; max-width: 320px; }
 
 .universe-card {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
-  text-align: left; color: var(--text); cursor: pointer;
-  transition: all 0.15s; position: relative; overflow: hidden;
-  display: flex; flex-direction: column;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 18px 20px;
+  cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 8px;
 }
-.universe-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
-.universe-card .card-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; z-index: 2; }
+.universe-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent2); opacity: 0; transition: opacity 0.2s;
+}
+.universe-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.universe-card:hover::before { opacity: 1; }
+.universe-card .card-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; z-index: 2; }
 .universe-card:hover .card-actions { opacity: 1; }
 
-.card-illus-wrap { position: relative; width: 100%; aspect-ratio: 16 / 7; overflow: hidden; background: var(--bg3); }
-.card-illus-wrap::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.35) 100%); }
-.universe-card .card-illus { width: 100%; height: 100%; object-fit: cover; cursor: default; display: block; }
-
-.universe-card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; flex: 1; }
-.universe-card-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-.universe-card-desc { color: var(--text3); font-size: 12px; line-height: 1.5; min-height: 18px; margin-bottom: 14px; flex: 1; }
-.universe-card-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.universe-card-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.universe-card-desc { color: var(--text3); font-size: 12px; line-height: 1.5; flex: 1; }
+.universe-card-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .universe-card-date { color: var(--text3); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
 
 .role-badge {

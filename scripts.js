@@ -421,19 +421,17 @@ function renderUniverseList() {
       : '';
     return `
     <div class="universe-card" onclick="enterUniverse('${u.id}')">
+      ${u.illustration_url ? `<img class="card-illus" src="${esc(u.illustration_url)}" style="object-position:center ${u.illustration_position || 0}%" alt="">` : ''}
       ${u.role !== 'owner' ? `<div class="card-actions">
         <button class="icon-btn danger" onclick="event.stopPropagation();leaveUniverse('${u.id}')" title="${t('btn_leave_universe')}">
           ${_leaveIcon()}
         </button>
       </div>` : ''}
-      ${u.illustration_url ? `<div class="card-illus-wrap"><img class="card-illus" src="${esc(u.illustration_url)}" style="object-position:center ${u.illustration_position || 0}%" alt=""></div>` : ''}
-      <div class="universe-card-body">
-        <div class="universe-card-title">${esc(u.name)}</div>
-        <div class="universe-card-desc">${esc(u.description || 'Aucune description')}</div>
-        <div class="universe-card-meta">
-          <span class="role-badge role-${esc(u.role || 'player')}">${esc(t(roleKey))}</span>
-          ${updated ? `<span class="universe-card-date">${esc(t('universe_updated_prefix'))} ${updated}</span>` : ''}
-        </div>
+      <div class="universe-card-title">${esc(u.name)}</div>
+      <div class="universe-card-desc">${esc(u.description || 'Aucune description')}</div>
+      <div class="universe-card-meta">
+        <span class="role-badge role-${esc(u.role || 'player')}">${esc(t(roleKey))}</span>
+        ${updated ? `<span class="universe-card-date">${esc(t('universe_updated_prefix'))} ${updated}</span>` : ''}
       </div>
     </div>
   `; }).join('');
