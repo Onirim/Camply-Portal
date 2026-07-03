@@ -282,14 +282,14 @@ async function _buildFullZip(model) {
 
   for (const item of model.mapItems) {
     const layer = item.layer || {};
-    const name = _safeName(layer.title || layer.map_key || 'carte', 'carte');
-    const objDir = cartesDir.folder(`${name}_${layer.id || ''}`);
     const mapLabel = (mapsConfig || []).find(m => m.key === layer.map_key)?.name || layer.map_key || 'default';
+    const name = _safeName(mapLabel, 'carte');
+    const objDir = cartesDir.folder(`${name}_${layer.id || ''}`);
     const lines = [
-      `# ${layer.title || 'Couche de carte'}`,
+      `# ${mapLabel}`,
       '',
       `- Source: ${item.source === 'owned' ? 'propriétaire' : 'abonné'}`,
-      `- Carte: ${mapLabel}`,
+      ...(layer._owner_name ? [`- Propriétaire: ${layer._owner_name}`] : []),
       '',
       '## Marqueurs',
       ''
@@ -431,14 +431,14 @@ function _buildMarkdownZip(model) {
     index.push('## Cartes', '');
     for (const item of model.mapItems) {
       const layer = item.layer || {};
-      const name = _safeName(layer.title || layer.map_key || 'carte', 'carte');
-      const file = `${name}_${layer.id || ''}.md`;
       const mapLabel = (mapsConfig || []).find(m => m.key === layer.map_key)?.name || layer.map_key || 'default';
+      const name = _safeName(mapLabel, 'carte');
+      const file = `${name}_${layer.id || ''}.md`;
       const lines = [
-        `# ${layer.title || 'Couche de carte'}`,
+        `# ${mapLabel}`,
         '',
         `- Source: ${item.source === 'owned' ? 'propriétaire' : 'abonné'}`,
-        `- Carte: ${mapLabel}`,
+        ...(layer._owner_name ? [`- Propriétaire: ${layer._owner_name}`] : []),
         '',
         '## Marqueurs',
         ''
@@ -455,7 +455,7 @@ function _buildMarkdownZip(model) {
         });
       }
       cartesDir.file(file, lines.join('\n'));
-      index.push(`- [${layer.title || layer.map_key || 'Sans nom'}](cartes/${file})`);
+      index.push(`- [${mapLabel}](cartes/${file})`);
     }
     index.push('');
   }
@@ -496,7 +496,8 @@ function _buildMarkdownSingleFile(model) {
   const charLabel = c => `${c.name || 'Personnage'} (perso-${(c._db_id || '').slice(0, 8)})`;
   const chrLabel = chr => `${chr.title || 'Chronique'} (chronique-${(chr.id || '').slice(0, 8)})`;
   const docLabel = d => `${d.title || 'Document'} (doc-${(d.id || '').slice(0, 8)})`;
-  const mapLabel = layer => `${layer.title || layer.map_key || 'Carte'} (carte-${(layer.id || '').slice(0, 8)})`;
+  const mapName = layer => (mapsConfig || []).find(m => m.key === layer.map_key)?.name || layer.map_key || 'Carte';
+  const mapLabel = layer => `${mapName(layer)} (carte-${(layer.id || '').slice(0, 8)})`;
   const tagLabel = name => `${name} (tag)`;
 
   const tagIndex = _buildTagIndex(model);
@@ -521,7 +522,7 @@ function _buildMarkdownSingleFile(model) {
   }
   if (model.mapItems.length) {
     out.push('- Cartes');
-    model.mapItems.forEach(item => out.push(`  - [${item.layer?.title || item.layer?.map_key || 'Sans nom'}](#${_slugify(mapLabel(item.layer || {}))})`));
+    model.mapItems.forEach(item => out.push(`  - [${mapName(item.layer || {})}](#${_slugify(mapLabel(item.layer || {}))})`));
   }
   const tagSlugs = Object.keys(tagIndex);
   if (tagSlugs.length) {
@@ -575,10 +576,10 @@ function _buildMarkdownSingleFile(model) {
     out.push('## Cartes', '');
     model.mapItems.forEach(item => {
       const layer = item.layer || {};
-      const label = (mapsConfig || []).find(m => m.key === layer.map_key)?.name || layer.map_key || 'default';
       out.push(`### ${mapLabel(layer)}`, '');
       out.push(`- Source: ${item.source === 'owned' ? 'propriétaire' : 'abonné'}`);
-      out.push(`- Carte: ${label}`, '', '#### Marqueurs', '');
+      if (layer._owner_name) out.push(`- Propriétaire: ${layer._owner_name}`);
+      out.push('', '#### Marqueurs', '');
       if (!item.markers.length) {
         out.push('- (aucun marqueur)', '');
       } else {

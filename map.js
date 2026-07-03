@@ -607,7 +607,7 @@ async function loadMapMarkersFromDB() {
     return;
   }
   const { data, error } = await sb.from('map_markers')
-    .select('id, x, y, name, description, color, map_key')
+    .select('id, x, y, name, description, color, map_key, linked_type, linked_id')
     .eq('user_id', currentUser.id)
     .eq('map_key', currentMapKey)
     .eq('universe_id', currentUniverse.id)
@@ -630,7 +630,7 @@ async function _saveMarkerToDB(payload, ctx) {
   if (ctx.mode === 'add') {
     const { data, error } = await sb.from('map_markers')
       .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey, universe_id: currentUniverse.id })
-      .select('id, x, y, name, description, color, map_key').single();
+      .select('id, x, y, name, description, color, map_key, linked_type, linked_id').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapMarkers[data.id] = data;
     _renderMarker(data, true);
@@ -643,7 +643,7 @@ async function _saveMarkerToDB(payload, ctx) {
     const existing = _findMarkerContext(ctx.id);
     const { data, error } = await sb.from('map_markers')
       .update(payload).eq('id', ctx.id).eq('universe_id', currentUniverse.id)
-      .select('id, x, y, name, description, color, map_key').single();
+      .select('id, x, y, name, description, color, map_key, linked_type, linked_id').single();
     if (error) { showToast(t('map_toast_error')); return; }
     if (existing && !existing.own) {
       existing.followedEntry.markers[data.id] = data;
@@ -675,7 +675,7 @@ async function deleteMapMarker(id) {
 async function loadAllOwnLayersFromDB() {
   if (!currentUser) return;
   const { data: layers, error } = await sb.from('map_layers')
-    .select('id, title, description, is_public, user_id, map_key')
+    .select('id, is_public, user_id, map_key')
     .eq('universe_id', currentUniverse.id);
   if (error) { console.error('Erreur chargement couches:', error); return; }
 
@@ -694,7 +694,7 @@ async function loadAllOwnLayersFromDB() {
       continue;
     }
     const { data: markers } = await sb.from('map_markers')
-      .select('id, x, y, name, description, color, map_key')
+      .select('id, x, y, name, description, color, map_key, linked_type, linked_id')
       .eq('user_id', layer.user_id).eq('universe_id', currentUniverse.id);
     mapFollowedLayers[layer.id] = {
       layer: { ...layer, _owner_name: ownerMap[layer.user_id] || '?' },
@@ -705,22 +705,20 @@ async function loadAllOwnLayersFromDB() {
 }
 
 async function saveOwnLayerToDB() {
-  const title  = document.getElementById('map-layer-title')?.value.trim() || '';
-  const desc   = document.getElementById('map-layer-desc')?.value.trim()  || '';
-  const pub    = document.getElementById('map-layer-public')?.checked      || false;
-  const payload = { title, description: desc, is_public: pub };
+  const pub     = document.getElementById('map-layer-public')?.checked || false;
+  const payload = { is_public: pub };
 
   const layer = _ownLayer();
   if (layer?.id) {
     const { data, error } = await sb.from('map_layers')
       .update(payload).eq('id', layer.id).eq('universe_id', currentUniverse.id)
-      .select('id, title, description, is_public, map_key').single();
+      .select('id, is_public, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapOwnLayers[data.map_key] = data;
   } else {
     const { data, error } = await sb.from('map_layers')
       .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey, universe_id: currentUniverse.id })
-      .select('id, title, description, is_public, map_key').single();
+      .select('id, is_public, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapOwnLayers[data.map_key] = data;
   }
@@ -843,6 +841,20 @@ function _updateMarkerCount() {
 // POPUP D'INFO
 // ══════════════════════════════════════════════════════════════
 
+/** Nom affichable de l'objet lié à un marqueur, si connu localement. */
+function _linkedObjectName(type, id) {
+  if (type === 'char') return chars[id]?.name || followedChars[id]?.name || null;
+  if (type === 'doc')  return documents[id]?.title || followedDocuments[id]?.title || null;
+  return null;
+}
+
+/** Ouvre la fiche de l'objet lié à un marqueur et ferme la popup. */
+function _openMarkerLinkedObject(type, id) {
+  _closePopup();
+  if (type === 'char') navigateToChar(id);
+  else if (type === 'doc') navigateToDoc(id);
+}
+
 function _openPopup(markerId, owned) {
   let m = mapMarkers[markerId];
   let ownerName = null;
@@ -866,6 +878,12 @@ function _openPopup(markerId, owned) {
       <button class="map-popup-close" onclick="_closePopup()">✕</button>
     </div>
     ${m.description ? `<div class="map-popup-desc">${esc(m.description)}</div>` : ''}
+    ${m.linked_type && m.linked_id ? `
+    <div class="map-popup-link">
+      <a href="#" onclick="event.preventDefault(); _openMarkerLinkedObject('${m.linked_type}','${m.linked_id}')">
+        ${m.linked_type === 'char' ? '👤' : '📄'} ${esc(_linkedObjectName(m.linked_type, m.linked_id) || t('map_popup_link_' + m.linked_type))}
+      </a>
+    </div>` : ''}
     ${ownerName ? `<div class="map-popup-owner">${t('followed_owner_prefix')}${esc(ownerName)}</div>` : ''}
     ${owned ? `
     <div class="map-popup-actions">
@@ -943,9 +961,41 @@ function openMapMarkerModal(mode, rx, ry, markerId) {
         style="background:${c}" onclick="selectMapModalColor('${c}',this)"></div>`
     ).join('');
 
+  document.getElementById('map-modal-link-type').value = m?.linked_type || '';
+  _refreshMapModalLinkOptions(m?.linked_id);
+
   document.getElementById('map-marker-modal').classList.add('open');
   requestAnimationFrame(() => document.getElementById('map-modal-name').focus());
   _closePopup();
+}
+
+/**
+ * Personnages/documents que l'utilisateur peut lier à un marqueur : les
+ * siens plus tout ce qui lui est visible dans l'univers (RLS), càd les
+ * stores `followedChars`/`followedDocuments` déjà filtrés côté serveur
+ * selon le partage de campagne et le statut public des objets.
+ */
+function _universeItemsOfType(type) {
+  if (type === 'char') return [
+    ...Object.values(chars).map(c => ({ id: c._db_id, name: c.name || '—' })),
+    ...Object.values(followedChars).map(c => ({ id: c._db_id, name: `${c.name || '—'} (${c._owner_name})` })),
+  ];
+  if (type === 'doc') return [
+    ...Object.values(documents).map(d => ({ id: d.id, name: d.title || '—' })),
+    ...Object.values(followedDocuments).map(d => ({ id: d.id, name: `${d.title || '—'} (${d._owner_name})` })),
+  ];
+  return [];
+}
+
+/** Peuple le select d'objets liés selon le type choisi (personnage/document). */
+function _refreshMapModalLinkOptions(selectedId) {
+  const type = document.getElementById('map-modal-link-type').value;
+  const select = document.getElementById('map-modal-link-id');
+  if (!type) { select.innerHTML = ''; select.disabled = true; return; }
+  const items = _universeItemsOfType(type);
+  select.disabled = false;
+  select.innerHTML = `<option value="">${t('map_modal_link_select_ph')}</option>` +
+    items.map(it => `<option value="${it.id}" ${it.id === selectedId ? 'selected' : ''}>${esc(it.name)}</option>`).join('');
 }
 
 function selectMapModalColor(color, el) {
@@ -963,9 +1013,13 @@ async function submitMapMarkerModal() {
   const name = document.getElementById('map-modal-name').value.trim();
   const desc = document.getElementById('map-modal-desc').value.trim();
   if (!name) { document.getElementById('map-modal-name').focus(); return; }
+  const linkType = document.getElementById('map-modal-link-type').value;
+  const linkId   = document.getElementById('map-modal-link-id').value;
   const ctx = { ...mapModalCtx };
   const payload = {
     name, description: desc, color: mapModalColor,
+    linked_type: linkType && linkId ? linkType : null,
+    linked_id:   linkType && linkId ? linkId   : null,
     ...(ctx.mode === 'add' && {
       x: Math.max(0, Math.min(1, ctx.x)),
       y: Math.max(0, Math.min(1, ctx.y)),
@@ -1005,8 +1059,7 @@ function _renderLayerPanel() {
         <div class="map-followed-row">
           <div class="map-followed-dot"></div>
           <div class="map-followed-info">
-            <div class="map-followed-title">${esc(l.title || t('map_own_layer'))}</div>
-            <div class="map-followed-owner">${t('followed_owner_prefix')}${esc(l._owner_name)}</div>
+            <div class="map-followed-title">${t('followed_owner_prefix')}${esc(l._owner_name)}</div>
           </div>
         </div>`).join('')
     : `<div class="map-followed-empty">${t('map_followed_empty')}</div>`;
@@ -1018,17 +1071,6 @@ function _renderLayerPanel() {
         <div class="map-panel-title">
           ${t('map_own_layer')}
           ${cfg ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3)"> — ${esc(cfg.name)}</span>` : ''}
-        </div>
-        <div class="map-panel-field">
-          <label>${t('map_field_title')}</label>
-          <input type="text" id="map-layer-title"
-            value="${esc(layer?.title || '')}"
-            placeholder="${t('map_layer_title_ph')}">
-        </div>
-        <div class="map-panel-field">
-          <label>${t('map_field_desc')}</label>
-          <textarea id="map-layer-desc"
-            placeholder="${t('map_layer_desc_ph')}">${esc(layer?.description || '')}</textarea>
         </div>
         <div class="map-panel-public-row">
           <label>${t('editor_field_public')}</label>

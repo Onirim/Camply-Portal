@@ -97,6 +97,7 @@
   padding: 8px 12px; outline: none; transition: border-color 0.15s;
 }
 .chr-follow-wrap input:focus { border-color: var(--sup); }
+.chr-follow-wrap select { flex: 1; max-width: 200px; width: auto; }
 .chr-follow-wrap input::placeholder {
   text-transform: none; letter-spacing: 0;
   color: var(--text3); font-family: var(--font-body); font-size: 12px;
