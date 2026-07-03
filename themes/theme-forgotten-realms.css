@@ -157,7 +157,7 @@ a:hover { color: #e0b050; }
     0 2px 0 rgba(200,144,48,0.08),
     0 4px 20px rgba(0,0,0,0.7);
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 150;
   padding: 0 20px;
   gap: 0 8px;
   position: relative;

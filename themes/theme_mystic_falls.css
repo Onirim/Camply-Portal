@@ -110,7 +110,7 @@ body::before {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 150;
   padding: 0 24px;
   gap: 0 8px;
 }

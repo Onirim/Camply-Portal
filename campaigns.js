@@ -125,22 +125,27 @@ async function loadGMObjectOptions() {
   const ownerMap = {};
   (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
 
-  const [chars, chrs, docs, maps] = await Promise.all([
+  const [chars, chrs, docs, maps, mapConfigs] = await Promise.all([
     sb.from('characters').select('id, name, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', gmIds),
     sb.from('chronicles').select('id, title, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', gmIds),
     sb.from('documents').select('id, title, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', gmIds),
-    sb.from('map_layers').select('id, title, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', gmIds),
+    sb.from('map_layers').select('id, map_key, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', gmIds),
+    sb.from('maps').select('map_key, name').eq('universe_id', currentUniverse.id),
   ]);
 
   const toOptions = (result, labelField) => (result.data || [])
     .map(r => ({ id: r.id, label: r[labelField] || '?', owner: ownerMap[r.user_id] || '?' }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
+  const mapNameByKey = Object.fromEntries((mapConfigs.data || []).map(m => [m.map_key, m.name]));
+
   gmObjectOptions = {
     character: toOptions(chars, 'name'),
     chronicle: toOptions(chrs, 'title'),
     document:  toOptions(docs, 'title'),
-    map:       toOptions(maps, 'title'),
+    map: (maps.data || [])
+      .map(r => ({ id: r.id, label: mapNameByKey[r.map_key] || r.map_key || '?', owner: ownerMap[r.user_id] || '?' }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
   };
 }
 

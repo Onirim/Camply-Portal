@@ -675,7 +675,7 @@ async function deleteMapMarker(id) {
 async function loadAllOwnLayersFromDB() {
   if (!currentUser) return;
   const { data: layers, error } = await sb.from('map_layers')
-    .select('id, title, description, is_public, user_id, map_key')
+    .select('id, is_public, user_id, map_key')
     .eq('universe_id', currentUniverse.id);
   if (error) { console.error('Erreur chargement couches:', error); return; }
 
@@ -705,22 +705,20 @@ async function loadAllOwnLayersFromDB() {
 }
 
 async function saveOwnLayerToDB() {
-  const title  = document.getElementById('map-layer-title')?.value.trim() || '';
-  const desc   = document.getElementById('map-layer-desc')?.value.trim()  || '';
-  const pub    = document.getElementById('map-layer-public')?.checked      || false;
-  const payload = { title, description: desc, is_public: pub };
+  const pub     = document.getElementById('map-layer-public')?.checked || false;
+  const payload = { is_public: pub };
 
   const layer = _ownLayer();
   if (layer?.id) {
     const { data, error } = await sb.from('map_layers')
       .update(payload).eq('id', layer.id).eq('universe_id', currentUniverse.id)
-      .select('id, title, description, is_public, map_key').single();
+      .select('id, is_public, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapOwnLayers[data.map_key] = data;
   } else {
     const { data, error } = await sb.from('map_layers')
       .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey, universe_id: currentUniverse.id })
-      .select('id, title, description, is_public, map_key').single();
+      .select('id, is_public, map_key').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapOwnLayers[data.map_key] = data;
   }
@@ -1005,8 +1003,7 @@ function _renderLayerPanel() {
         <div class="map-followed-row">
           <div class="map-followed-dot"></div>
           <div class="map-followed-info">
-            <div class="map-followed-title">${esc(l.title || t('map_own_layer'))}</div>
-            <div class="map-followed-owner">${t('followed_owner_prefix')}${esc(l._owner_name)}</div>
+            <div class="map-followed-title">${t('followed_owner_prefix')}${esc(l._owner_name)}</div>
           </div>
         </div>`).join('')
     : `<div class="map-followed-empty">${t('map_followed_empty')}</div>`;
@@ -1018,17 +1015,6 @@ function _renderLayerPanel() {
         <div class="map-panel-title">
           ${t('map_own_layer')}
           ${cfg ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3)"> — ${esc(cfg.name)}</span>` : ''}
-        </div>
-        <div class="map-panel-field">
-          <label>${t('map_field_title')}</label>
-          <input type="text" id="map-layer-title"
-            value="${esc(layer?.title || '')}"
-            placeholder="${t('map_layer_title_ph')}">
-        </div>
-        <div class="map-panel-field">
-          <label>${t('map_field_desc')}</label>
-          <textarea id="map-layer-desc"
-            placeholder="${t('map_layer_desc_ph')}">${esc(layer?.description || '')}</textarea>
         </div>
         <div class="map-panel-public-row">
           <label>${t('editor_field_public')}</label>
