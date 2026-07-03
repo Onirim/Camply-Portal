@@ -204,6 +204,12 @@ body::before {
 }
 #view-list.active { display: flex; }
 
+#view-chronicles.active,
+#view-documents.active,
+#view-campaigns.active {
+  padding: 32px 36px;
+}
+
 .list-header {
   display: flex; align-items: flex-end; justify-content: space-between;
   margin-bottom: 28px;
@@ -272,6 +278,22 @@ body::before {
 .char-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.5), var(--glow-accent); }
 .char-card:hover::before { opacity: 1; }
 .char-card:hover::after { opacity: 1; }
+
+/* ── Harmonisation des autres cartes sur le format des cartes personnages ── */
+.chr-grid,
+.doc-grid,
+.universe-list,
+.campaign-grid {
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 16px;
+}
+.chr-card,
+.doc-card,
+.universe-card,
+.campaign-card {
+  border-radius: 4px;
+  padding: 20px 22px;
+}
 
 .char-card .card-name {
   font-family: 'Cinzel', serif; font-size: 18px; font-weight: 700;
@@ -772,6 +794,9 @@ body::before {
   #main { overflow: visible; }
   #mob-preview-btn { display: flex !important; }
   #view-list { padding: 18px; }
+  #view-chronicles.active,
+  #view-documents.active,
+  #view-campaigns.active { padding: 18px; }
   .list-header { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
   .list-header h1 { font-size: 20px; }
   .char-grid { grid-template-columns: 1fr; }
@@ -791,6 +816,7 @@ body::before {
   .preview-attrs { grid-template-columns: repeat(3, 1fr); }
   #toast { bottom: 80px; }
   .char-card { padding: 16px 18px; }
+  .chr-card, .doc-card, .universe-card, .campaign-card { padding: 16px 18px; }
   .char-card .card-actions { opacity: 1; }
 }
 

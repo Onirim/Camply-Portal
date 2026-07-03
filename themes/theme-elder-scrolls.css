@@ -1059,6 +1059,7 @@ a:hover { color: var(--gold-bright); }
    CAMPAGNES — Les Guildes de Tamriel
    ══════════════════════════════════════════════════════════════ */
 .campaign-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 0; }
+.universe-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 0; }
 .campaign-card::before {
   background: linear-gradient(90deg, var(--accent), var(--daedric-purple));
   height: 2px;

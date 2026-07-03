@@ -167,6 +167,12 @@ html, body {
 }
 #view-list.active { display: flex; }
 
+#view-chronicles.active,
+#view-documents.active,
+#view-campaigns.active {
+  padding: 28px 32px;
+}
+
 .list-header {
   display: flex; align-items: flex-end; justify-content: space-between;
   margin-bottom: 24px;
@@ -213,6 +219,22 @@ html, body {
 }
 .char-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
 .char-card:hover::before { opacity: 1; }
+
+/* ── Harmonisation des autres cartes sur le format des cartes personnages ── */
+.chr-grid,
+.doc-grid,
+.universe-list,
+.campaign-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.chr-card,
+.doc-card,
+.universe-card,
+.campaign-card {
+  border-radius: 8px;
+  padding: 18px 20px;
+}
 
 .char-card .card-name {
   font-family: var(--font-display); font-size: 22px; font-weight: 700;
@@ -845,6 +867,9 @@ html, body {
 
   /* List view */
   #view-list { padding: 16px; }
+  #view-chronicles.active,
+  #view-documents.active,
+  #view-campaigns.active { padding: 16px; }
   .list-header { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
   .list-header h1 { font-size: 24px; }
   .char-grid { grid-template-columns: 1fr; }
@@ -887,6 +912,7 @@ html, body {
 
   /* Char card touch target */
   .char-card { padding: 14px 16px; }
+  .chr-card, .doc-card, .universe-card, .campaign-card { padding: 14px 16px; }
   .char-card .card-actions { opacity: 1; }
 }
 
