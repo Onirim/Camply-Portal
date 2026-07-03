@@ -1226,6 +1226,19 @@
             <label data-i18n="map_modal_field_color">Couleur</label>
             <div class="map-color-swatches" id="map-modal-swatches"></div>
           </div>
+
+          <!-- Lien vers un objet de l'univers -->
+          <div class="map-modal-field">
+            <label data-i18n="map_modal_field_link">Lien vers un objet</label>
+            <div class="map-modal-link-row">
+              <select id="map-modal-link-type" onchange="_refreshMapModalLinkOptions()">
+                <option value="" data-i18n="map_modal_link_none">Aucun</option>
+                <option value="char" data-i18n="map_modal_link_char">Personnage</option>
+                <option value="doc" data-i18n="map_modal_link_doc">Document</option>
+              </select>
+              <select id="map-modal-link-id"></select>
+            </div>
+          </div>
         </div>
      
         <div class="map-modal-footer">

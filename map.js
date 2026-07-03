@@ -607,7 +607,7 @@ async function loadMapMarkersFromDB() {
     return;
   }
   const { data, error } = await sb.from('map_markers')
-    .select('id, x, y, name, description, color, map_key')
+    .select('id, x, y, name, description, color, map_key, linked_type, linked_id')
     .eq('user_id', currentUser.id)
     .eq('map_key', currentMapKey)
     .eq('universe_id', currentUniverse.id)
@@ -630,7 +630,7 @@ async function _saveMarkerToDB(payload, ctx) {
   if (ctx.mode === 'add') {
     const { data, error } = await sb.from('map_markers')
       .insert({ ...payload, user_id: currentUser.id, map_key: currentMapKey, universe_id: currentUniverse.id })
-      .select('id, x, y, name, description, color, map_key').single();
+      .select('id, x, y, name, description, color, map_key, linked_type, linked_id').single();
     if (error) { showToast(t('map_toast_error')); return; }
     mapMarkers[data.id] = data;
     _renderMarker(data, true);
@@ -643,7 +643,7 @@ async function _saveMarkerToDB(payload, ctx) {
     const existing = _findMarkerContext(ctx.id);
     const { data, error } = await sb.from('map_markers')
       .update(payload).eq('id', ctx.id).eq('universe_id', currentUniverse.id)
-      .select('id, x, y, name, description, color, map_key').single();
+      .select('id, x, y, name, description, color, map_key, linked_type, linked_id').single();
     if (error) { showToast(t('map_toast_error')); return; }
     if (existing && !existing.own) {
       existing.followedEntry.markers[data.id] = data;
@@ -694,7 +694,7 @@ async function loadAllOwnLayersFromDB() {
       continue;
     }
     const { data: markers } = await sb.from('map_markers')
-      .select('id, x, y, name, description, color, map_key')
+      .select('id, x, y, name, description, color, map_key, linked_type, linked_id')
       .eq('user_id', layer.user_id).eq('universe_id', currentUniverse.id);
     mapFollowedLayers[layer.id] = {
       layer: { ...layer, _owner_name: ownerMap[layer.user_id] || '?' },
@@ -841,6 +841,20 @@ function _updateMarkerCount() {
 // POPUP D'INFO
 // ══════════════════════════════════════════════════════════════
 
+/** Nom affichable de l'objet lié à un marqueur, si connu localement. */
+function _linkedObjectName(type, id) {
+  if (type === 'char') return chars[id]?.name || followedChars[id]?.name || null;
+  if (type === 'doc')  return documents[id]?.title || followedDocuments[id]?.title || null;
+  return null;
+}
+
+/** Ouvre la fiche de l'objet lié à un marqueur et ferme la popup. */
+function _openMarkerLinkedObject(type, id) {
+  _closePopup();
+  if (type === 'char') navigateToChar(id);
+  else if (type === 'doc') navigateToDoc(id);
+}
+
 function _openPopup(markerId, owned) {
   let m = mapMarkers[markerId];
   let ownerName = null;
@@ -864,6 +878,12 @@ function _openPopup(markerId, owned) {
       <button class="map-popup-close" onclick="_closePopup()">✕</button>
     </div>
     ${m.description ? `<div class="map-popup-desc">${esc(m.description)}</div>` : ''}
+    ${m.linked_type && m.linked_id ? `
+    <div class="map-popup-link">
+      <a href="#" onclick="event.preventDefault(); _openMarkerLinkedObject('${m.linked_type}','${m.linked_id}')">
+        ${m.linked_type === 'char' ? '👤' : '📄'} ${esc(_linkedObjectName(m.linked_type, m.linked_id) || t('map_popup_link_' + m.linked_type))}
+      </a>
+    </div>` : ''}
     ${ownerName ? `<div class="map-popup-owner">${t('followed_owner_prefix')}${esc(ownerName)}</div>` : ''}
     ${owned ? `
     <div class="map-popup-actions">
@@ -941,9 +961,23 @@ function openMapMarkerModal(mode, rx, ry, markerId) {
         style="background:${c}" onclick="selectMapModalColor('${c}',this)"></div>`
     ).join('');
 
+  document.getElementById('map-modal-link-type').value = m?.linked_type || '';
+  _refreshMapModalLinkOptions(m?.linked_id);
+
   document.getElementById('map-marker-modal').classList.add('open');
   requestAnimationFrame(() => document.getElementById('map-modal-name').focus());
   _closePopup();
+}
+
+/** Peuple le select d'objets liés selon le type choisi (personnage/document). */
+function _refreshMapModalLinkOptions(selectedId) {
+  const type = document.getElementById('map-modal-link-type').value;
+  const select = document.getElementById('map-modal-link-id');
+  if (!type) { select.innerHTML = ''; select.disabled = true; return; }
+  const items = _ownItemsOfType(type);
+  select.disabled = false;
+  select.innerHTML = `<option value="">${t('map_modal_link_select_ph')}</option>` +
+    items.map(it => `<option value="${it.id}" ${it.id === selectedId ? 'selected' : ''}>${esc(it.name)}</option>`).join('');
 }
 
 function selectMapModalColor(color, el) {
@@ -961,9 +995,13 @@ async function submitMapMarkerModal() {
   const name = document.getElementById('map-modal-name').value.trim();
   const desc = document.getElementById('map-modal-desc').value.trim();
   if (!name) { document.getElementById('map-modal-name').focus(); return; }
+  const linkType = document.getElementById('map-modal-link-type').value;
+  const linkId   = document.getElementById('map-modal-link-id').value;
   const ctx = { ...mapModalCtx };
   const payload = {
     name, description: desc, color: mapModalColor,
+    linked_type: linkType && linkId ? linkType : null,
+    linked_id:   linkType && linkId ? linkId   : null,
     ...(ctx.mode === 'add' && {
       x: Math.max(0, Math.min(1, ctx.x)),
       y: Math.max(0, Math.min(1, ctx.y)),

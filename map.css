@@ -339,6 +339,20 @@
 }
 .map-popup-desc:empty { display: none; }
 
+.map-popup-link {
+  padding: 0 14px 10px;
+}
+.map-popup-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--accent2);
+  text-decoration: none;
+  cursor: pointer;
+}
+.map-popup-link a:hover { text-decoration: underline; }
+
 .map-popup-actions {
   display: flex;
   gap: 6px;
@@ -464,7 +478,8 @@
 }
 
 .map-modal-field input,
-.map-modal-field textarea {
+.map-modal-field textarea,
+.map-modal-field select {
   width: 100%;
   background: var(--bg3);
   border: 1px solid var(--border);
@@ -477,10 +492,18 @@
   transition: border-color 0.15s;
 }
 .map-modal-field input:focus,
-.map-modal-field textarea:focus { border-color: var(--accent); }
+.map-modal-field textarea:focus,
+.map-modal-field select:focus { border-color: var(--accent); }
 .map-modal-field textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
 .map-modal-field input::placeholder,
 .map-modal-field textarea::placeholder { color: var(--text3); }
+
+.map-modal-link-row {
+  display: flex;
+  gap: 8px;
+}
+.map-modal-link-row select { width: auto; flex: 1; }
+.map-modal-link-row select:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Sélecteur de couleur */
 .map-color-swatches {
