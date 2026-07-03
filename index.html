@@ -305,7 +305,7 @@
             </svg>
             <span data-i18n="user_transfer">Transférer un élément</span>
           </button>
-          <button class="user-dropdown-item" onclick="exportVisibleData()">
+          <button class="user-dropdown-item" onclick="openExportModal()">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M8 2v8"/>
               <path d="M5.5 7.5 8 10l2.5-2.5"/>
@@ -1488,6 +1488,65 @@
             <path d="M4 4l0.6 8.5a1 1 0 0 0 1 0.9h4.8a1 1 0 0 0 1-0.9l0.6-8.5" stroke-linecap="round"/>
           </svg>
           <span data-i18n="delete_universe_confirm_btn">Supprimer définitivement</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="export-modal">
+    <div id="export-modal-panel">
+      <div class="transfer-header">
+        <div class="transfer-title">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+            <path d="M8 2v8"/>
+            <path d="M5.5 7.5 8 10l2.5-2.5"/>
+            <path d="M2.5 11.5v1h11v-1"/>
+          </svg>
+          <span data-i18n="export_modal_title">Exporter mes données visibles</span>
+        </div>
+        <button class="transfer-close-btn" onclick="closeExportModal()" title="Annuler">✕</button>
+      </div>
+
+      <p class="transfer-desc" data-i18n="export_modal_desc">
+        Choisissez le format d'export le mieux adapté à votre usage.
+      </p>
+
+      <div class="export-option-grid" id="export-format-grid">
+        <button class="export-option-card" data-format="zip" onclick="_setExportFormat('zip')">
+          <svg class="export-option-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" width="20" height="20">
+            <path d="M2.5 2.5h11v11h-11z" stroke-linejoin="round"/>
+            <path d="M6.5 2.5v11M6.5 4.5h2M6.5 7h2M6.5 9.5h2"/>
+          </svg>
+          <span class="export-option-label" data-i18n="export_format_zip_label">Export complet</span>
+          <span class="export-option-desc" data-i18n="export_format_zip_desc">Structure en dossiers avec toutes les images. Idéal pour archiver ou partager.</span>
+        </button>
+        <button class="export-option-card" data-format="markdown" onclick="_setExportFormat('markdown')">
+          <svg class="export-option-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" width="20" height="20">
+            <path d="M2 4h12M2 8h12M2 12h7"/>
+          </svg>
+          <span class="export-option-label" data-i18n="export_format_markdown_label">Export Markdown (IA)</span>
+          <span class="export-option-desc" data-i18n="export_format_markdown_desc">Texte structuré sans images, pensé pour être fourni à une IA afin de préparer vos scénarios.</span>
+        </button>
+      </div>
+
+      <div id="export-md-mode-section" style="display:none">
+        <div class="transfer-section-label" data-i18n="export_md_mode_label">Format Markdown</div>
+        <div class="export-option-grid export-option-grid-sub" id="export-md-mode-grid">
+          <button class="export-option-card" data-md-mode="single" onclick="_setExportMdMode('single')">
+            <span class="export-option-label" data-i18n="export_md_mode_single_label">Fichier unique</span>
+            <span class="export-option-desc" data-i18n="export_md_mode_single_desc">Un seul fichier .md à copier-coller directement dans une conversation avec une IA.</span>
+          </button>
+          <button class="export-option-card" data-md-mode="multi" onclick="_setExportMdMode('multi')">
+            <span class="export-option-label" data-i18n="export_md_mode_multi_label">Plusieurs fichiers</span>
+            <span class="export-option-desc" data-i18n="export_md_mode_multi_desc">Un fichier .md par élément (zip), pratique pour les gros univers ou un upload multi-fichiers.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="transfer-actions">
+        <button class="btn-cancel" onclick="closeExportModal()" data-i18n="btn_cancel">Annuler</button>
+        <button class="transfer-confirm-btn" onclick="confirmExportChoice()">
+          <span data-i18n="export_confirm_btn">Exporter</span>
         </button>
       </div>
     </div>
