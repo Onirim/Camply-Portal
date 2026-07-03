@@ -17,13 +17,7 @@ function editChar(id, dataOverride) {
   if (!state.characteristics) state.characteristics = [];
   if (!state.skills)          state.skills          = [];
   if (!state.traits)          state.traits          = [];
-  if (!state.tags)            state.tags            = [];
   if (state.level === undefined || state.level === null) state.level = 0;
-  if (editingId && charTagMap[editingId]) {
-    state.tags = charTagMap[editingId]
-      .map(tid => allTags.find(tg => tg.id === tid))
-      .filter(Boolean);
-  }
 
   currentSecretDraft = '';
   populateEditor();
@@ -68,14 +62,9 @@ function populateEditor() {
   const descriptionField = document.getElementById('f-description');
   if (descriptionField) descriptionField.value = state.description || '';
 
-  renderTagChips();
-  setIllusPreview(state.illustration_url || '', state.illustration_position || 0);
-  updatePreview();
-
   const secretField = document.getElementById('f-secret');
   if (secretField) secretField.value = currentSecretDraft;
 
-  renderTagChips();
   setIllusPreview(state.illustration_url || '', state.illustration_position || 0);
   updatePreview();
 }

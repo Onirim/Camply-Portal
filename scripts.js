@@ -15,7 +15,6 @@ let allTags          = [];
 let activeTagFilters = [];
 let charTagMap       = {};
 let followedChars    = {};
-let followedTagMap   = {};
 let filterFollowed   = false;
 let charSecrets = {}; 
 let currentSecretDraft = '';
@@ -209,9 +208,7 @@ async function saveCharToDB() {
   editingId = result.data.id;
   await saveCharSecretToDB(editingId, currentSecretDraft);
   if (!isEditingFollowedChar) {
-    await saveCharTagsToDB(editingId);
     chars[editingId] = { ...state, _db_id: editingId, _owner_id: currentUser.id };
-    charTagMap[editingId] = (state.tags || []).map(tg => tg.id);
   } else if (followedChars[editingId]) {
     followedChars[editingId] = {
       ...followedChars[editingId],
@@ -235,15 +232,13 @@ async function deleteCharFromDB(id) {
   delete charTagMap[id];
   if (illustrationUrl) await deleteStorageFile(illustrationUrl);
   for (const tagId of tagIds) {
-  const { count: c1 } = await sb.from('character_tags')
-    .select('*', { count:'exact', head:true }).eq('tag_id', tagId);
-  const { count: c2 } = await sb.from('followed_character_tags')
-    .select('*', { count:'exact', head:true }).eq('tag_id', tagId);
-  if ((c1 + c2) === 0) {
-    await sb.from('tags').delete().eq('id', tagId);
-    allTags = allTags.filter(tg => tg.id !== tagId);
+    const { count } = await sb.from('character_tags')
+      .select('*', { count:'exact', head:true }).eq('tag_id', tagId).eq('user_id', currentUser.id);
+    if (count === 0) {
+      await sb.from('tags').delete().eq('id', tagId);
+      allTags = allTags.filter(tg => tg.id !== tagId);
+    }
   }
-}
   renderList();
 }
 
@@ -255,22 +250,12 @@ async function loadTagsFromDB() {
   const { data: tags } = await sb.from('tags')
     .select('*').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id).order('name');
   allTags = tags || [];
-  const ownCharIds = Object.keys(chars);
-  charTagMap = {};
-  if (ownCharIds.length) {
-    const { data: charTags } = await sb.from('character_tags')
-      .select('character_id, tag_id').in('character_id', ownCharIds);
-    (charTags || []).forEach(({ character_id, tag_id }) => {
-      if (!charTagMap[character_id]) charTagMap[character_id] = [];
-      charTagMap[character_id].push(tag_id);
-    });
-  }
-  const { data: followedTags } = await sb.from('followed_character_tags')
+  const { data: charTags } = await sb.from('character_tags')
     .select('character_id, tag_id').eq('user_id', currentUser.id).eq('universe_id', currentUniverse.id);
-  followedTagMap = {};
-  (followedTags || []).forEach(({ character_id, tag_id }) => {
-    if (!followedTagMap[character_id]) followedTagMap[character_id] = [];
-    followedTagMap[character_id].push(tag_id);
+  charTagMap = {};
+  (charTags || []).forEach(({ character_id, tag_id }) => {
+    if (!charTagMap[character_id]) charTagMap[character_id] = [];
+    charTagMap[character_id].push(tag_id);
   });
 }
 
@@ -1181,7 +1166,7 @@ function renderList() {
   if (filterFollowed) keys = [];
   if (activeTagFilters.length) {
     keys         = keys.filter(id => activeTagFilters.every(fid => (charTagMap[id] || []).includes(fid)));
-    followedKeys = followedKeys.filter(id => activeTagFilters.every(fid => (followedTagMap[id] || []).includes(fid)));
+    followedKeys = followedKeys.filter(id => activeTagFilters.every(fid => (charTagMap[id] || []).includes(fid)));
   }
   const total = Object.keys(chars).length + Object.keys(followedChars).length;
   document.getElementById('list-count-badge').textContent = total ? `(${total})` : '';
@@ -1200,7 +1185,14 @@ function renderList() {
 function cardHTML(id, c, isFollowed = false) {
   // Le corps de la carte est délégué à game-system.js
   const body     = renderCharCardBody(c);
-  const cardTags = _buildTagChips(id, isFollowed ? followedTagMap : charTagMap);
+  const cardTags = _buildTagChips(id, charTagMap);
+  const tagBtn = `
+        <button class="icon-btn" onclick="event.stopPropagation();editCharTags('${id}')"
+          title="${t('card_manage_tags')}">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M1 4h14M1 8h10M1 12h6"/>
+          </svg>
+        </button>`;
 
   if (isFollowed) {
     const canAdminEdit = isUniverseGM();
@@ -1213,12 +1205,7 @@ function cardHTML(id, c, isFollowed = false) {
           title="${t('btn_edit')}">
           ${_editIcon()}
         </button>` : ''}
-        <button class="icon-btn" onclick="event.stopPropagation();editFollowedTags('${id}')"
-          title="${t('card_manage_tags')}">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M1 4h14M1 8h10M1 12h6"/>
-          </svg>
-        </button>
+        ${tagBtn}
       </div>
       ${body}
       ${cardTags ? `<div class="card-tags">${cardTags}</div>` : ''}
@@ -1238,6 +1225,7 @@ function cardHTML(id, c, isFollowed = false) {
         title="${t('btn_edit')}">
         ${_editIcon()}
       </button>
+      ${tagBtn}
       <button class="icon-btn danger" onclick="event.stopPropagation();deleteCharFromDB('${id}')"
         title="${t('btn_delete')}">
         ${_trashIcon()}
@@ -1642,23 +1630,6 @@ function navigateToCampaign(id) {
   return true;
 }
 
-/**
- * Appelle sync_owner_tags via RPC.
- * p_item_id est passé en string (TEXT) pour éviter le cast UUID
- * que PostgREST ne sait pas faire automatiquement depuis le JSON.
- */
-async function syncOwnerTagsToMe(type, itemId) {
-  try {
-    const { error } = await sb.rpc('sync_owner_tags', {
-      p_item_type: type,
-      p_item_id:   String(itemId),   // ← TEXT, pas UUID
-    });
-    if (error) console.warn('syncOwnerTagsToMe:', error.message);
-  } catch (err) {
-    console.warn('syncOwnerTagsToMe: non-fatal error', err);
-  }
-}
- 
 /**
  * Appelle cleanup_orphan_char_tags ou cleanup_orphan_doc_tags.
  * À appeler après un désabonnement ou la suppression d'un tag local.

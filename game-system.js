@@ -24,7 +24,6 @@ function freshState() {
     is_public:             false,
     illustration_url:      '',
     illustration_position: 0,
-    tags:                  [],
     characteristics:       [],     // [{ id, name, trigram, score }]
     skills:                [],     // [{ id, name, score }]
     traits:                [],     // [{ id, name, score, detail }]
