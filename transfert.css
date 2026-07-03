@@ -248,3 +248,66 @@
 @media (max-width: 520px) {
   #delete-universe-modal-panel { max-height: 100vh; border-radius: 0; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   Modale export — réutilise le chrome ci-dessus
+   ══════════════════════════════════════════════════════════════ */
+#export-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 210;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+#export-modal-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: slideUp 0.18s ease;
+}
+
+.export-option-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  margin: 0 20px 16px;
+}
+
+.export-option-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  padding: 12px; border-radius: 6px; text-align: left;
+  background: var(--bg3); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.15s;
+  color: var(--text2);
+}
+.export-option-card:hover { border-color: var(--border2); color: var(--text); }
+.export-option-card.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg3));
+  color: var(--text);
+}
+
+.export-option-icon { color: var(--accent); }
+
+.export-option-label {
+  font-family: var(--font-display); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text);
+}
+
+.export-option-desc {
+  font-size: 11px; color: var(--text3); line-height: 1.5;
+}
+
+#export-md-mode-section { margin-bottom: 4px; }
+
+@media (max-width: 520px) {
+  #export-modal-panel { max-height: 100vh; border-radius: 0; }
+  .export-option-grid { grid-template-columns: 1fr; }
+}
