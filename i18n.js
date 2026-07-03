@@ -84,6 +84,12 @@ const TRANSLATIONS = {
     confirm_leave_universe:  'Quitter l\'univers "${name}" ? Vous perdrez l\'accès à son contenu.',
     toast_universe_left:     'Vous avez quitté "${name}".',
     toast_leave_universe_error: 'Erreur lors de la sortie de l\'univers.',
+    role_owner:              'Propriétaire',
+    universe_greeting:       'Bonjour',
+    universe_hero_sub:       'Choisissez l\'univers dans lequel vous souhaitez plonger',
+    universe_empty_title:    'Aucun univers pour l\'instant',
+    universe_empty_desc:     'Créez votre premier univers pour commencer à jouer.',
+    universe_updated_prefix: 'Modifié',
 
     // ── Configuration du thème ─────────────────────────────────
     config_section_theme:    'Thème',
@@ -426,6 +432,12 @@ const TRANSLATIONS = {
     confirm_leave_universe:  'Leave the universe "${name}"? You will lose access to its content.',
     toast_universe_left:     'You have left "${name}".',
     toast_leave_universe_error: 'Error while leaving the universe.',
+    role_owner:              'Owner',
+    universe_greeting:       'Hello',
+    universe_hero_sub:       'Choose the universe you want to dive into',
+    universe_empty_title:    'No universe yet',
+    universe_empty_desc:     'Create your first universe to start playing.',
+    universe_updated_prefix: 'Updated',
 
     // ── Theme configuration ─────────────────────────────────────
     config_section_theme:    'Theme',

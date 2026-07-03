@@ -118,23 +118,35 @@ async function doLogout() {
   await sb.auth.signOut();
 }
 
-function toggleUserMenu(force) {
-  const dd = document.getElementById('user-dropdown');
-  dd.classList.toggle('open', force !== undefined ? force : !dd.classList.contains('open'));
+function toggleUserMenu(target, force) {
+  // Legacy calls (toggleUserMenu() / toggleUserMenu(false)) close every open menu.
+  if (typeof target === 'boolean' || target === undefined) {
+    document.querySelectorAll('.user-dropdown.open').forEach(dd => dd.classList.remove('open'));
+    return;
+  }
+  const wrap = typeof target === 'string' ? document.getElementById(target) : target;
+  const dd = wrap?.querySelector('.user-dropdown');
+  if (!dd) return;
+  const willOpen = force !== undefined ? force : !dd.classList.contains('open');
+  document.querySelectorAll('.user-dropdown.open').forEach(d => d.classList.remove('open'));
+  dd.classList.toggle('open', willOpen);
 }
 
 document.addEventListener('click', e => {
-  const wrap = document.getElementById('user-menu-wrap');
-  if (wrap && !wrap.contains(e.target)) toggleUserMenu(false);
+  document.querySelectorAll('.user-menu-wrap').forEach(wrap => {
+    if (!wrap.contains(e.target)) wrap.querySelector('.user-dropdown')?.classList.remove('open');
+  });
 });
 
 function updateUserUI(user) {
   if (!user) return;
   const username = getDiscordUsername(user);
-  document.getElementById('user-avatar').textContent = username.charAt(0).toUpperCase();
-  document.getElementById('user-label').textContent  = username;
-  document.getElementById('dd-username').textContent = username;
-  document.getElementById('dd-email').textContent    = user.email || '';
+  const initial = username.charAt(0).toUpperCase();
+  document.querySelectorAll('.user-btn .avatar').forEach(el => el.textContent = initial);
+  document.querySelectorAll('.user-btn .user-label').forEach(el => el.textContent = username);
+  document.querySelectorAll('.user-dropdown-header .uname').forEach(el => el.textContent = username);
+  document.querySelectorAll('.user-dropdown-header .uemail').forEach(el => el.textContent = user.email || '');
+  document.querySelectorAll('.universe-greeting-name').forEach(el => el.textContent = ', ' + username);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -391,24 +403,40 @@ function renderUniverseList() {
   const list = document.getElementById('universe-list');
   if (!list) return;
   if (!userUniverses.length) {
-    list.innerHTML = `<div class="universe-empty">Aucun univers disponible.<br>Créez votre premier univers pour commencer.</div>`;
+    list.innerHTML = `
+      <div class="universe-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+          <circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/>
+        </svg>
+        <div class="universe-empty-title">${t('universe_empty_title')}</div>
+        <div class="universe-empty-desc">${t('universe_empty_desc')}</div>
+      </div>`;
     return;
   }
-  list.innerHTML = userUniverses.map(u => `
+  const dateLocale = currentLang === 'en' ? 'en-GB' : 'fr-FR';
+  list.innerHTML = userUniverses.map(u => {
+    const roleKey = u.role === 'owner' ? 'role_owner' : (u.role === 'gm' ? 'role_gm' : 'role_player');
+    const updated = u.updated_at
+      ? new Date(u.updated_at).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short' })
+      : '';
+    return `
     <div class="universe-card" onclick="enterUniverse('${u.id}')">
       ${u.role !== 'owner' ? `<div class="card-actions">
         <button class="icon-btn danger" onclick="event.stopPropagation();leaveUniverse('${u.id}')" title="${t('btn_leave_universe')}">
           ${_leaveIcon()}
         </button>
       </div>` : ''}
-      ${u.illustration_url ? `<img class="card-illus" src="${esc(u.illustration_url)}" style="object-position:center ${u.illustration_position || 0}%" alt="">` : ''}
-      <div class="universe-card-title">${esc(u.name)}</div>
-      <div class="universe-card-desc">${esc(u.description || 'Aucune description')}</div>
-      <div class="universe-card-meta">
-        <span>${esc(u.role || 'membre')}</span>
+      ${u.illustration_url ? `<div class="card-illus-wrap"><img class="card-illus" src="${esc(u.illustration_url)}" style="object-position:center ${u.illustration_position || 0}%" alt=""></div>` : ''}
+      <div class="universe-card-body">
+        <div class="universe-card-title">${esc(u.name)}</div>
+        <div class="universe-card-desc">${esc(u.description || 'Aucune description')}</div>
+        <div class="universe-card-meta">
+          <span class="role-badge role-${esc(u.role || 'player')}">${esc(t(roleKey))}</span>
+          ${updated ? `<span class="universe-card-date">${esc(t('universe_updated_prefix'))} ${updated}</span>` : ''}
+        </div>
       </div>
     </div>
-  `).join('');
+  `; }).join('');
 }
 
 function _leaveIcon() {
