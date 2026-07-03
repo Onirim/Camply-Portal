@@ -969,12 +969,30 @@ function openMapMarkerModal(mode, rx, ry, markerId) {
   _closePopup();
 }
 
+/**
+ * Personnages/documents que l'utilisateur peut lier à un marqueur : les
+ * siens plus tout ce qui lui est visible dans l'univers (RLS), càd les
+ * stores `followedChars`/`followedDocuments` déjà filtrés côté serveur
+ * selon le partage de campagne et le statut public des objets.
+ */
+function _universeItemsOfType(type) {
+  if (type === 'char') return [
+    ...Object.values(chars).map(c => ({ id: c._db_id, name: c.name || '—' })),
+    ...Object.values(followedChars).map(c => ({ id: c._db_id, name: `${c.name || '—'} (${c._owner_name})` })),
+  ];
+  if (type === 'doc') return [
+    ...Object.values(documents).map(d => ({ id: d.id, name: d.title || '—' })),
+    ...Object.values(followedDocuments).map(d => ({ id: d.id, name: `${d.title || '—'} (${d._owner_name})` })),
+  ];
+  return [];
+}
+
 /** Peuple le select d'objets liés selon le type choisi (personnage/document). */
 function _refreshMapModalLinkOptions(selectedId) {
   const type = document.getElementById('map-modal-link-type').value;
   const select = document.getElementById('map-modal-link-id');
   if (!type) { select.innerHTML = ''; select.disabled = true; return; }
-  const items = _ownItemsOfType(type);
+  const items = _universeItemsOfType(type);
   select.disabled = false;
   select.innerHTML = `<option value="">${t('map_modal_link_select_ph')}</option>` +
     items.map(it => `<option value="${it.id}" ${it.id === selectedId ? 'selected' : ''}>${esc(it.name)}</option>`).join('');
