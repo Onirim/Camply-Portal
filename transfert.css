@@ -132,6 +132,16 @@
   color: var(--text3); text-align: left;
 }
 
+/* ── Listes déroulantes (élément à transférer / destinataire) ── */
+.transfer-item-select {
+  width: 100%;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text);
+  font-family: var(--font-body); font-size: 13px;
+  padding: 10px 12px; outline: none; transition: border-color 0.15s;
+}
+.transfer-item-select:focus { border-color: var(--accent); }
+
 /* Preview de l'item trouvé / non trouvé */
 .transfer-item-preview {
   display: flex; align-items: center; gap: 7px;

@@ -51,8 +51,9 @@ const TRANSFER_ERRORS = () => ({
 
 // ── État du module ────────────────────────────────────────────
 
-let _transferSelectedType  = 'char';
-let _transferModalJustOpen = false; // guard anti-fermeture immédiate
+let _transferSelectedType    = 'char';
+let _transferModalJustOpen   = false; // guard anti-fermeture immédiate
+let _transferUniverseMembers = []; // { id, username } des autres membres de l'univers courant
 
 // ── Helper guard ─────────────────────────────────────────────
 // À appeler chaque fois qu'on reconstruit le innerHTML du panneau,
@@ -67,17 +68,43 @@ function _armTransferGuard() {
 // ══════════════════════════════════════════════════════════════
 
 function openTransferModal() {
-  _transferSelectedType = 'char';
+  _transferSelectedType    = 'char';
+  _transferUniverseMembers = [];
   _renderTransferModal();
 
   document.getElementById('transfer-modal').style.display = 'flex';
   _armTransferGuard();
   toggleUserMenu(false);
+
+  _loadTransferUniverseMembers();
 }
 
 function closeTransferModal() {
   document.getElementById('transfer-modal').style.display = 'none';
   _resetTransferForm();
+}
+
+// Charge les autres membres de l'univers courant pour la liste des destinataires.
+async function _loadTransferUniverseMembers() {
+  if (!currentUniverse?.id || !currentUser?.id) return;
+
+  const { data, error } = await sb.from('universe_members')
+    .select('user_id')
+    .eq('universe_id', currentUniverse.id);
+  if (error) { console.error('Erreur chargement membres univers:', error); return; }
+
+  const userIds = (data || []).map(r => r.user_id).filter(id => id !== currentUser.id);
+  if (!userIds.length) { _transferUniverseMembers = []; _renderTransferModal(); return; }
+
+  const { data: profiles, error: profErr } = await sb.from('profiles')
+    .select('id, username').in('id', userIds);
+  if (profErr) { console.error('Erreur chargement profils:', profErr); return; }
+
+  _transferUniverseMembers = (profiles || [])
+    .map(p => ({ id: p.id, username: p.username }))
+    .sort((a, b) => a.username.localeCompare(b.username));
+
+  _renderTransferModal();
 }
 
 // Ferme sur clic en dehors du panneau (avec guard)
@@ -113,6 +140,10 @@ function _renderTransferModal() {
     ? ownItems.map(it => `<option value="${it.id}">${esc(it.name)}</option>`).join('')
     : '';
 
+  const members = _transferUniverseMembers;
+  const membersOptionsHtml = members
+    .map(m => `<option value="${esc(m.username)}">${esc(m.username)}</option>`).join('');
+
   document.getElementById('transfer-modal-panel').innerHTML = `
     <div class="transfer-header">
       <div class="transfer-title">
@@ -135,7 +166,7 @@ function _renderTransferModal() {
       ${ownItems.length ? `
       <select
         id="transfer-item-select"
-        class="transfer-code-input"
+        class="transfer-item-select"
         onchange="_refreshTransferConfirmState()">
         <option value="">${t('transfer_item_select_ph')}</option>
         ${optionsHtml}
@@ -145,20 +176,15 @@ function _renderTransferModal() {
 
     <div class="transfer-section-label">${t('transfer_step3')}</div>
     <div class="transfer-field-wrap">
-      <div class="transfer-username-wrap">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14">
-          <circle cx="8" cy="5" r="3"/>
-          <path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
-        </svg>
-        <input
-          type="text"
-          id="transfer-username-input"
-          class="transfer-username-input"
-          placeholder="${t('transfer_username_ph')}"
-          oninput="_refreshTransferConfirmState()"
-          autocomplete="off"
-          spellcheck="false">
-      </div>
+      ${members.length ? `
+      <select
+        id="transfer-username-select"
+        class="transfer-item-select"
+        onchange="_refreshTransferConfirmState()">
+        <option value="">${t('transfer_username_select_ph')}</option>
+        ${membersOptionsHtml}
+      </select>` : `
+      <div class="transfer-item-preview not-found" style="display:flex">${t('transfer_username_empty')}</div>`}
     </div>
 
     <div id="transfer-warning" class="transfer-warning" style="display:none">
@@ -205,13 +231,13 @@ function selectTransferType(type) {
 
 function _refreshTransferConfirmState() {
   const itemSelect = document.getElementById('transfer-item-select');
-  const userInput  = document.getElementById('transfer-username-input');
+  const userSelect = document.getElementById('transfer-username-select');
   const confirmBtn = document.getElementById('transfer-confirm-btn');
   const warning    = document.getElementById('transfer-warning');
   if (!confirmBtn) return;
 
   const itemOk = !!itemSelect?.value;
-  const userOk = (userInput?.value.trim().length ?? 0) > 0;
+  const userOk = !!userSelect?.value;
   const ready  = itemOk && userOk;
 
   confirmBtn.disabled = !ready;
@@ -231,7 +257,8 @@ function _showTransferError(msg) {
 }
 
 function _resetTransferForm() {
-  _transferSelectedType = 'char';
+  _transferSelectedType    = 'char';
+  _transferUniverseMembers = [];
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -240,13 +267,13 @@ function _resetTransferForm() {
 
 async function confirmTransfer() {
   const itemSelect = document.getElementById('transfer-item-select');
-  const userInput  = document.getElementById('transfer-username-input');
+  const userSelect = document.getElementById('transfer-username-select');
   const confirmBtn = document.getElementById('transfer-confirm-btn');
 
-  if (!itemSelect || !userInput) return;
+  if (!itemSelect || !userSelect) return;
 
   const itemId   = itemSelect.value;
-  const username = userInput.value.trim();
+  const username = userSelect.value;
 
   if (!itemId || !username) return;
 
@@ -350,9 +377,11 @@ const TRANSFER_I18N = {
     transfer_type_char:            'Personnage',
     transfer_type_chr:             'Chronique',
     transfer_type_doc:             'Document',
+    transfer_type_map:             'Carte',
     transfer_item_select_ph:       'Choisissez un élément…',
     transfer_item_none:            'Aucun élément possédé de ce type',
-    transfer_username_ph:          'Nom du joueur destinataire',
+    transfer_username_select_ph:   'Choisissez un destinataire…',
+    transfer_username_empty:       'Aucun autre membre dans cet univers',
     transfer_warning_irreversible: 'Ce transfert est définitif. Vous perdrez la propriété de cet élément.',
     transfer_btn_confirm:          'Transférer',
     transfer_btn_in_progress:      'Transfert…',
@@ -376,9 +405,11 @@ const TRANSFER_I18N = {
     transfer_type_char:            'Character',
     transfer_type_chr:             'Chronicle',
     transfer_type_doc:             'Document',
+    transfer_type_map:             'Map',
     transfer_item_select_ph:       'Choose an item…',
     transfer_item_none:            'No item of this type owned',
-    transfer_username_ph:          'Recipient player name',
+    transfer_username_select_ph:   'Choose a recipient…',
+    transfer_username_empty:       'No other member in this universe',
     transfer_warning_irreversible: 'This transfer is permanent. You will lose ownership of this item.',
     transfer_btn_confirm:          'Transfer',
     transfer_btn_in_progress:      'Transferring…',
