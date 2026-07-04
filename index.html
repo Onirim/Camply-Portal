@@ -24,6 +24,8 @@
 <link rel="stylesheet" href="campaigns.css" />
 <link rel="stylesheet" href="map.css" />
 <link rel="stylesheet" href="transfert.css" />
+<link rel="stylesheet" href="universe-pause.css" />
+<link rel="stylesheet" href="admin-panel.css" />
 <link rel="stylesheet" id="theme-stylesheet" href="" disabled>
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script>
@@ -146,6 +148,12 @@
             <div class="uname">—</div>
             <div class="uemail">—</div>
           </div>
+          <button class="user-dropdown-item admin-menu-item" style="display:none" onclick="adminPanel.open()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M8 1.5l5.5 2.5v3.5c0 3.5-2.3 5.9-5.5 7-3.2-1.1-5.5-3.5-5.5-7V4l5.5-2.5z"/>
+            </svg>
+            <span data-i18n="user_admin_panel">Panneau d'administration</span>
+          </button>
           <button class="user-dropdown-item danger" onclick="doLogout()">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M6 3H3v10h3M10 5l3 3-3 3M13 8H6"/>
@@ -248,6 +256,102 @@
   </div>
 </div>
 
+<!-- Admin panel screen -->
+<div id="admin-screen">
+  <header class="universe-topbar">
+    <div class="brand">
+      <img class="brand-mark" src="android-chrome-192x192.png" alt="" width="30" height="30">
+      <span class="brand-name">CAMPLY <em>Portal</em></span>
+    </div>
+    <div class="universe-topbar-right">
+      <button class="btn-cancel" onclick="adminPanel.close()" data-i18n="admin_back_btn">← Retour</button>
+    </div>
+  </header>
+
+  <div class="admin-page">
+    <div class="admin-hero">
+      <h1 data-i18n="admin_title">Panneau d'administration</h1>
+      <button class="btn-cancel" id="admin-refresh-btn" onclick="adminPanel.loadStats()" data-i18n="admin_refresh_btn">Actualiser</button>
+    </div>
+
+    <div id="admin-loading" class="admin-loading">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="admin-content" class="admin-grid" style="display:none">
+
+      <div class="admin-card">
+        <div class="admin-card-title" data-i18n="admin_card_objects">Objets des utilisateurs</div>
+        <div class="admin-card-value" id="admin-objects-total">—</div>
+        <div class="admin-card-breakdown" id="admin-objects-breakdown"></div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title" data-i18n="admin_card_universes">Univers</div>
+        <div class="admin-card-value" id="admin-universes-total">—</div>
+        <div class="admin-card-breakdown" id="admin-universes-breakdown"></div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title" data-i18n="admin_card_storage">Stockage (fichiers)</div>
+        <div class="admin-card-value" id="admin-storage-value">—</div>
+        <div class="admin-progress"><div class="admin-progress-bar" id="admin-storage-bar"></div></div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title" data-i18n="admin_card_database">Base de données</div>
+        <div class="admin-card-value" id="admin-database-value">—</div>
+        <div class="admin-progress"><div class="admin-progress-bar" id="admin-database-bar"></div></div>
+      </div>
+
+      <div class="admin-card admin-card-wide">
+        <div class="admin-card-title" data-i18n="admin_card_orphans">Images orphelines</div>
+        <div class="admin-card-value" id="admin-orphans-value">—</div>
+        <button class="btn-danger-outline" id="admin-purge-btn" onclick="adminPanel.purgeOrphans()" data-i18n="admin_purge_btn">Purger les fichiers orphelins</button>
+        <div class="admin-purge-result" id="admin-purge-result"></div>
+      </div>
+
+      <div class="admin-card admin-card-wide">
+        <div class="admin-card-title" data-i18n="admin_card_users">Utilisateurs</div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th data-i18n="admin_th_user">Utilisateur</th>
+                <th data-i18n="admin_th_universes_owned">Univers possédés</th>
+                <th data-i18n="admin_th_objects">Objets</th>
+                <th data-i18n="admin_th_universe_limit">Limite d'univers</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="admin-card admin-card-wide">
+        <div class="admin-card-title" data-i18n="admin_card_universes_list">Univers</div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th data-i18n="admin_th_name">Nom</th>
+                <th data-i18n="admin_th_owner">Propriétaire</th>
+                <th data-i18n="admin_th_members">Membres</th>
+                <th data-i18n="admin_th_objects">Objets</th>
+                <th data-i18n="admin_th_status">Statut</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="admin-universes-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <div id="app">
 
   <!-- Top bar -->
@@ -333,6 +437,12 @@
               <path d="M2.5 11.5v1h11v-1"/>
             </svg>
             <span data-i18n="user_export_visible">Exporter mes données visibles</span>
+          </button>
+          <button class="user-dropdown-item admin-menu-item" style="display:none" onclick="adminPanel.open()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M8 1.5l5.5 2.5v3.5c0 3.5-2.3 5.9-5.5 7-3.2-1.1-5.5-3.5-5.5-7V4l5.5-2.5z"/>
+            </svg>
+            <span data-i18n="user_admin_panel">Panneau d'administration</span>
           </button>
           <button class="user-dropdown-item danger" onclick="doLogout()">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -1448,6 +1558,8 @@
 <script src="map.js"></script>
 <script src="map-admin.js"></script>
 <script src="export.js"></script>
+<script src="universe-pause.js"></script>
+<script src="admin-panel.js"></script>
 <script src="scripts.js"></script>
   <div id="transfer-modal">
   <div id="transfer-modal-panel"></div>

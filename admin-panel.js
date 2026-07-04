@@ -1,0 +1,354 @@
+// ══════════════════════════════════════════════════════════════
+// Camply — Panneau d'administration
+//
+// Statistiques globales (objets, univers, stockage, base de données,
+// images orphelines) et purge des fichiers orphelins. Réservé aux
+// comptes listés dans public.admin_users (cf. sql/30_admin_panel.sql) :
+// l'entrée de menu (.admin-menu-item) reste masquée pour tout le monde
+// d'autre, et chaque RPC admin_* revérifie is_admin() côté serveur.
+//
+// Chargé après i18n.js et supabase-client.js, avant scripts.js qui
+// appelle adminPanel.checkAndShowMenu() depuis onSignedIn().
+// ══════════════════════════════════════════════════════════════
+
+Object.assign(TRANSLATIONS.fr, {
+  user_admin_panel:     'Panneau d\'administration',
+  admin_back_btn:       '← Retour',
+  admin_title:          'Panneau d\'administration',
+  admin_refresh_btn:    'Actualiser',
+  admin_card_objects:   'Objets des utilisateurs',
+  admin_card_universes: 'Univers',
+  admin_card_storage:   'Stockage (fichiers)',
+  admin_card_database:  'Base de données',
+  admin_card_orphans:   'Images orphelines',
+  admin_card_users:          'Utilisateurs',
+  admin_card_universes_list: 'Univers',
+  admin_purge_btn:      'Purger les fichiers orphelins',
+  admin_universes_active_paused: '${active} actifs · ${paused} en pause',
+  admin_orphans_count:  '${count} fichier(s) · ${size}',
+  admin_purge_none:     'Aucun fichier orphelin.',
+  admin_purge_done:     '${count} fichier(s) supprimé(s) (${size}).',
+  admin_load_error:     'Erreur lors du chargement des statistiques.',
+  toast_admin_purge_done: 'Fichiers orphelins purgés !',
+  admin_th_user:             'Utilisateur',
+  admin_th_universes_owned:  'Univers possédés',
+  admin_th_objects:          'Objets',
+  admin_th_universe_limit:   'Limite d\'univers',
+  admin_th_name:             'Nom',
+  admin_th_owner:            'Propriétaire',
+  admin_th_members:          'Membres',
+  admin_th_status:           'Statut',
+  admin_save_btn:            'Enregistrer',
+  admin_pause_btn:           'Mettre en pause',
+  admin_resume_btn:          'Réactiver',
+  admin_delete_btn:          'Supprimer',
+  admin_status_active:       'Actif',
+  admin_status_paused:       'En pause',
+  admin_confirm_delete_universe: 'Suppression définitive de l\'univers "${name}" et de tout son contenu.\nTapez son nom pour confirmer :',
+  admin_confirm_pause:       'Mettre l\'univers "${name}" en pause ?',
+  admin_confirm_resume:      'Réactiver l\'univers "${name}" ?',
+  toast_admin_limit_saved:   'Limite d\'univers mise à jour.',
+  toast_admin_universe_paused:   'Univers mis en pause.',
+  toast_admin_universe_resumed:  'Univers réactivé.',
+  toast_admin_universe_deleted:  'Univers supprimé.',
+  toast_admin_action_error:  'Erreur : ${message}',
+});
+
+Object.assign(TRANSLATIONS.en, {
+  user_admin_panel:     'Admin panel',
+  admin_back_btn:       '← Back',
+  admin_title:          'Admin panel',
+  admin_refresh_btn:    'Refresh',
+  admin_card_objects:   'User objects',
+  admin_card_universes: 'Universes',
+  admin_card_storage:   'Storage (files)',
+  admin_card_database:  'Database',
+  admin_card_orphans:   'Orphan images',
+  admin_card_users:          'Users',
+  admin_card_universes_list: 'Universes',
+  admin_purge_btn:      'Purge orphan files',
+  admin_universes_active_paused: '${active} active · ${paused} paused',
+  admin_orphans_count:  '${count} file(s) · ${size}',
+  admin_purge_none:     'No orphan files.',
+  admin_purge_done:     '${count} file(s) deleted (${size}).',
+  admin_load_error:     'Error while loading statistics.',
+  toast_admin_purge_done: 'Orphan files purged!',
+  admin_th_user:             'User',
+  admin_th_universes_owned:  'Owned universes',
+  admin_th_objects:          'Objects',
+  admin_th_universe_limit:   'Universe limit',
+  admin_th_name:             'Name',
+  admin_th_owner:            'Owner',
+  admin_th_members:          'Members',
+  admin_th_status:           'Status',
+  admin_save_btn:            'Save',
+  admin_pause_btn:           'Pause',
+  admin_resume_btn:          'Resume',
+  admin_delete_btn:          'Delete',
+  admin_status_active:       'Active',
+  admin_status_paused:       'Paused',
+  admin_confirm_delete_universe: 'This will permanently delete the universe "${name}" and all its content.\nType its name to confirm:',
+  admin_confirm_pause:       'Pause the universe "${name}"?',
+  admin_confirm_resume:      'Resume the universe "${name}"?',
+  toast_admin_limit_saved:   'Universe limit updated.',
+  toast_admin_universe_paused:   'Universe paused.',
+  toast_admin_universe_resumed:  'Universe resumed.',
+  toast_admin_universe_deleted:  'Universe deleted.',
+  toast_admin_action_error:  'Error: ${message}',
+});
+
+const adminPanel = {
+
+  _prevAppVisible: false,
+  _lastOrphans: [],
+  _users: [],
+  _universes: [],
+
+  formatBytes(bytes) {
+    if (!bytes) return '0 MB';
+    const mb = bytes / (1024 * 1024);
+    if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB';
+    return mb.toFixed(1) + ' MB';
+  },
+
+  // Affiché quand l'utilisateur courant est admin (fire-and-forget,
+  // appelé après chaque connexion).
+  async checkAndShowMenu() {
+    const { data, error } = await sb.rpc('is_admin');
+    if (error) { console.warn('is_admin:', error.message); return; }
+    document.querySelectorAll('.admin-menu-item').forEach(el => el.style.display = data ? '' : 'none');
+  },
+
+  async open() {
+    toggleUserMenu(false);
+    this._prevAppVisible = document.getElementById('app').style.display !== 'none';
+    document.getElementById('auth-screen').classList.remove('active');
+    document.getElementById('universe-screen')?.classList.remove('active');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('admin-screen').classList.add('active');
+    applyTranslations();
+    await this.loadStats();
+  },
+
+  close() {
+    document.getElementById('admin-screen').classList.remove('active');
+    if (this._prevAppVisible) document.getElementById('app').style.display = 'flex';
+    else showUniverseScreen();
+  },
+
+  async loadStats() {
+    const loadingEl = document.getElementById('admin-loading');
+    const contentEl = document.getElementById('admin-content');
+    loadingEl.style.display = 'flex';
+    contentEl.style.display = 'none';
+    document.getElementById('admin-purge-result').textContent = '';
+
+    const [statsRes, usersRes, universesRes] = await Promise.all([
+      sb.rpc('admin_get_stats'),
+      sb.rpc('admin_list_users'),
+      sb.rpc('admin_list_universes'),
+    ]);
+
+    if (statsRes.error) {
+      console.error('admin_get_stats:', statsRes.error);
+      showToast(t('admin_load_error'));
+      loadingEl.style.display = 'none';
+      return;
+    }
+    this._renderStats(statsRes.data);
+
+    if (usersRes.error) console.error('admin_list_users:', usersRes.error);
+    else { this._users = usersRes.data || []; this._renderUsers(); }
+
+    if (universesRes.error) console.error('admin_list_universes:', universesRes.error);
+    else { this._universes = universesRes.data || []; this._renderUniverses(); }
+
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'grid';
+  },
+
+  _renderStats(stats) {
+    document.getElementById('admin-objects-total').textContent = stats.objects.total;
+    document.getElementById('admin-objects-breakdown').innerHTML = `
+      <span>${t('nav_characters')}: ${stats.objects.characters}</span>
+      <span>${t('nav_chronicles')}: ${stats.objects.chronicles}</span>
+      <span>${t('nav_documents')}: ${stats.objects.documents}</span>
+      <span>${t('nav_campaigns')}: ${stats.objects.campaigns}</span>
+      <span>${t('nav_map')}: ${stats.objects.maps}</span>`;
+
+    document.getElementById('admin-universes-total').textContent = stats.universes.total;
+    document.getElementById('admin-universes-breakdown').textContent = ti('admin_universes_active_paused', {
+      active: stats.universes.active, paused: stats.universes.paused,
+    });
+
+    const storagePct = Math.min(100, (stats.storage.bytes / stats.storage.limit_bytes) * 100);
+    document.getElementById('admin-storage-value').textContent =
+      `${this.formatBytes(stats.storage.bytes)} / ${this.formatBytes(stats.storage.limit_bytes)}`;
+    const storageBar = document.getElementById('admin-storage-bar');
+    storageBar.style.width = storagePct + '%';
+    storageBar.classList.toggle('warning', storagePct >= 80);
+
+    const dbPct = Math.min(100, (stats.database.bytes / stats.database.limit_bytes) * 100);
+    document.getElementById('admin-database-value').textContent =
+      `${this.formatBytes(stats.database.bytes)} / ${this.formatBytes(stats.database.limit_bytes)}`;
+    const dbBar = document.getElementById('admin-database-bar');
+    dbBar.style.width = dbPct + '%';
+    dbBar.classList.toggle('warning', dbPct >= 80);
+
+    document.getElementById('admin-orphans-value').textContent = ti('admin_orphans_count', {
+      count: stats.orphans.count, size: this.formatBytes(stats.orphans.bytes),
+    });
+  },
+
+  // ── Utilisateurs ──────────────────────────────────────────────
+
+  _renderUsers() {
+    const tbody = document.getElementById('admin-users-tbody');
+    tbody.innerHTML = this._users.map(u => `
+      <tr>
+        <td>
+          <div class="admin-cell-title">${esc(u.username || '—')}</div>
+          <div class="admin-cell-sub">${esc(u.email || '')}</div>
+        </td>
+        <td>${u.owned_universes}</td>
+        <td>${u.objects_count}</td>
+        <td>
+          <input type="number" min="0" class="admin-input-mini" id="admin-limit-input-${esc(u.user_id)}" value="${u.max_universes}">
+        </td>
+        <td>
+          <button class="btn-cancel admin-row-btn" onclick="adminPanel.saveUserLimit('${u.user_id}')" data-i18n="admin_save_btn">Enregistrer</button>
+        </td>
+      </tr>`).join('');
+  },
+
+  async saveUserLimit(userId) {
+    const input = document.getElementById(`admin-limit-input-${userId}`);
+    const value = parseInt(input?.value, 10);
+    if (!Number.isFinite(value) || value < 0) return;
+
+    const { error } = await sb.rpc('admin_set_user_max_universes', { p_user_id: userId, p_max_universes: value });
+    if (error) {
+      showToast(ti('toast_admin_action_error', { message: error.message }));
+      return;
+    }
+    const user = this._users.find(u => u.user_id === userId);
+    if (user) user.max_universes = value;
+    showToast(t('toast_admin_limit_saved'));
+  },
+
+  // ── Univers ───────────────────────────────────────────────────
+
+  _renderUniverses() {
+    const tbody = document.getElementById('admin-universes-tbody');
+    tbody.innerHTML = this._universes.map(u => `
+      <tr>
+        <td class="admin-cell-title">${esc(u.name)}</td>
+        <td>${esc(u.owner_username || '—')}</td>
+        <td>${u.member_count}</td>
+        <td>${u.objects_count}</td>
+        <td>
+          <span class="admin-status-badge ${u.paused_at ? 'paused' : 'active'}">
+            ${u.paused_at ? t('admin_status_paused') : t('admin_status_active')}
+          </span>
+        </td>
+        <td class="admin-row-actions">
+          <button class="btn-cancel admin-row-btn" onclick="adminPanel.togglePauseUniverse('${u.universe_id}')">
+            ${u.paused_at ? t('admin_resume_btn') : t('admin_pause_btn')}
+          </button>
+          <button class="btn-danger-outline admin-row-btn" onclick="adminPanel.deleteUniverseAsAdmin('${u.universe_id}')" data-i18n="admin_delete_btn">Supprimer</button>
+        </td>
+      </tr>`).join('');
+  },
+
+  async togglePauseUniverse(universeId) {
+    const universe = this._universes.find(u => u.universe_id === universeId);
+    if (!universe) return;
+
+    if (universe.paused_at) {
+      if (!confirm(ti('admin_confirm_resume', { name: universe.name }))) return;
+      const { error } = await sb.rpc('admin_resume_universe', { p_universe_id: universeId });
+      if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }
+      showToast(t('toast_admin_universe_resumed'));
+    } else {
+      if (!confirm(ti('admin_confirm_pause', { name: universe.name }))) return;
+      const { error } = await sb.rpc('admin_pause_universe', { p_universe_id: universeId });
+      if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }
+      showToast(t('toast_admin_universe_paused'));
+    }
+    await this.loadStats();
+  },
+
+  async deleteUniverseAsAdmin(universeId) {
+    const universe = this._universes.find(u => u.universe_id === universeId);
+    if (!universe) return;
+
+    const typed = prompt(ti('admin_confirm_delete_universe', { name: universe.name }));
+    if (typed !== universe.name) return;
+
+    const { data: illustrationUrls, error } = await sb.rpc('admin_delete_universe', { p_universe_id: universeId });
+    if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }
+
+    // Nettoyage du storage en best-effort : la ligne univers est déjà supprimée
+    // (même logique que confirmDeleteUniverse() côté propriétaire).
+    const charPaths = [...new Set((illustrationUrls || [])
+      .map(u => _extractStoragePath(u, 'character-illustrations'))
+      .filter(Boolean))];
+    if (charPaths.length) {
+      sb.storage.from('character-illustrations').remove(charPaths)
+        .catch(e => console.warn('Nettoyage storage character-illustrations:', e));
+    }
+    sb.storage.from('map-images').list(universeId).then(({ data }) => {
+      const paths = (data || []).map(f => `${universeId}/${f.name}`);
+      if (paths.length) {
+        sb.storage.from('map-images').remove(paths)
+          .catch(e => console.warn('Nettoyage storage map-images:', e));
+      }
+    }).catch(e => console.warn('Listage storage map-images:', e));
+
+    showToast(t('toast_admin_universe_deleted'));
+    await this.loadStats();
+  },
+
+  // ── Purge des illustrations orphelines ───────────────────────
+  async purgeOrphans() {
+    const btn = document.getElementById('admin-purge-btn');
+    const resultEl = document.getElementById('admin-purge-result');
+    resultEl.textContent = '';
+    btn.disabled = true;
+
+    const { data, error } = await sb.rpc('admin_list_orphan_illustrations');
+    if (error) {
+      showToast(t('admin_load_error') + ' ' + error.message);
+      btn.disabled = false;
+      return;
+    }
+
+    const orphans = data || [];
+    if (!orphans.length) {
+      resultEl.textContent = t('admin_purge_none');
+      btn.disabled = false;
+      return;
+    }
+
+    const totalBytes = orphans.reduce((sum, o) => sum + (o.size_bytes || 0), 0);
+    if (!confirm(ti('confirm_cleanup_orphans', { count: orphans.length, size: (totalBytes / (1024 * 1024)).toFixed(1) }))) {
+      btn.disabled = false;
+      return;
+    }
+
+    const pathsByBucket = {};
+    orphans.forEach(o => { (pathsByBucket[o.bucket_id] ||= []).push(o.path); });
+
+    let deletedCount = 0;
+    for (const [bucketId, paths] of Object.entries(pathsByBucket)) {
+      const { data: removed, error: rmError } = await sb.storage.from(bucketId).remove(paths);
+      if (rmError) { console.warn('Purge storage', bucketId, rmError); continue; }
+      deletedCount += (removed || []).length;
+    }
+
+    resultEl.textContent = ti('admin_purge_done', { count: deletedCount, size: (totalBytes / (1024 * 1024)).toFixed(1) });
+    showToast(t('toast_admin_purge_done'));
+    btn.disabled = false;
+    await this.loadStats();
+  },
+};

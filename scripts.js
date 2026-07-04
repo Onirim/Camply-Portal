@@ -337,6 +337,7 @@ async function onSignedIn(user) {
   userUniverses = [];
   isAppReady = false;
   updateUserUI(currentUser);
+  adminPanel.checkAndShowMenu();
   const username = getDiscordUsername(user);
   await sb.from('profiles').upsert({ id: user.id, username });
   document.getElementById('auth-screen').classList.remove('active');
@@ -354,7 +355,7 @@ async function loadUniversesFromDB() {
 
   const { data: universes, error } = await sb
     .from('universes')
-    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, char_block_config, created_at, updated_at')
+    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, char_block_config, created_at, updated_at, last_visited_at, paused_at')
     .order('updated_at', { ascending: false });
 
   if (error) {
@@ -384,6 +385,15 @@ async function loadUniversesFromDB() {
     ...u,
     role: roleByUniverse[u.id] || (u.owner_id === currentUser.id ? 'owner' : 'player'),
   }));
+
+  // Univers possédés que personne n'a visités depuis 2 mois :
+  // archivage serveur puis marquage local (cf. universe-pause.js).
+  const pausedIds = await universePause.autoPauseStale();
+  if (pausedIds.length) {
+    const nowIso = new Date().toISOString();
+    userUniverses.forEach(u => { if (pausedIds.includes(u.id)) u.paused_at = nowIso; });
+  }
+
   renderUniverseList();
   return userUniverses;
 }
@@ -470,7 +480,7 @@ function renderUniverseList() {
       ? new Date(u.updated_at).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short' })
       : '';
     return `
-    <div class="universe-card" onclick="enterUniverse('${u.id}')">
+    <div class="universe-card${universePause.isPaused(u) ? ' paused' : ''}" onclick="enterUniverse('${u.id}')">
       ${universeUnreadMap[u.id] ? unreadMarkers.cardDotHTML(true) : ''}
       ${u.illustration_url ? `<img class="card-illus" src="${esc(u.illustration_url)}" style="object-position:center ${u.illustration_position || 0}%" alt="">` : ''}
       ${u.role !== 'owner' ? `<div class="card-actions">
@@ -482,7 +492,9 @@ function renderUniverseList() {
       <div class="universe-card-desc">${esc(u.description || t('universe_no_description'))}</div>
       <div class="universe-card-meta">
         <span class="role-badge role-${esc(u.role || 'player')}">${esc(t(roleKey))}</span>
-        ${updated ? `<span class="universe-card-date">${esc(t('universe_updated_prefix'))} ${updated}</span>` : ''}
+        ${universePause.isPaused(u)
+          ? universePause.cardBadgeHTML()
+          : (updated ? `<span class="universe-card-date">${esc(t('universe_updated_prefix'))} ${updated}</span>` : '')}
       </div>
     </div>
   `; }).join('');
@@ -654,7 +666,15 @@ async function enterUniverse(universeId) {
     showToast('Univers introuvable.');
     return;
   }
+  if (universePause.isPaused(universe)) {
+    // Univers archivé : prévient que la réactivation prend un peu de
+    // temps et demande confirmation avant de restaurer les données.
+    const resumed = await universePause.promptAndResume(universe);
+    if (!resumed) return;
+    renderUniverseList();
+  }
   currentUniverse = universe;
+  universePause.touchVisit(universeId);
   if (typeof resetMapState === 'function') resetMapState();
   updateConfigNavVisibility();
   await loadThemeManifest();
@@ -1188,8 +1208,10 @@ function onSignedOut() {
   charSecrets = {};
   updateConfigNavVisibility();
   applyTheme('');
+  document.querySelectorAll('.admin-menu-item').forEach(el => el.style.display = 'none');
   document.getElementById('loading-overlay').classList.remove('active');
   document.getElementById('universe-screen')?.classList.remove('active');
+  document.getElementById('admin-screen')?.classList.remove('active');
   document.getElementById('auth-screen').classList.add('active');
   document.getElementById('app').style.display = 'none';
 }
