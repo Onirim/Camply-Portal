@@ -220,7 +220,10 @@
 
       <div class="field">
         <label>Description courte</label>
-        <textarea id="universe-f-description" placeholder="Quelques mots pour présenter cet univers…"></textarea>
+        <textarea id="universe-f-description" maxlength="300"
+          placeholder="Quelques mots pour présenter cet univers…"
+          oninput="updateFieldCharCount('universe-f-description')"></textarea>
+        <div class="field-char-count" id="universe-f-description-count">0 / 300</div>
       </div>
 
       <div class="field">
@@ -993,7 +996,9 @@
 
             <div class="field">
               <label data-i18n="config_field_description">Description courte</label>
-              <textarea id="config-f-description"></textarea>
+              <textarea id="config-f-description" maxlength="300"
+                oninput="updateFieldCharCount('config-f-description')"></textarea>
+              <div class="field-char-count" id="config-f-description-count">0 / 300</div>
             </div>
 			
 			<div class="form-section-title" data-i18n="config_section_theme">Thème</div>

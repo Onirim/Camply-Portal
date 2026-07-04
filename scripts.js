@@ -502,6 +502,17 @@ async function leaveUniverse(universeId) {
   await loadUniversesFromDB();
 }
 
+// ── Compteur de caractères (textarea avec maxlength) ──────────
+function updateFieldCharCount(fieldId) {
+  const field   = document.getElementById(fieldId);
+  const counter = document.getElementById(`${fieldId}-count`);
+  if (!field || !counter) return;
+  const max = Number(field.getAttribute('maxlength')) || 0;
+  const len = field.value.length;
+  counter.textContent = `${len} / ${max}`;
+  counter.classList.toggle('limit-reached', len >= max);
+}
+
 // ── Création d'univers ───────────────────────────────────────
 let universeFormState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
 
@@ -512,6 +523,7 @@ function openUniverseCreateForm() {
   universeFormState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
   document.getElementById('universe-f-name').value = '';
   document.getElementById('universe-f-description').value = '';
+  updateFieldCharCount('universe-f-description');
   const username = getDiscordUsername(currentUser);
   document.getElementById('universe-f-owner').value = username;
   setUniverseIllusPreview('', 0);
@@ -757,6 +769,7 @@ function openUniverseConfigView() {
   };
   document.getElementById('config-f-name').value = universeConfigState.name;
   document.getElementById('config-f-description').value = universeConfigState.description;
+  updateFieldCharCount('config-f-description');
   setConfigIllusPreview(universeConfigState.illustration_url, universeConfigState.illustration_position);
   populateConfigThemeSelect(universeConfigState.theme_name);
   Object.keys(CHAR_BLOCKS).forEach(key => {
