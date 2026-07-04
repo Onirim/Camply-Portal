@@ -188,17 +188,33 @@ async function saveCharToDB() {
   if (!state.name.trim()) { alert(t('alert_char_no_name')); return; }
   setSaveIndicator('saving', t('save_saving'));
   const isEditingFollowedChar = !!(editingId && followedChars[editingId] && isUniverseGM());
+  const isValidUUID = editingId &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingId);
+
+  // S'il y a une image en attente de sauvegarde, on a besoin de l'id
+  // définitif du personnage pour construire son chemin de storage
+  // canonique AVANT l'insertion (généré côté client si le personnage
+  // est nouveau, sinon on connaît déjà editingId).
+  let targetId = isValidUUID ? editingId : null;
+  if (charIllusStaging) {
+    if (!targetId) targetId = crypto.randomUUID();
+    state.illustration_url = await promoteStagedIllustration(
+      'character-illustrations', charIllusStaging, `${currentUser.id}/${targetId}.jpg`, state.illustration_url
+    );
+    charIllusStaging = null;
+  }
+
   const payload = {
     name:      state.name.trim(),
     rank:      state.rank,
     is_public: state.is_public || false,
     data:      state,
   };
-  const isValidUUID = editingId &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingId);
+  const insertPayload = { ...payload, user_id: currentUser.id, universe_id: currentUniverse.id };
+  if (targetId && !isValidUUID) insertPayload.id = targetId;
   const result = isValidUUID
     ? await sb.from('characters').update(payload).eq('id', editingId).eq('universe_id', currentUniverse.id).select('id').single()
-    : await sb.from('characters').insert({ ...payload, user_id: currentUser.id, universe_id: currentUniverse.id }).select('id').single();
+    : await sb.from('characters').insert(insertPayload).select('id').single();
   if (!isValidUUID && editingId) editingId = null;
   if (result.error) {
     setSaveIndicator('error', t('save_error'));
@@ -489,7 +505,10 @@ async function leaveUniverse(universeId) {
 // ── Création d'univers ───────────────────────────────────────
 let universeFormState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
 
+let universeFormStaging = null;
+
 function openUniverseCreateForm() {
+  if (universeFormStaging) { discardStagedIllustration('character-illustrations', universeFormStaging); universeFormStaging = null; }
   universeFormState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
   document.getElementById('universe-f-name').value = '';
   document.getElementById('universe-f-description').value = '';
@@ -503,6 +522,7 @@ function openUniverseCreateForm() {
 }
 
 function closeUniverseCreateForm() {
+  if (universeFormStaging) { discardStagedIllustration('character-illustrations', universeFormStaging); universeFormStaging = null; }
   document.getElementById('universe-create-view').style.display = 'none';
   document.getElementById('universe-list-view').style.display = 'block';
 }
@@ -544,16 +564,13 @@ async function uploadUniverseIllustration(input) {
   if (!currentUser) { showToast(t('toast_upload_no_user')); return; }
   if (file.size > 3 * 1024 * 1024) { showToast(t('toast_illus_too_large')); return; }
   document.getElementById('universe-illus-uploading').classList.add('active');
-  const oldUrl = universeFormState.illustration_url || '';
-  const path   = `${currentUser.id}/universe_tmp_${Date.now()}.jpg`;
-  const blob   = await compressImage(file);
-  const { error } = await sb.storage
-    .from('character-illustrations').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  if (universeFormStaging) await discardStagedIllustration('character-illustrations', universeFormStaging);
+  const blob = await compressImage(file);
+  const { path, url, error } = await stageIllustrationUpload('character-illustrations', currentUser.id, blob);
   document.getElementById('universe-illus-uploading').classList.remove('active');
   if (error) { showToast(t('toast_illus_upload_error') + error.message); return; }
-  if (oldUrl && !oldUrl.includes(path)) await deleteStorageFile(oldUrl);
-  const { data } = sb.storage.from('character-illustrations').getPublicUrl(path);
-  universeFormState.illustration_url      = `${data.publicUrl}?v=${Date.now()}`;
+  universeFormStaging = path;
+  universeFormState.illustration_url      = url;
   universeFormState.illustration_position = 0;
   setUniverseIllusPreview(universeFormState.illustration_url, 0);
   showToast(t('toast_illus_added'));
@@ -562,7 +579,12 @@ async function uploadUniverseIllustration(input) {
 
 async function removeUniverseIllustration() {
   if (!universeFormState.illustration_url) return;
-  await deleteStorageFile(universeFormState.illustration_url);
+  if (universeFormStaging) {
+    await discardStagedIllustration('character-illustrations', universeFormStaging);
+    universeFormStaging = null;
+  } else {
+    await deleteStorageFile(universeFormState.illustration_url);
+  }
   universeFormState.illustration_url      = '';
   universeFormState.illustration_position = 0;
   setUniverseIllusPreview('', 0);
@@ -579,18 +601,36 @@ async function submitCreateUniverse() {
   if (errEl) errEl.classList.remove('show');
 
   document.getElementById('loading-overlay').classList.add('active');
+  // L'illustration est envoyée sans image : create_universe() génère
+  // l'id de l'univers côté serveur, qu'il faut connaître pour construire
+  // le chemin de storage canonique de l'illustration (promotion ci-dessous).
   const { data, error } = await sb.rpc('create_universe', {
     p_name: name,
     p_description: description,
-    p_illustration_url: universeFormState.illustration_url || '',
+    p_illustration_url: '',
     p_illustration_position: universeFormState.illustration_position || 0,
   });
-  document.getElementById('loading-overlay').classList.remove('active');
   if (error) {
+    document.getElementById('loading-overlay').classList.remove('active');
     console.error('Erreur création univers:', error);
     if (errEl) { errEl.textContent = 'Impossible de créer l’univers : ' + error.message; errEl.classList.add('show'); }
     return;
   }
+
+  if (universeFormStaging && data?.id) {
+    const finalUrl = await promoteStagedIllustration(
+      'character-illustrations', universeFormStaging, `${currentUser.id}/universe_${data.id}.jpg`, ''
+    );
+    universeFormStaging = null;
+    if (finalUrl) {
+      await sb.from('universes').update({
+        illustration_url: finalUrl,
+        illustration_position: universeFormState.illustration_position || 0,
+      }).eq('id', data.id);
+    }
+  }
+
+  document.getElementById('loading-overlay').classList.remove('active');
   await loadUniversesFromDB();
   closeUniverseCreateForm();
   if (data?.id) await enterUniverse(data.id);
@@ -702,8 +742,11 @@ function updateConfigNavVisibility() {
   if (btn) btn.style.display = canConfigureUniverse() ? '' : 'none';
 }
 
+let universeConfigStaging = null;
+
 function openUniverseConfigView() {
   if (!canConfigureUniverse() || !currentUniverse) return;
+  if (universeConfigStaging) { discardStagedIllustration('character-illustrations', universeConfigStaging); universeConfigStaging = null; }
   universeConfigState = {
     name: currentUniverse.name || '',
     description: currentUniverse.description || '',
@@ -877,6 +920,52 @@ async function confirmDeleteUniverse() {
   showToast(ti('toast_universe_deleted', { name: universeName }));
 }
 
+// ── Nettoyage des illustrations orphelines ─────────────────────
+// list_orphan_illustrations() (RPC serveur) ne renvoie que des fichiers
+// dont plus aucune ligne (univers/personnage/chronique/document/carte)
+// ne référence l'URL : leur suppression est donc toujours sans risque,
+// quel que soit qui les a uploadés à l'origine.
+async function cleanupOrphanIllustrations() {
+  const btn = document.getElementById('config-cleanup-btn');
+  const resultEl = document.getElementById('config-cleanup-result');
+  if (resultEl) resultEl.textContent = '';
+  if (btn) btn.disabled = true;
+
+  const { data, error } = await sb.rpc('list_orphan_illustrations');
+  if (error) {
+    showToast(t('toast_cleanup_error') + error.message);
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  const orphans = data || [];
+  if (!orphans.length) {
+    if (resultEl) resultEl.textContent = t('config_cleanup_none');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  const totalMB = (orphans.reduce((sum, o) => sum + (o.size_bytes || 0), 0) / (1024 * 1024)).toFixed(1);
+  if (!confirm(ti('confirm_cleanup_orphans', { count: orphans.length, size: totalMB }))) {
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  const pathsByBucket = {};
+  orphans.forEach(o => { (pathsByBucket[o.bucket_id] ||= []).push(o.path); });
+
+  let deletedCount = 0;
+  for (const [bucketId, paths] of Object.entries(pathsByBucket)) {
+    const { data: removed, error: rmError } = await sb.storage.from(bucketId).remove(paths);
+    if (rmError) { console.warn('Nettoyage storage', bucketId, rmError); continue; }
+    deletedCount += (removed || []).length;
+  }
+
+  if (resultEl) resultEl.textContent = ti('config_cleanup_done', { count: deletedCount, size: totalMB });
+  showToast(ti('toast_cleanup_done', { count: deletedCount }));
+  if (btn) btn.disabled = false;
+}
+
 function renderUniverseMembersList(members) {
   const container = document.getElementById('config-members-list');
   if (!container) return;
@@ -998,16 +1087,13 @@ async function uploadConfigIllustration(input) {
   if (!currentUser) { showToast(t('toast_upload_no_user')); return; }
   if (file.size > 3 * 1024 * 1024) { showToast(t('toast_illus_too_large')); return; }
   document.getElementById('config-illus-uploading').classList.add('active');
-  const oldUrl = universeConfigState.illustration_url || '';
-  const path   = `${currentUser.id}/universe_${currentUniverse.id}_${Date.now()}.jpg`;
-  const blob   = await compressImage(file);
-  const { error } = await sb.storage
-    .from('character-illustrations').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  if (universeConfigStaging) await discardStagedIllustration('character-illustrations', universeConfigStaging);
+  const blob = await compressImage(file);
+  const { path, url, error } = await stageIllustrationUpload('character-illustrations', currentUser.id, blob);
   document.getElementById('config-illus-uploading').classList.remove('active');
   if (error) { showToast(t('toast_illus_upload_error') + error.message); return; }
-  if (oldUrl && !oldUrl.includes(path)) await deleteStorageFile(oldUrl);
-  const { data } = sb.storage.from('character-illustrations').getPublicUrl(path);
-  universeConfigState.illustration_url      = `${data.publicUrl}?v=${Date.now()}`;
+  universeConfigStaging = path;
+  universeConfigState.illustration_url      = url;
   universeConfigState.illustration_position = 0;
   setConfigIllusPreview(universeConfigState.illustration_url, 0);
   showToast(t('toast_illus_added'));
@@ -1016,7 +1102,12 @@ async function uploadConfigIllustration(input) {
 
 async function removeConfigIllustration() {
   if (!universeConfigState.illustration_url) return;
-  await deleteStorageFile(universeConfigState.illustration_url);
+  if (universeConfigStaging) {
+    await discardStagedIllustration('character-illustrations', universeConfigStaging);
+    universeConfigStaging = null;
+  } else {
+    await deleteStorageFile(universeConfigState.illustration_url);
+  }
   universeConfigState.illustration_url      = '';
   universeConfigState.illustration_position = 0;
   setConfigIllusPreview('', 0);
@@ -1042,6 +1133,13 @@ async function saveUniverseConfig() {
       label: (labelInput?.value || '').trim(),
     };
   });
+
+  if (universeConfigStaging) {
+    universeConfigState.illustration_url = await promoteStagedIllustration(
+      'character-illustrations', universeConfigStaging, `${currentUser.id}/universe_${currentUniverse.id}.jpg`, universeConfigState.illustration_url
+    );
+    universeConfigStaging = null;
+  }
 
   const { data, error } = await sb.from('universes')
     .update({
@@ -1390,21 +1488,65 @@ function compressImage(file) {
   });
 }
 
+// ══════════════════════════════════════════════════════════════
+// UPLOAD D'ILLUSTRATION EN 2 TEMPS (staging → promotion à la sauvegarde)
+// ══════════════════════════════════════════════════════════════
+// Le fichier choisi est d'abord envoyé sous un nom "staging_" jamais
+// référencé par aucune ligne en base. L'image publiée/canonique n'est
+// donc jamais modifiée avant que l'utilisateur clique sur Enregistrer,
+// et un upload abandonné (fermeture sans sauvegarder) reste un
+// orphelin trivialement identifiable par l'outil de nettoyage — au
+// lieu d'un fichier tmp_ permanent ou d'un écrasement silencieux de
+// l'image déjà publiée.
+
+async function stageIllustrationUpload(bucket, folder, blob) {
+  const stagingPath = `${folder}/staging_${crypto.randomUUID()}.jpg`;
+  const { error } = await sb.storage.from(bucket).upload(stagingPath, blob, { contentType: 'image/jpeg' });
+  if (error) return { error };
+  const { data } = sb.storage.from(bucket).getPublicUrl(stagingPath);
+  return { path: stagingPath, url: `${data.publicUrl}?v=${Date.now()}` };
+}
+
+async function discardStagedIllustration(bucket, stagingPath) {
+  if (!stagingPath) return;
+  await sb.storage.from(bucket).remove([stagingPath]).catch(() => {});
+}
+
+// Déplace le fichier de staging vers son chemin canonique définitif
+// (en remplaçant ce qui s'y trouve déjà) et supprime l'ancien fichier
+// s'il vivait ailleurs (ex : personnage transféré à un autre owner,
+// dont l'ancienne image est restée dans le dossier de l'ex-propriétaire).
+// Sans staging en attente, renvoie oldUrl tel quel (aucun changement).
+async function promoteStagedIllustration(bucket, stagingPath, canonicalPath, oldUrl) {
+  if (!stagingPath) return oldUrl || '';
+  await sb.storage.from(bucket).remove([canonicalPath]).catch(() => {});
+  const { error } = await sb.storage.from(bucket).move(stagingPath, canonicalPath);
+  if (error) {
+    console.warn('Promotion illustration échouée:', error);
+    return oldUrl || '';
+  }
+  if (oldUrl && !oldUrl.includes(canonicalPath)) {
+    const match = oldUrl.match(new RegExp(bucket + '/([^?#]+)'));
+    if (match) await sb.storage.from(bucket).remove([match[1]]).catch(() => {});
+  }
+  const { data } = sb.storage.from(bucket).getPublicUrl(canonicalPath);
+  return `${data.publicUrl}?v=${Date.now()}`;
+}
+
+let charIllusStaging = null; // chemin de staging en attente de sauvegarde, ou null
+
 async function uploadIllustration(input) {
   const file = input.files[0];
   if (!file) return;
   if (file.size > 3 * 1024 * 1024) { showToast(t('toast_illus_too_large')); return; }
   document.getElementById('illus-uploading').classList.add('active');
-  const oldUrl = state.illustration_url || '';
-  const path   = `${currentUser.id}/${editingId || ('tmp_' + Date.now())}.jpg`;
-  const blob   = await compressImage(file);
-  const { error } = await sb.storage
-    .from('character-illustrations').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  if (charIllusStaging) await discardStagedIllustration('character-illustrations', charIllusStaging);
+  const blob = await compressImage(file);
+  const { path, url, error } = await stageIllustrationUpload('character-illustrations', currentUser.id, blob);
   document.getElementById('illus-uploading').classList.remove('active');
   if (error) { showToast(t('toast_illus_upload_error') + error.message); return; }
-  if (oldUrl && !oldUrl.includes(path)) await deleteStorageFile(oldUrl);
-  const { data } = sb.storage.from('character-illustrations').getPublicUrl(path);
-  state.illustration_url      = `${data.publicUrl}?v=${Date.now()}`;
+  charIllusStaging = path;
+  state.illustration_url      = url;
   state.illustration_position = 0;
   setIllusPreview(state.illustration_url, 0);
   updatePreview();
@@ -1420,7 +1562,12 @@ async function deleteStorageFile(url) {
 
 async function removeIllustration() {
   if (!state.illustration_url) return;
-  await deleteStorageFile(state.illustration_url);
+  if (charIllusStaging) {
+    await discardStagedIllustration('character-illustrations', charIllusStaging);
+    charIllusStaging = null;
+  } else {
+    await deleteStorageFile(state.illustration_url);
+  }
   state.illustration_url      = '';
   state.illustration_position = 0;
   setIllusPreview('', 0);

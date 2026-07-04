@@ -5,6 +5,7 @@
 
 let mapAdminMaps       = [];   // liste des cartes de l'univers courant (cache pour la vue Configuration)
 let mapAdminEditingId  = null; // id de la carte en cours d'édition, null = création
+let mapAdminStaging    = null; // chemin de staging (map-images) en attente de sauvegarde, ou null
 let mapAdminState      = {     // état du formulaire (modale ouverte)
   name: '',
   image_url: '',
@@ -62,6 +63,7 @@ function renderMapsAdminList(maps) {
 
 function openMapAdminForm(mapId) {
   if (!canConfigureUniverse()) return;
+  if (mapAdminStaging) { discardStagedIllustration('map-images', mapAdminStaging); mapAdminStaging = null; }
   const existing = mapId ? mapAdminMaps.find(m => m.id === mapId) : null;
   mapAdminEditingId = existing ? existing.id : null;
   mapAdminState = {
@@ -84,6 +86,7 @@ function openMapAdminForm(mapId) {
 }
 
 function closeMapAdminForm() {
+  if (mapAdminStaging) { discardStagedIllustration('map-images', mapAdminStaging); mapAdminStaging = null; }
   document.getElementById('map-admin-modal').classList.remove('open');
   mapAdminEditingId = null;
 }
@@ -162,17 +165,14 @@ async function uploadMapAdminImage(input) {
   if (file.size > 15 * 1024 * 1024) { showToast(t('toast_map_image_too_large')); return; }
 
   document.getElementById('map-admin-illus-uploading').classList.add('active');
-  const oldUrl = mapAdminState.image_url || '';
-  const path   = `${currentUniverse.id}/${mapAdminEditingId || ('tmp_' + Date.now())}.jpg`;
+  if (mapAdminStaging) await discardStagedIllustration('map-images', mapAdminStaging);
   const { blob, width, height } = await compressMapImage(file);
-  const { error } = await sb.storage
-    .from('map-images').upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  const { path, url, error } = await stageIllustrationUpload('map-images', currentUniverse.id, blob);
   document.getElementById('map-admin-illus-uploading').classList.remove('active');
   if (error) { showToast(t('toast_map_image_upload_error') + error.message); return; }
-  if (oldUrl && !oldUrl.includes(path)) await deleteMapStorageFile(oldUrl);
 
-  const { data } = sb.storage.from('map-images').getPublicUrl(path);
-  mapAdminState.image_url    = `${data.publicUrl}?v=${Date.now()}`;
+  mapAdminStaging = path;
+  mapAdminState.image_url    = url;
   mapAdminState.image_width  = width;
   mapAdminState.image_height = height;
   setMapAdminImagePreview();
@@ -188,7 +188,12 @@ async function deleteMapStorageFile(url) {
 
 async function removeMapAdminImage() {
   if (!mapAdminState.image_url) return;
-  await deleteMapStorageFile(mapAdminState.image_url);
+  if (mapAdminStaging) {
+    await discardStagedIllustration('map-images', mapAdminStaging);
+    mapAdminStaging = null;
+  } else {
+    await deleteMapStorageFile(mapAdminState.image_url);
+  }
   mapAdminState.image_url    = '';
   mapAdminState.image_width  = 0;
   mapAdminState.image_height = 0;
@@ -210,6 +215,18 @@ async function saveMapAdmin() {
     return;
   }
 
+  // Une nouvelle carte n'a pas encore d'id : on en génère un côté client
+  // pour construire le chemin de storage canonique de l'image AVANT
+  // l'insertion (l'id sert aussi ensuite pour l'insert lui-même).
+  let targetId = mapAdminEditingId || null;
+  if (mapAdminStaging) {
+    if (!targetId) targetId = crypto.randomUUID();
+    mapAdminState.image_url = await promoteStagedIllustration(
+      'map-images', mapAdminStaging, `${currentUniverse.id}/${targetId}.jpg`, mapAdminState.image_url
+    );
+    mapAdminStaging = null;
+  }
+
   const marker_colors = MAP_CONFIG.markerColors.map(c => ({
     color: c,
     label: (mapAdminState.colorLabels[c] || '').trim(),
@@ -227,11 +244,9 @@ async function saveMapAdmin() {
   if (mapAdminEditingId) {
     ({ error } = await sb.from('maps').update(payload).eq('id', mapAdminEditingId));
   } else {
-    ({ error } = await sb.from('maps').insert({
-      ...payload,
-      universe_id: currentUniverse.id,
-      created_by:  currentUser.id,
-    }));
+    const insertPayload = { ...payload, universe_id: currentUniverse.id, created_by: currentUser.id };
+    if (targetId) insertPayload.id = targetId;
+    ({ error } = await sb.from('maps').insert(insertPayload));
   }
   if (error) {
     console.error('Erreur sauvegarde carte:', error);
