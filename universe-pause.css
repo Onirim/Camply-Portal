@@ -1,0 +1,57 @@
+/* ══════════════════════════════════════════════════════════════
+   Mise en pause des univers inactifs (cf. universe-pause.js)
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Card d'univers en pause : grisée ─────────────────────────── */
+.universe-card.paused {
+  filter: grayscale(0.9);
+  opacity: 0.65;
+}
+
+.universe-card.paused:hover {
+  filter: grayscale(0.6);
+  opacity: 0.85;
+}
+
+/* ── Badge pause (deux barres verticales, façon radio-cassette) ── */
+.universe-pause-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+/* ── Modale de réactivation — même chrome que transfert.css ───── */
+/* Au-dessus de #universe-screen (z-index 300), car ce modal s'ouvre
+   depuis la page de la liste des univers, pas depuis l'app. */
+#universe-pause-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+#universe-pause-modal-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: slideUp 0.18s ease;
+}
+
+@media (max-width: 520px) {
+  #universe-pause-modal-panel { max-height: 100vh; border-radius: 0; }
+}
