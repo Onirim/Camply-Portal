@@ -36,6 +36,34 @@
 
 .admin-purge-result { font-size: 12px; color: var(--text3); min-height: 16px; }
 
+.admin-table-wrap { overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table th {
+  text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text3); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.admin-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text2); }
+.admin-table tr:last-child td { border-bottom: none; }
+
+.admin-cell-title { color: var(--text); font-weight: 500; }
+.admin-cell-sub { font-size: 11px; color: var(--text3); }
+
+.admin-input-mini {
+  width: 60px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+  color: var(--text); font-family: var(--font-mono); font-size: 13px; padding: 5px 8px; outline: none;
+}
+.admin-input-mini:focus { border-color: var(--accent); }
+
+.admin-row-btn { padding: 6px 10px; font-size: 11px; white-space: nowrap; }
+.admin-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.admin-status-badge {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 3px 8px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap;
+}
+.admin-status-badge.active { color: var(--mov); background: rgba(68,170,119,0.12); border-color: rgba(68,170,119,0.25); }
+.admin-status-badge.paused { color: var(--text2); background: var(--bg3); border-color: var(--border); }
+
 @media (max-width: 640px) {
   .admin-page { padding: 24px 16px 48px; }
   .admin-hero h1 { font-size: 18px; }

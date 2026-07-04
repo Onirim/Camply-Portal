@@ -21,6 +21,8 @@ Object.assign(TRANSLATIONS.fr, {
   admin_card_storage:   'Stockage (fichiers)',
   admin_card_database:  'Base de données',
   admin_card_orphans:   'Images orphelines',
+  admin_card_users:          'Utilisateurs',
+  admin_card_universes_list: 'Univers',
   admin_purge_btn:      'Purger les fichiers orphelins',
   admin_universes_active_paused: '${active} actifs · ${paused} en pause',
   admin_orphans_count:  '${count} fichier(s) · ${size}',
@@ -28,6 +30,28 @@ Object.assign(TRANSLATIONS.fr, {
   admin_purge_done:     '${count} fichier(s) supprimé(s) (${size}).',
   admin_load_error:     'Erreur lors du chargement des statistiques.',
   toast_admin_purge_done: 'Fichiers orphelins purgés !',
+  admin_th_user:             'Utilisateur',
+  admin_th_universes_owned:  'Univers possédés',
+  admin_th_objects:          'Objets',
+  admin_th_universe_limit:   'Limite d\'univers',
+  admin_th_name:             'Nom',
+  admin_th_owner:            'Propriétaire',
+  admin_th_members:          'Membres',
+  admin_th_status:           'Statut',
+  admin_save_btn:            'Enregistrer',
+  admin_pause_btn:           'Mettre en pause',
+  admin_resume_btn:          'Réactiver',
+  admin_delete_btn:          'Supprimer',
+  admin_status_active:       'Actif',
+  admin_status_paused:       'En pause',
+  admin_confirm_delete_universe: 'Suppression définitive de l\'univers "${name}" et de tout son contenu.\nTapez son nom pour confirmer :',
+  admin_confirm_pause:       'Mettre l\'univers "${name}" en pause ?',
+  admin_confirm_resume:      'Réactiver l\'univers "${name}" ?',
+  toast_admin_limit_saved:   'Limite d\'univers mise à jour.',
+  toast_admin_universe_paused:   'Univers mis en pause.',
+  toast_admin_universe_resumed:  'Univers réactivé.',
+  toast_admin_universe_deleted:  'Univers supprimé.',
+  toast_admin_action_error:  'Erreur : ${message}',
 });
 
 Object.assign(TRANSLATIONS.en, {
@@ -40,6 +64,8 @@ Object.assign(TRANSLATIONS.en, {
   admin_card_storage:   'Storage (files)',
   admin_card_database:  'Database',
   admin_card_orphans:   'Orphan images',
+  admin_card_users:          'Users',
+  admin_card_universes_list: 'Universes',
   admin_purge_btn:      'Purge orphan files',
   admin_universes_active_paused: '${active} active · ${paused} paused',
   admin_orphans_count:  '${count} file(s) · ${size}',
@@ -47,12 +73,36 @@ Object.assign(TRANSLATIONS.en, {
   admin_purge_done:     '${count} file(s) deleted (${size}).',
   admin_load_error:     'Error while loading statistics.',
   toast_admin_purge_done: 'Orphan files purged!',
+  admin_th_user:             'User',
+  admin_th_universes_owned:  'Owned universes',
+  admin_th_objects:          'Objects',
+  admin_th_universe_limit:   'Universe limit',
+  admin_th_name:             'Name',
+  admin_th_owner:            'Owner',
+  admin_th_members:          'Members',
+  admin_th_status:           'Status',
+  admin_save_btn:            'Save',
+  admin_pause_btn:           'Pause',
+  admin_resume_btn:          'Resume',
+  admin_delete_btn:          'Delete',
+  admin_status_active:       'Active',
+  admin_status_paused:       'Paused',
+  admin_confirm_delete_universe: 'This will permanently delete the universe "${name}" and all its content.\nType its name to confirm:',
+  admin_confirm_pause:       'Pause the universe "${name}"?',
+  admin_confirm_resume:      'Resume the universe "${name}"?',
+  toast_admin_limit_saved:   'Universe limit updated.',
+  toast_admin_universe_paused:   'Universe paused.',
+  toast_admin_universe_resumed:  'Universe resumed.',
+  toast_admin_universe_deleted:  'Universe deleted.',
+  toast_admin_action_error:  'Error: ${message}',
 });
 
 const adminPanel = {
 
   _prevAppVisible: false,
   _lastOrphans: [],
+  _users: [],
+  _universes: [],
 
   formatBytes(bytes) {
     if (!bytes) return '0 MB';
@@ -93,15 +143,26 @@ const adminPanel = {
     contentEl.style.display = 'none';
     document.getElementById('admin-purge-result').textContent = '';
 
-    const { data, error } = await sb.rpc('admin_get_stats');
-    if (error) {
-      console.error('admin_get_stats:', error);
+    const [statsRes, usersRes, universesRes] = await Promise.all([
+      sb.rpc('admin_get_stats'),
+      sb.rpc('admin_list_users'),
+      sb.rpc('admin_list_universes'),
+    ]);
+
+    if (statsRes.error) {
+      console.error('admin_get_stats:', statsRes.error);
       showToast(t('admin_load_error'));
       loadingEl.style.display = 'none';
       return;
     }
+    this._renderStats(statsRes.data);
 
-    this._renderStats(data);
+    if (usersRes.error) console.error('admin_list_users:', usersRes.error);
+    else { this._users = usersRes.data || []; this._renderUsers(); }
+
+    if (universesRes.error) console.error('admin_list_universes:', universesRes.error);
+    else { this._universes = universesRes.data || []; this._renderUniverses(); }
+
     loadingEl.style.display = 'none';
     contentEl.style.display = 'grid';
   },
@@ -137,6 +198,115 @@ const adminPanel = {
     document.getElementById('admin-orphans-value').textContent = ti('admin_orphans_count', {
       count: stats.orphans.count, size: this.formatBytes(stats.orphans.bytes),
     });
+  },
+
+  // ── Utilisateurs ──────────────────────────────────────────────
+
+  _renderUsers() {
+    const tbody = document.getElementById('admin-users-tbody');
+    tbody.innerHTML = this._users.map(u => `
+      <tr>
+        <td>
+          <div class="admin-cell-title">${esc(u.username || '—')}</div>
+          <div class="admin-cell-sub">${esc(u.email || '')}</div>
+        </td>
+        <td>${u.owned_universes}</td>
+        <td>${u.objects_count}</td>
+        <td>
+          <input type="number" min="0" class="admin-input-mini" id="admin-limit-input-${esc(u.user_id)}" value="${u.max_universes}">
+        </td>
+        <td>
+          <button class="btn-cancel admin-row-btn" onclick="adminPanel.saveUserLimit('${u.user_id}')" data-i18n="admin_save_btn">Enregistrer</button>
+        </td>
+      </tr>`).join('');
+  },
+
+  async saveUserLimit(userId) {
+    const input = document.getElementById(`admin-limit-input-${userId}`);
+    const value = parseInt(input?.value, 10);
+    if (!Number.isFinite(value) || value < 0) return;
+
+    const { error } = await sb.rpc('admin_set_user_max_universes', { p_user_id: userId, p_max_universes: value });
+    if (error) {
+      showToast(ti('toast_admin_action_error', { message: error.message }));
+      return;
+    }
+    const user = this._users.find(u => u.user_id === userId);
+    if (user) user.max_universes = value;
+    showToast(t('toast_admin_limit_saved'));
+  },
+
+  // ── Univers ───────────────────────────────────────────────────
+
+  _renderUniverses() {
+    const tbody = document.getElementById('admin-universes-tbody');
+    tbody.innerHTML = this._universes.map(u => `
+      <tr>
+        <td class="admin-cell-title">${esc(u.name)}</td>
+        <td>${esc(u.owner_username || '—')}</td>
+        <td>${u.member_count}</td>
+        <td>${u.objects_count}</td>
+        <td>
+          <span class="admin-status-badge ${u.paused_at ? 'paused' : 'active'}">
+            ${u.paused_at ? t('admin_status_paused') : t('admin_status_active')}
+          </span>
+        </td>
+        <td class="admin-row-actions">
+          <button class="btn-cancel admin-row-btn" onclick="adminPanel.togglePauseUniverse('${u.universe_id}')">
+            ${u.paused_at ? t('admin_resume_btn') : t('admin_pause_btn')}
+          </button>
+          <button class="btn-danger-outline admin-row-btn" onclick="adminPanel.deleteUniverseAsAdmin('${u.universe_id}')" data-i18n="admin_delete_btn">Supprimer</button>
+        </td>
+      </tr>`).join('');
+  },
+
+  async togglePauseUniverse(universeId) {
+    const universe = this._universes.find(u => u.universe_id === universeId);
+    if (!universe) return;
+
+    if (universe.paused_at) {
+      if (!confirm(ti('admin_confirm_resume', { name: universe.name }))) return;
+      const { error } = await sb.rpc('admin_resume_universe', { p_universe_id: universeId });
+      if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }
+      showToast(t('toast_admin_universe_resumed'));
+    } else {
+      if (!confirm(ti('admin_confirm_pause', { name: universe.name }))) return;
+      const { error } = await sb.rpc('admin_pause_universe', { p_universe_id: universeId });
+      if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }
+      showToast(t('toast_admin_universe_paused'));
+    }
+    await this.loadStats();
+  },
+
+  async deleteUniverseAsAdmin(universeId) {
+    const universe = this._universes.find(u => u.universe_id === universeId);
+    if (!universe) return;
+
+    const typed = prompt(ti('admin_confirm_delete_universe', { name: universe.name }));
+    if (typed !== universe.name) return;
+
+    const { data: illustrationUrls, error } = await sb.rpc('admin_delete_universe', { p_universe_id: universeId });
+    if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }
+
+    // Nettoyage du storage en best-effort : la ligne univers est déjà supprimée
+    // (même logique que confirmDeleteUniverse() côté propriétaire).
+    const charPaths = [...new Set((illustrationUrls || [])
+      .map(u => _extractStoragePath(u, 'character-illustrations'))
+      .filter(Boolean))];
+    if (charPaths.length) {
+      sb.storage.from('character-illustrations').remove(charPaths)
+        .catch(e => console.warn('Nettoyage storage character-illustrations:', e));
+    }
+    sb.storage.from('map-images').list(universeId).then(({ data }) => {
+      const paths = (data || []).map(f => `${universeId}/${f.name}`);
+      if (paths.length) {
+        sb.storage.from('map-images').remove(paths)
+          .catch(e => console.warn('Nettoyage storage map-images:', e));
+      }
+    }).catch(e => console.warn('Listage storage map-images:', e));
+
+    showToast(t('toast_admin_universe_deleted'));
+    await this.loadStats();
   },
 
   // ── Purge des illustrations orphelines ───────────────────────
