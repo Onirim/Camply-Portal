@@ -1109,7 +1109,7 @@ a:hover { color: var(--accent2); }
 /* ══════════════════════════════════════════════════════════════
    SÉLECTEUR DE LANGUE
    ══════════════════════════════════════════════════════════════ */
-#lang-select {
+.lang-select {
   background: var(--bg3) !important;
   border: 1px solid var(--border) !important;
   color: var(--text2) !important;
@@ -1118,4 +1118,4 @@ a:hover { color: var(--accent2); }
   letter-spacing: 0.08em !important;
   border-radius: 2px !important;
 }
-#lang-select:hover { border-color: var(--border2) !important; color: var(--text) !important; }
+.lang-select:hover { border-color: var(--border2) !important; color: var(--text) !important; }

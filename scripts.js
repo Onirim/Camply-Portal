@@ -479,7 +479,7 @@ function renderUniverseList() {
         </button>
       </div>` : ''}
       <div class="universe-card-title">${esc(u.name)}</div>
-      <div class="universe-card-desc">${esc(u.description || 'Aucune description')}</div>
+      <div class="universe-card-desc">${esc(u.description || t('universe_no_description'))}</div>
       <div class="universe-card-meta">
         <span class="role-badge role-${esc(u.role || 'player')}">${esc(t(roleKey))}</span>
         ${updated ? `<span class="universe-card-date">${esc(t('universe_updated_prefix'))} ${updated}</span>` : ''}
@@ -606,7 +606,7 @@ async function submitCreateUniverse() {
   const errEl = document.getElementById('universe-create-error');
   const name  = document.getElementById('universe-f-name').value.trim();
   if (!name) {
-    if (errEl) { errEl.textContent = 'Le nom de l’univers est requis.'; errEl.classList.add('show'); }
+    if (errEl) { errEl.textContent = t('config_error_name_required'); errEl.classList.add('show'); }
     return;
   }
   const description = document.getElementById('universe-f-description').value.trim();
@@ -625,7 +625,7 @@ async function submitCreateUniverse() {
   if (error) {
     document.getElementById('loading-overlay').classList.remove('active');
     console.error('Erreur création univers:', error);
-    if (errEl) { errEl.textContent = 'Impossible de créer l’univers : ' + error.message; errEl.classList.add('show'); }
+    if (errEl) { errEl.textContent = t('universe_create_error_prefix') + error.message; errEl.classList.add('show'); }
     return;
   }
 

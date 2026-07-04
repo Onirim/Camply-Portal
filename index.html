@@ -44,15 +44,15 @@
 </script>
 
 <style>
-  #lang-select {
+  .lang-select {
     background: var(--bg3); border: 1px solid var(--border);
     color: var(--text2); font-family: var(--font-display); font-size: 12px;
     font-weight: 600; letter-spacing: 0.06em;
     padding: 5px 8px; border-radius: 4px; cursor: pointer;
     outline: none; transition: all 0.15s;
   }
-  #lang-select:hover { border-color: var(--border2); color: var(--text); }
-  #lang-select option { background: var(--bg3); }
+  .lang-select:hover { border-color: var(--border2); color: var(--text); }
+  .lang-select option { background: var(--bg3); }
 </style>
 </head>
 <body>
@@ -131,22 +131,28 @@
       <img class="brand-mark" src="android-chrome-192x192.png" alt="" width="30" height="30">
       <span class="brand-name">CAMPLY <em>Portal</em></span>
     </div>
-    <div class="user-menu-wrap">
-      <button class="user-btn" onclick="toggleUserMenu(this.parentElement)">
-        <div class="avatar">?</div>
-        <span class="user-label">…</span>
-      </button>
-      <div class="user-dropdown">
-        <div class="user-dropdown-header">
-          <div class="uname">—</div>
-          <div class="uemail">—</div>
-        </div>
-        <button class="user-dropdown-item danger" onclick="doLogout()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M6 3H3v10h3M10 5l3 3-3 3M13 8H6"/>
-          </svg>
-          <span data-i18n="user_logout">Se déconnecter</span>
+    <div class="universe-topbar-right">
+      <select id="lang-select-universe" class="lang-select" onchange="setLang(this.value)">
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+      </select>
+      <div class="user-menu-wrap">
+        <button class="user-btn" onclick="toggleUserMenu(this.parentElement)">
+          <div class="avatar">?</div>
+          <span class="user-label">…</span>
         </button>
+        <div class="user-dropdown">
+          <div class="user-dropdown-header">
+            <div class="uname">—</div>
+            <div class="uemail">—</div>
+          </div>
+          <button class="user-dropdown-item danger" onclick="doLogout()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M6 3H3v10h3M10 5l3 3-3 3M13 8H6"/>
+            </svg>
+            <span data-i18n="user_logout">Se déconnecter</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -160,7 +166,7 @@
       </div>
 
       <div class="universe-actions">
-        <button class="btn-primary" onclick="openUniverseCreateForm()">+ Créer un univers</button>
+        <button class="btn-primary" onclick="openUniverseCreateForm()" data-i18n="universe_create_btn">+ Créer un univers</button>
       </div>
 
       <div id="universe-error" class="auth-error"></div>
@@ -180,10 +186,10 @@
 
     <!-- Create view: new universe form -->
     <div id="universe-create-view" class="universe-box" style="display:none">
-      <div class="auth-tagline">Créer un nouvel univers</div>
+      <div class="auth-tagline" data-i18n="universe_create_form_title">Créer un nouvel univers</div>
 
       <div class="form-section" style="border-bottom:none;padding:0 0 16px">
-        <div class="form-section-title">Bandeau</div>
+        <div class="form-section-title" data-i18n="config_section_illus">Bandeau</div>
         <div class="illus-upload-zone" id="universe-illus-zone" onclick="universeIllusZoneClick()">
           <div class="illus-upload-placeholder" id="universe-illus-placeholder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -191,20 +197,20 @@
               <circle cx="8.5" cy="8.5" r="1.5"/>
               <path d="M21 15l-5-5L5 21"/>
             </svg>
-            <span>Cliquez pour ajouter une image de bandeau</span>
+            <span data-i18n="universe_illus_ph">Cliquez pour ajouter une image de bandeau</span>
           </div>
           <img id="universe-illus-preview-img" style="display:none">
           <div class="illus-overlay" id="universe-illus-overlay">
-            <button class="illus-overlay-btn" onclick="event.stopPropagation();document.getElementById('universe-illus-input').click()">Changer</button>
-            <button class="illus-overlay-btn danger" onclick="event.stopPropagation();removeUniverseIllustration()">Supprimer</button>
+            <button class="illus-overlay-btn" onclick="event.stopPropagation();document.getElementById('universe-illus-input').click()" data-i18n="editor_illus_change">Changer</button>
+            <button class="illus-overlay-btn danger" onclick="event.stopPropagation();removeUniverseIllustration()" data-i18n="editor_illus_remove">Supprimer</button>
           </div>
           <div class="illus-uploading" id="universe-illus-uploading">
             <div class="spinner"></div>
-            <span>Upload en cours…</span>
+            <span data-i18n="editor_illus_uploading">Upload en cours…</span>
           </div>
         </div>
         <div class="illus-slider-wrap" id="universe-illus-slider-wrap">
-          <label>Cadrage</label>
+          <label data-i18n="editor_illus_slider">Cadrage</label>
           <input type="range" id="universe-illus-pos-slider" min="0" max="100" value="0"
             oninput="updateUniverseIllusPosition(this.value)">
         </div>
@@ -214,28 +220,29 @@
       </div>
 
       <div class="field">
-        <label>Nom de l'univers</label>
-        <input type="text" id="universe-f-name" placeholder="Ex : Les Terres de l'Aube">
+        <label data-i18n="config_field_name">Nom de l'univers</label>
+        <input type="text" id="universe-f-name" data-i18n="universe_name_ph" data-i18n-attr="placeholder" placeholder="Ex : Les Terres de l'Aube">
       </div>
 
       <div class="field">
-        <label>Description courte</label>
-        <textarea id="universe-f-description" maxlength="300"
+        <label data-i18n="config_field_description">Description courte</label>
+        <textarea id="universe-f-description" maxlength="500"
+          data-i18n="universe_desc_ph" data-i18n-attr="placeholder"
           placeholder="Quelques mots pour présenter cet univers…"
           oninput="updateFieldCharCount('universe-f-description')"></textarea>
-        <div class="field-char-count" id="universe-f-description-count">0 / 300</div>
+        <div class="field-char-count" id="universe-f-description-count">0 / 500</div>
       </div>
 
       <div class="field">
-        <label>Propriétaire</label>
+        <label data-i18n="universe_owner_label">Propriétaire</label>
         <input type="text" id="universe-f-owner" disabled>
       </div>
 
       <div id="universe-create-error" class="auth-error"></div>
 
       <div class="universe-actions">
-        <button class="btn-primary" onclick="submitCreateUniverse()">Créer l'univers</button>
-        <button class="btn-cancel" onclick="closeUniverseCreateForm()">Annuler</button>
+        <button class="btn-primary" onclick="submitCreateUniverse()" data-i18n="universe_create_submit_btn">Créer l'univers</button>
+        <button class="btn-cancel" onclick="closeUniverseCreateForm()" data-i18n="btn_cancel">Annuler</button>
       </div>
     </div>
   </div>
@@ -996,9 +1003,9 @@
 
             <div class="field">
               <label data-i18n="config_field_description">Description courte</label>
-              <textarea id="config-f-description" maxlength="300"
+              <textarea id="config-f-description" maxlength="500"
                 oninput="updateFieldCharCount('config-f-description')"></textarea>
-              <div class="field-char-count" id="config-f-description-count">0 / 300</div>
+              <div class="field-char-count" id="config-f-description-count">0 / 500</div>
             </div>
 			
 			<div class="form-section-title" data-i18n="config_section_theme">Thème</div>
