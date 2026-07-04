@@ -44,15 +44,15 @@
 </script>
 
 <style>
-  #lang-select {
+  .lang-select {
     background: var(--bg3); border: 1px solid var(--border);
     color: var(--text2); font-family: var(--font-display); font-size: 12px;
     font-weight: 600; letter-spacing: 0.06em;
     padding: 5px 8px; border-radius: 4px; cursor: pointer;
     outline: none; transition: all 0.15s;
   }
-  #lang-select:hover { border-color: var(--border2); color: var(--text); }
-  #lang-select option { background: var(--bg3); }
+  .lang-select:hover { border-color: var(--border2); color: var(--text); }
+  .lang-select option { background: var(--bg3); }
 </style>
 </head>
 <body>
@@ -131,22 +131,28 @@
       <img class="brand-mark" src="android-chrome-192x192.png" alt="" width="30" height="30">
       <span class="brand-name">CAMPLY <em>Portal</em></span>
     </div>
-    <div class="user-menu-wrap">
-      <button class="user-btn" onclick="toggleUserMenu(this.parentElement)">
-        <div class="avatar">?</div>
-        <span class="user-label">…</span>
-      </button>
-      <div class="user-dropdown">
-        <div class="user-dropdown-header">
-          <div class="uname">—</div>
-          <div class="uemail">—</div>
-        </div>
-        <button class="user-dropdown-item danger" onclick="doLogout()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M6 3H3v10h3M10 5l3 3-3 3M13 8H6"/>
-          </svg>
-          <span data-i18n="user_logout">Se déconnecter</span>
+    <div class="universe-topbar-right">
+      <select id="lang-select-universe" class="lang-select" onchange="setLang(this.value)">
+        <option value="fr">FR</option>
+        <option value="en">EN</option>
+      </select>
+      <div class="user-menu-wrap">
+        <button class="user-btn" onclick="toggleUserMenu(this.parentElement)">
+          <div class="avatar">?</div>
+          <span class="user-label">…</span>
         </button>
+        <div class="user-dropdown">
+          <div class="user-dropdown-header">
+            <div class="uname">—</div>
+            <div class="uemail">—</div>
+          </div>
+          <button class="user-dropdown-item danger" onclick="doLogout()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M6 3H3v10h3M10 5l3 3-3 3M13 8H6"/>
+            </svg>
+            <span data-i18n="user_logout">Se déconnecter</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -160,19 +166,30 @@
       </div>
 
       <div class="universe-actions">
-        <button class="btn-primary" onclick="openUniverseCreateForm()">+ Créer un univers</button>
+        <button class="btn-primary" onclick="openUniverseCreateForm()" data-i18n="universe_create_btn">+ Créer un univers</button>
       </div>
 
       <div id="universe-error" class="auth-error"></div>
       <div id="universe-list" class="universe-list"></div>
+
+      <div class="landing-footer">
+        <a href="https://discord.gg/c2u9BtbNQc" target="_blank" rel="noopener noreferrer" class="footer-discord-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+          </svg>
+          <span data-i18n="footer_discord_join">Rejoindre le Discord</span>
+        </a>
+        <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script>
+        <script type='text/javascript'>kofiwidget2.init('Support me on Ko-fi', '#72a4f2', 'W7W81W9WU0');kofiwidget2.draw();</script>
+      </div>
     </div>
 
     <!-- Create view: new universe form -->
     <div id="universe-create-view" class="universe-box" style="display:none">
-      <div class="auth-tagline">Créer un nouvel univers</div>
+      <div class="auth-tagline" data-i18n="universe_create_form_title">Créer un nouvel univers</div>
 
       <div class="form-section" style="border-bottom:none;padding:0 0 16px">
-        <div class="form-section-title">Bandeau</div>
+        <div class="form-section-title" data-i18n="config_section_illus">Bandeau</div>
         <div class="illus-upload-zone" id="universe-illus-zone" onclick="universeIllusZoneClick()">
           <div class="illus-upload-placeholder" id="universe-illus-placeholder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -180,20 +197,20 @@
               <circle cx="8.5" cy="8.5" r="1.5"/>
               <path d="M21 15l-5-5L5 21"/>
             </svg>
-            <span>Cliquez pour ajouter une image de bandeau</span>
+            <span data-i18n="universe_illus_ph">Cliquez pour ajouter une image de bandeau</span>
           </div>
           <img id="universe-illus-preview-img" style="display:none">
           <div class="illus-overlay" id="universe-illus-overlay">
-            <button class="illus-overlay-btn" onclick="event.stopPropagation();document.getElementById('universe-illus-input').click()">Changer</button>
-            <button class="illus-overlay-btn danger" onclick="event.stopPropagation();removeUniverseIllustration()">Supprimer</button>
+            <button class="illus-overlay-btn" onclick="event.stopPropagation();document.getElementById('universe-illus-input').click()" data-i18n="editor_illus_change">Changer</button>
+            <button class="illus-overlay-btn danger" onclick="event.stopPropagation();removeUniverseIllustration()" data-i18n="editor_illus_remove">Supprimer</button>
           </div>
           <div class="illus-uploading" id="universe-illus-uploading">
             <div class="spinner"></div>
-            <span>Upload en cours…</span>
+            <span data-i18n="editor_illus_uploading">Upload en cours…</span>
           </div>
         </div>
         <div class="illus-slider-wrap" id="universe-illus-slider-wrap">
-          <label>Cadrage</label>
+          <label data-i18n="editor_illus_slider">Cadrage</label>
           <input type="range" id="universe-illus-pos-slider" min="0" max="100" value="0"
             oninput="updateUniverseIllusPosition(this.value)">
         </div>
@@ -203,25 +220,29 @@
       </div>
 
       <div class="field">
-        <label>Nom de l'univers</label>
-        <input type="text" id="universe-f-name" placeholder="Ex : Les Terres de l'Aube">
+        <label data-i18n="config_field_name">Nom de l'univers</label>
+        <input type="text" id="universe-f-name" data-i18n="universe_name_ph" data-i18n-attr="placeholder" placeholder="Ex : Les Terres de l'Aube">
       </div>
 
       <div class="field">
-        <label>Description courte</label>
-        <textarea id="universe-f-description" placeholder="Quelques mots pour présenter cet univers…"></textarea>
+        <label data-i18n="config_field_description">Description courte</label>
+        <textarea id="universe-f-description" maxlength="400"
+          data-i18n="universe_desc_ph" data-i18n-attr="placeholder"
+          placeholder="Quelques mots pour présenter cet univers…"
+          oninput="updateFieldCharCount('universe-f-description')"></textarea>
+        <div class="field-char-count" id="universe-f-description-count">0 / 400</div>
       </div>
 
       <div class="field">
-        <label>Propriétaire</label>
+        <label data-i18n="universe_owner_label">Propriétaire</label>
         <input type="text" id="universe-f-owner" disabled>
       </div>
 
       <div id="universe-create-error" class="auth-error"></div>
 
       <div class="universe-actions">
-        <button class="btn-primary" onclick="submitCreateUniverse()">Créer l'univers</button>
-        <button class="btn-cancel" onclick="closeUniverseCreateForm()">Annuler</button>
+        <button class="btn-primary" onclick="submitCreateUniverse()" data-i18n="universe_create_submit_btn">Créer l'univers</button>
+        <button class="btn-cancel" onclick="closeUniverseCreateForm()" data-i18n="btn_cancel">Annuler</button>
       </div>
     </div>
   </div>
@@ -244,7 +265,7 @@
 
     <div class="topbar-right">
       <span class="save-indicator" id="save-indicator"></span>
-      <select id="lang-select" onchange="setLang(this.value)">
+      <select id="lang-select" class="lang-select" onchange="setLang(this.value)">
         <option value="fr">FR</option>
         <option value="en">EN</option>
       </select>
@@ -982,7 +1003,9 @@
 
             <div class="field">
               <label data-i18n="config_field_description">Description courte</label>
-              <textarea id="config-f-description"></textarea>
+              <textarea id="config-f-description" maxlength="400"
+                oninput="updateFieldCharCount('config-f-description')"></textarea>
+              <div class="field-char-count" id="config-f-description-count">0 / 400</div>
             </div>
 			
 			<div class="form-section-title" data-i18n="config_section_theme">Thème</div>

@@ -479,7 +479,7 @@ function renderUniverseList() {
         </button>
       </div>` : ''}
       <div class="universe-card-title">${esc(u.name)}</div>
-      <div class="universe-card-desc">${esc(u.description || 'Aucune description')}</div>
+      <div class="universe-card-desc">${esc(u.description || t('universe_no_description'))}</div>
       <div class="universe-card-meta">
         <span class="role-badge role-${esc(u.role || 'player')}">${esc(t(roleKey))}</span>
         ${updated ? `<span class="universe-card-date">${esc(t('universe_updated_prefix'))} ${updated}</span>` : ''}
@@ -502,6 +502,17 @@ async function leaveUniverse(universeId) {
   await loadUniversesFromDB();
 }
 
+// ── Compteur de caractères (textarea avec maxlength) ──────────
+function updateFieldCharCount(fieldId) {
+  const field   = document.getElementById(fieldId);
+  const counter = document.getElementById(`${fieldId}-count`);
+  if (!field || !counter) return;
+  const max = Number(field.getAttribute('maxlength')) || 0;
+  const len = field.value.length;
+  counter.textContent = `${len} / ${max}`;
+  counter.classList.toggle('limit-reached', len >= max);
+}
+
 // ── Création d'univers ───────────────────────────────────────
 let universeFormState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
 
@@ -512,6 +523,7 @@ function openUniverseCreateForm() {
   universeFormState = { name: '', description: '', illustration_url: '', illustration_position: 0 };
   document.getElementById('universe-f-name').value = '';
   document.getElementById('universe-f-description').value = '';
+  updateFieldCharCount('universe-f-description');
   const username = getDiscordUsername(currentUser);
   document.getElementById('universe-f-owner').value = username;
   setUniverseIllusPreview('', 0);
@@ -594,7 +606,7 @@ async function submitCreateUniverse() {
   const errEl = document.getElementById('universe-create-error');
   const name  = document.getElementById('universe-f-name').value.trim();
   if (!name) {
-    if (errEl) { errEl.textContent = 'Le nom de l’univers est requis.'; errEl.classList.add('show'); }
+    if (errEl) { errEl.textContent = t('config_error_name_required'); errEl.classList.add('show'); }
     return;
   }
   const description = document.getElementById('universe-f-description').value.trim();
@@ -613,7 +625,7 @@ async function submitCreateUniverse() {
   if (error) {
     document.getElementById('loading-overlay').classList.remove('active');
     console.error('Erreur création univers:', error);
-    if (errEl) { errEl.textContent = 'Impossible de créer l’univers : ' + error.message; errEl.classList.add('show'); }
+    if (errEl) { errEl.textContent = t('universe_create_error_prefix') + error.message; errEl.classList.add('show'); }
     return;
   }
 
@@ -757,6 +769,7 @@ function openUniverseConfigView() {
   };
   document.getElementById('config-f-name').value = universeConfigState.name;
   document.getElementById('config-f-description').value = universeConfigState.description;
+  updateFieldCharCount('config-f-description');
   setConfigIllusPreview(universeConfigState.illustration_url, universeConfigState.illustration_position);
   populateConfigThemeSelect(universeConfigState.theme_name);
   Object.keys(CHAR_BLOCKS).forEach(key => {

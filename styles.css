@@ -291,6 +291,8 @@ html, body {
 .field textarea { resize: vertical; min-height: 60px; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
 .field select option { background: var(--bg3); }
+.field-char-count { text-align: right; font-size: 11px; color: var(--text3); margin-top: 4px; }
+.field-char-count.limit-reached { color: var(--offc); }
 .field input:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .attr-row            { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -547,6 +549,10 @@ html, body {
 .auth-success      { background: rgba(68,170,119,0.10); border: 1px solid rgba(68,170,119,0.30); color: var(--mov); font-size: 12px; padding: 10px 12px; border-radius: 6px; margin-top: 12px; text-align: center; display: none; }
 .auth-success.show { display: block; }
 
+.landing-footer { margin-top: 32px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+.footer-discord-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #5865F2; color: #fff; text-decoration: none; font-size: 13px; font-weight: 500; padding: 9px 16px; border-radius: 8px; transition: background 0.15s; }
+.footer-discord-btn:hover { background: #4752c4; }
+
 
 /* ══════════════════ UNIVERSE SCREEN ══════════════════ */
 #universe-screen {
@@ -567,6 +573,7 @@ html, body {
 .universe-topbar .brand-mark { border-radius: 8px; flex-shrink: 0; }
 .universe-topbar .brand-name { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
 .universe-topbar .brand-name em { color: var(--text3); font-style: normal; font-weight: 400; }
+.universe-topbar-right { display: flex; align-items: center; gap: 12px; }
 
 .universe-page { flex: 1; width: 100%; max-width: 1080px; margin: 0 auto; padding: 48px 32px 64px; }
 
@@ -608,7 +615,11 @@ html, body {
 .universe-card:hover .card-actions { opacity: 1; }
 
 .universe-card-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
-.universe-card-desc { color: var(--text3); font-size: 12px; line-height: 1.5; flex: 1; }
+.universe-card-desc {
+  color: var(--text3); font-size: 12px; line-height: 1.5; flex: 1;
+  display: -webkit-box; -webkit-box-orient: vertical;
+  overflow: hidden; overflow-wrap: anywhere;
+}
 .universe-card-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .universe-card-date { color: var(--text3); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
 

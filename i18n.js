@@ -28,6 +28,7 @@ const TRANSLATIONS = {
     auth_login_discord: 'Se connecter avec Discord',
     auth_redirecting:   'Redirection vers Discord…',
     auth_error_prefix:  'Erreur de connexion Discord : ',
+    footer_discord_join: 'Rejoindre le Discord',
 
     // ── Navigation ────────────────────────────────────────────
     nav_characters: 'Personnages',
@@ -98,6 +99,15 @@ const TRANSLATIONS = {
     universe_empty_title:    'Aucun univers pour l\'instant',
     universe_empty_desc:     'Créez votre premier univers pour commencer à jouer.',
     universe_updated_prefix: 'Modifié',
+    universe_no_description: 'Aucune description',
+    universe_create_btn:        '+ Créer un univers',
+    universe_create_form_title: 'Créer un nouvel univers',
+    universe_illus_ph:          'Cliquez pour ajouter une image de bandeau',
+    universe_name_ph:           'Ex : Les Terres de l\'Aube',
+    universe_desc_ph:           'Quelques mots pour présenter cet univers…',
+    universe_owner_label:       'Propriétaire',
+    universe_create_submit_btn: 'Créer l\'univers',
+    universe_create_error_prefix: 'Impossible de créer l\'univers : ',
 
     // ── Configuration du thème ─────────────────────────────────
     config_section_theme:    'Thème',
@@ -397,6 +407,7 @@ const TRANSLATIONS = {
     auth_login_discord: 'Log in with Discord',
     auth_redirecting:   'Redirecting to Discord…',
     auth_error_prefix:  'Discord login error: ',
+    footer_discord_join: 'Join the Discord',
 
     // ── Navigation ────────────────────────────────────────────
     nav_characters: 'Characters',
@@ -467,6 +478,15 @@ const TRANSLATIONS = {
     universe_empty_title:    'No universe yet',
     universe_empty_desc:     'Create your first universe to start playing.',
     universe_updated_prefix: 'Updated',
+    universe_no_description: 'No description',
+    universe_create_btn:        '+ Create a universe',
+    universe_create_form_title: 'Create a new universe',
+    universe_illus_ph:          'Click to add a banner image',
+    universe_name_ph:           'E.g.: The Dawn Lands',
+    universe_desc_ph:           'A few words to introduce this universe…',
+    universe_owner_label:       'Owner',
+    universe_create_submit_btn: 'Create universe',
+    universe_create_error_prefix: 'Unable to create the universe: ',
 
     // ── Theme configuration ─────────────────────────────────────
     config_section_theme:    'Theme',
@@ -758,7 +778,14 @@ const TRANSLATIONS = {
 // MOTEUR i18n
 // ══════════════════════════════════════════════════════════════
 
-let currentLang = localStorage.getItem('lang') || 'fr';
+// Détecte la langue du navigateur : français si la langue commence par "fr",
+// anglais dans tous les autres cas.
+function detectBrowserLang() {
+  const nav = (navigator.language || navigator.userLanguage || 'fr').toLowerCase();
+  return nav.startsWith('fr') ? 'fr' : 'en';
+}
+
+let currentLang = localStorage.getItem('lang') || detectBrowserLang();
 
 function t(key) {
   return TRANSLATIONS[currentLang]?.[key]
@@ -775,8 +802,12 @@ function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
   applyTranslations();
-  const sel = document.getElementById('lang-select');
-  if (sel) sel.value = lang;
+  document.querySelectorAll('.lang-select').forEach(sel => { sel.value = lang; });
+  // Les cartes d'univers sont générées dynamiquement (rôle, date, description
+  // par défaut) et ne portent pas de [data-i18n] : il faut les regénérer.
+  if (typeof renderUniverseList === 'function' && document.getElementById('universe-list')) {
+    renderUniverseList();
+  }
 }
 
 function applyTranslations() {
@@ -793,7 +824,6 @@ function applyTranslations() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const sel = document.getElementById('lang-select');
-  if (sel) sel.value = currentLang;
+  document.querySelectorAll('.lang-select').forEach(sel => { sel.value = currentLang; });
   applyTranslations();
 });
