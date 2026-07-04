@@ -28,6 +28,7 @@ const TRANSLATIONS = {
     auth_login_discord: 'Se connecter avec Discord',
     auth_redirecting:   'Redirection vers Discord…',
     auth_error_prefix:  'Erreur de connexion Discord : ',
+    footer_discord_join: 'Rejoindre le Discord',
 
     // ── Navigation ────────────────────────────────────────────
     nav_characters: 'Personnages',
@@ -397,6 +398,7 @@ const TRANSLATIONS = {
     auth_login_discord: 'Log in with Discord',
     auth_redirecting:   'Redirecting to Discord…',
     auth_error_prefix:  'Discord login error: ',
+    footer_discord_join: 'Join the Discord',
 
     // ── Navigation ────────────────────────────────────────────
     nav_characters: 'Characters',

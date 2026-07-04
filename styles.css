@@ -547,6 +547,10 @@ html, body {
 .auth-success      { background: rgba(68,170,119,0.10); border: 1px solid rgba(68,170,119,0.30); color: var(--mov); font-size: 12px; padding: 10px 12px; border-radius: 6px; margin-top: 12px; text-align: center; display: none; }
 .auth-success.show { display: block; }
 
+.landing-footer { margin-top: 32px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+.footer-discord-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #5865F2; color: #fff; text-decoration: none; font-size: 13px; font-weight: 500; padding: 9px 16px; border-radius: 8px; transition: all 0.15s; }
+.footer-discord-btn:hover { background: #4752c4; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(88,101,242,0.4); }
+
 
 /* ══════════════════ UNIVERSE SCREEN ══════════════════ */
 #universe-screen {
