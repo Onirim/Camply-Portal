@@ -388,7 +388,7 @@ async function openCampaignEditor(id) {
 async function renderCampaignEditor() {
   document.getElementById('campaign-f-title').value       = campaignState.title || '';
   document.getElementById('campaign-f-description').value = campaignState.description || '';
-  if (!universeMemberOptions.length) await loadUniverseMemberOptions();
+  await loadUniverseMemberOptions();
   await loadPublicObjectOptions();
   renderMemberPicker();
   renderObjectPicker();
