@@ -579,12 +579,12 @@ html, body {
 
 .universe-hero { text-align: center; }
 .universe-hero-logo {
-  display: block;
-  width: 168px;
-  height: 168px;
-  margin: 0 auto -56px;
-  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+    display: block;
+    width: 35%;
+    height: 35%;
+    margin: -55px auto -110px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
 }
 .universe-hero-row { position: relative; margin-bottom: 24px; }
 .universe-greeting { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin-bottom: 8px; }
