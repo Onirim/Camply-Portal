@@ -408,7 +408,7 @@ function renderUniverseQuota() {
   if (!el || !currentUser) return;
   const owned = userUniverses.filter(u => u.owner_id === currentUser.id).length;
   const remaining = Math.max(0, currentUserMaxUniverses - owned);
-  el.textContent = ti('universe_quota_remaining', { remaining, max: currentUserMaxUniverses });
+  el.innerHTML = ti('universe_quota_remaining', { remaining, max: currentUserMaxUniverses });
 }
 
 function showUniverseScreen() {

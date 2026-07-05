@@ -551,7 +551,7 @@ html, body {
 
 .landing-footer { margin-top: 32px; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
 .footer-discord-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #5865F2; color: #fff; text-decoration: none; font-size: 13px; font-weight: 500; padding: 9px 16px; border-radius: 8px; transition: background 0.15s; }
-.footer-discord-btn:hover { background: #4752c4; }
+.footer-discord-btn:hover { background: #4752c4; color: #fff; }
 
 
 /* ══════════════════ UNIVERSE SCREEN ══════════════════ */
@@ -582,6 +582,7 @@ html, body {
 .universe-greeting-name { color: var(--accent); }
 .universe-hero-sub { font-size: 14px; color: var(--text3); }
 .universe-quota { font-size: 13px; color: var(--text3); margin-top: 4px; }
+.universe-quota-num { color: #3b82f6; font-weight: 700; }
 
 .universe-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
 
