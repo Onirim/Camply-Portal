@@ -1061,6 +1061,7 @@ function _renderVisibilityToggle() {
   if (!btn) return;
   const isPublic = _ownLayer()?.is_public || false;
   btn.classList.toggle('public', isPublic);
+  btn.querySelector('.pub-toggle-track')?.classList.toggle('on', isPublic);
   btn.title = isPublic ? t('map_visibility_title_public') : t('map_visibility_title_private');
   const label = document.getElementById('map-visibility-label');
   if (label) label.textContent = isPublic ? t('map_public_active') : t('map_public_private');

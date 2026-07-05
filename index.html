@@ -585,10 +585,10 @@
           <div class="field"
             style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
             <label style="margin-bottom:0" data-i18n="editor_field_public">Partage public</label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0">
-              <input type="checkbox" id="f-public" onchange="updatePreview()"
-                style="width:auto;accent-color:var(--accent)">
-              <span style="font-size:12px;color:var(--text3)" id="public-label">Privé</span>
+            <label class="pub-toggle">
+              <input type="checkbox" id="f-public" onchange="updatePreview()">
+              <span class="pub-toggle-track"><span class="pub-toggle-dot"></span></span>
+              <span class="pub-toggle-label" id="public-label">Privé</span>
             </label>
           </div>
         </div>
@@ -763,10 +763,10 @@
         <div class="chr-options">
           <div class="chr-public-row">
             <label data-i18n="chr_editor_public">Partage public</label>
-            <label class="chr-public-toggle">
-              <input type="checkbox" id="chr-f-public" onchange="updateChrForm()"
-                style="width:auto;accent-color:var(--sup)">
-              <span id="chr-public-label">Privée</span>
+            <label class="pub-toggle" style="--toggle-color:var(--sup)">
+              <input type="checkbox" id="chr-f-public" onchange="updateChrForm()">
+              <span class="pub-toggle-track"><span class="pub-toggle-dot"></span></span>
+              <span class="pub-toggle-label" id="chr-public-label">Privée</span>
             </label>
           </div>
         </div>
@@ -899,18 +899,18 @@
         <div class="doc-options">
           <div class="doc-public-row">
             <label data-i18n="doc_editor_public">Partage public</label>
-            <label class="doc-public-toggle">
-              <input type="checkbox" id="doc-f-public" onchange="updateDocForm()"
-                style="width:auto;accent-color:var(--accent)">
-              <span id="doc-public-label">Privé</span>
+            <label class="pub-toggle">
+              <input type="checkbox" id="doc-f-public" onchange="updateDocForm()">
+              <span class="pub-toggle-track"><span class="pub-toggle-dot"></span></span>
+              <span class="pub-toggle-label" id="doc-public-label">Privé</span>
             </label>
           </div>
           <div class="doc-public-row">
             <label data-i18n="doc_editor_write_share">Partage en écriture</label>
-            <label class="doc-public-toggle">
-              <input type="checkbox" id="doc-f-write-share" onchange="updateDocForm()"
-                style="width:auto;accent-color:var(--accent)">
-              <span data-i18n="doc_editor_write_share_help">Lecteurs peuvent éditer</span>
+            <label class="pub-toggle">
+              <input type="checkbox" id="doc-f-write-share" onchange="updateDocForm()">
+              <span class="pub-toggle-track"><span class="pub-toggle-dot"></span></span>
+              <span class="pub-toggle-label" data-i18n="doc_editor_write_share_help">Lecteurs peuvent éditer</span>
             </label>
           </div>
         </div>
@@ -1301,7 +1301,7 @@
         <div class="map-hint" data-i18n="map_add_marker_hint"><kbd>Maj</kbd> + clic gauche pour ajouter un marqueur</div>
 
       <button class="map-visibility-btn" id="map-visibility-btn" onclick="toggleMapLayerPublic()">
-        <span class="map-visibility-switch"><span class="map-visibility-dot"></span></span>
+        <span class="pub-toggle-track"><span class="pub-toggle-dot"></span></span>
         <span id="map-visibility-label" data-i18n="map_public_private">Privé</span>
       </button>
 
