@@ -92,7 +92,7 @@ let mapOpenPopup = null;
 
 // Modale marqueur
 let mapModalCtx   = null;
-let mapModalColor = MAP_CONFIG.markerColors[0];
+let mapModalColor = null;
 
 // Références DOM
 let _mapViewport = null;
@@ -948,18 +948,30 @@ function _closePopup() {
 function openMapMarkerModal(mode, rx, ry, markerId) {
   mapModalCtx = { mode, x: rx, y: ry, id: markerId };
   const m = (mode === 'edit' && markerId) ? _findMarkerContext(markerId)?.marker : null;
-  mapModalColor = m?.color || MAP_CONFIG.markerColors[0];
+
+  // Seules les couleurs libellées par le propriétaire de l'univers (visibles
+  // dans la légende) sont proposées à la création/édition d'un marqueur.
+  const labels        = _getCurrentColorLabels();
+  const allowedColors = _getLegendColors();
+  mapModalColor = (m?.color && allowedColors.includes(m.color)) ? m.color : (allowedColors[0] || null);
 
   document.getElementById('map-modal-title-text').textContent =
     mode === 'add' ? t('map_modal_new_marker') : t('map_modal_edit_marker');
   document.getElementById('map-modal-name').value = m?.name        || '';
   document.getElementById('map-modal-desc').value = m?.description || '';
 
-  document.getElementById('map-modal-swatches').innerHTML =
-    MAP_CONFIG.markerColors.map(c => `
+  const swatchesEl = document.getElementById('map-modal-swatches');
+  const saveBtn    = document.getElementById('map-modal-save-btn');
+  if (!allowedColors.length) {
+    swatchesEl.innerHTML = `<div class="map-modal-no-colors">${t('map_modal_no_colors')}</div>`;
+    if (saveBtn) saveBtn.disabled = true;
+  } else {
+    swatchesEl.innerHTML = allowedColors.map(c => `
       <div class="map-color-swatch ${c === mapModalColor ? 'selected' : ''}"
-        style="background:${c}" onclick="selectMapModalColor('${c}',this)"></div>`
+        style="background:${c}" title="${esc(labels[c])}" onclick="selectMapModalColor('${c}',this)"></div>`
     ).join('');
+    if (saveBtn) saveBtn.disabled = false;
+  }
 
   document.getElementById('map-modal-link-type').value = m?.linked_type || '';
   _refreshMapModalLinkOptions(m?.linked_id);
@@ -1010,6 +1022,7 @@ function closeMapMarkerModal() {
 }
 
 async function submitMapMarkerModal() {
+  if (!mapModalColor) return; // aucune couleur libellée disponible pour cette carte
   const name = document.getElementById('map-modal-name').value.trim();
   const desc = document.getElementById('map-modal-desc').value.trim();
   if (!name) { document.getElementById('map-modal-name').focus(); return; }
