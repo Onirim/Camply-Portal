@@ -3,8 +3,8 @@
 // Une campagne est une collection d'utilisateurs. Ses membres ont
 // accès à tous les objets publics des autres membres de la même
 // campagne (visibilité calculée côté RLS, rien à synchroniser ici).
-// Seul le propriétaire de l'univers peut créer/gérer des campagnes ;
-// il y est automatiquement inscrit.
+// Le propriétaire de l'univers et les MJ peuvent créer/gérer des
+// campagnes ; le propriétaire y est automatiquement inscrit.
 // ══════════════════════════════════════════════════════════════
 
 // ── État ──────────────────────────────────────────────────────
@@ -19,9 +19,9 @@ let campaignState      = null;
 // Sélection en cours dans l'éditeur : set de user_id cochés
 let campaignMemberSelection = new Set();
 
-// Objets publics créés par le MJ (owner/gm de l'univers), groupés par
+// Objets publics de tous les membres de l'univers, groupés par
 // type : { character: [{id, label, owner}], chronicle, document, map }
-let gmObjectOptions = { character: [], chronicle: [], document: [], map: [] };
+let publicObjectOptions = { character: [], chronicle: [], document: [], map: [] };
 
 // Sélection en cours dans l'éditeur : { character: Set(id), chronicle, document, map }
 let campaignObjectSelection = { character: new Set(), chronicle: new Set(), document: new Set(), map: new Set() };
@@ -33,9 +33,6 @@ const CAMPAIGN_OBJECT_TABLES = {
   map:       { table: 'campaign_visible_maps',        col: 'map_layer_id' },
 };
 
-function isUniverseOwner() {
-  return !!(currentUser && currentUniverse && currentUser.id === currentUniverse.owner_id);
-}
 
 // ══════════════════════════════════════════════════════════════
 // CHARGEMENT
@@ -105,31 +102,30 @@ async function loadUniverseMemberOptions() {
     .sort((a, b) => a.username.localeCompare(b.username));
 }
 
-// Objets publics créés par un membre owner/gm de l'univers : ce sont les
-// seuls éligibles à la sélection de visibilité par campagne. Les
-// personnages publics des simples joueurs restent visibles à toute leur
-// campagne sans sélection explicite (cf. shares_campaign_with côté RLS).
-async function loadGMObjectOptions() {
+// Objets publics de tous les membres de l'univers : chacun est éligible
+// à la sélection de visibilité par campagne, quel que soit le rôle de
+// son créateur — rien n'est visible dans une campagne tant qu'il n'y a
+// pas été explicitement coché (cf. campaign_content_restricted côté RLS).
+async function loadPublicObjectOptions() {
   const empty = { character: [], chronicle: [], document: [], map: [] };
-  const { data: gmMembers, error } = await sb
+  const { data: members, error } = await sb
     .from('universe_members')
     .select('user_id')
-    .eq('universe_id', currentUniverse.id)
-    .in('role', ['owner', 'gm']);
-  if (error) { console.error('Erreur chargement MJ univers:', error); gmObjectOptions = empty; return; }
+    .eq('universe_id', currentUniverse.id);
+  if (error) { console.error('Erreur chargement membres univers:', error); publicObjectOptions = empty; return; }
 
-  const gmIds = (gmMembers || []).map(r => r.user_id);
-  if (!gmIds.length) { gmObjectOptions = empty; return; }
+  const memberIds = (members || []).map(r => r.user_id);
+  if (!memberIds.length) { publicObjectOptions = empty; return; }
 
-  const { data: profiles } = await sb.from('profiles').select('id, username').in('id', gmIds);
+  const { data: profiles } = await sb.from('profiles').select('id, username').in('id', memberIds);
   const ownerMap = {};
   (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
 
   const [chars, chrs, docs, maps, mapConfigs] = await Promise.all([
-    sb.from('characters').select('id, name, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', gmIds),
-    sb.from('chronicles').select('id, title, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', gmIds),
-    sb.from('documents').select('id, title, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', gmIds),
-    sb.from('map_layers').select('id, map_key, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', gmIds),
+    sb.from('characters').select('id, name, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', memberIds),
+    sb.from('chronicles').select('id, title, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', memberIds),
+    sb.from('documents').select('id, title, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', memberIds),
+    sb.from('map_layers').select('id, map_key, user_id').eq('universe_id', currentUniverse.id).eq('is_public', true).in('user_id', memberIds),
     sb.from('maps').select('map_key, name').eq('universe_id', currentUniverse.id),
   ]);
 
@@ -139,7 +135,7 @@ async function loadGMObjectOptions() {
 
   const mapNameByKey = Object.fromEntries((mapConfigs.data || []).map(m => [m.map_key, m.name]));
 
-  gmObjectOptions = {
+  publicObjectOptions = {
     character: toOptions(chars, 'name'),
     chronicle: toOptions(chrs, 'title'),
     document:  toOptions(docs, 'title'),
@@ -164,7 +160,7 @@ async function loadCampaignVisibleObjects(campaignId) {
 // ══════════════════════════════════════════════════════════════
 
 async function saveCampaignToDB() {
-  if (!isUniverseOwner()) return;
+  if (!isUniverseGM()) return;
   if (!campaignState.title.trim()) { alert(t('alert_campaign_no_title')); return; }
 
   const payload = {
@@ -243,7 +239,7 @@ async function saveCampaignMembersToDB(campaignId) {
 }
 
 async function deleteCampaignFromDB(id) {
-  if (!isUniverseOwner()) return;
+  if (!isUniverseGM()) return;
   const title = campaigns[id]?.title || 'cette campagne';
   if (!confirm(ti('confirm_delete_campaign', { title }))) return;
   const { error } = await sb.from('campaigns').delete().eq('id', id).eq('universe_id', currentUniverse.id);
@@ -262,7 +258,7 @@ function renderCampaignsList() {
   const grid  = document.getElementById('campaign-grid');
   const empty = document.getElementById('campaign-empty-state');
   const newBtns = document.querySelectorAll('.campaign-new-btn');
-  newBtns.forEach(b => { b.style.display = isUniverseOwner() ? '' : 'none'; });
+  newBtns.forEach(b => { b.style.display = isUniverseGM() ? '' : 'none'; });
 
   const keys = Object.keys(campaigns).sort((a, b) => (campaigns[a].title || '').localeCompare(campaigns[b].title || ''));
 
@@ -279,7 +275,7 @@ function campaignCardHTML(id, c) {
     ? (c.description.length > 200 ? c.description.slice(0, 200) + '…' : c.description)
     : '';
   const memberCount = c._member_count || 0;
-  const owner = isUniverseOwner();
+  const owner = isUniverseGM();
 
   return `<div class="campaign-card" onclick="showCampaignDetail('${id}')">
     ${owner ? `<div class="campaign-card-actions">
@@ -320,7 +316,7 @@ async function showCampaignDetail(campaignId) {
 function renderCampaignDetail() {
   const c = campaigns[activeCampaignId];
   if (!c) return;
-  const owner = isUniverseOwner();
+  const owner = isUniverseGM();
   const members = campaignMembersMap[activeCampaignId] || [];
 
   const memberRows = members.map(m => `
@@ -364,7 +360,7 @@ function renderCampaignDetail() {
 // ══════════════════════════════════════════════════════════════
 
 function newCampaign() {
-  if (!isUniverseOwner()) return;
+  if (!isUniverseGM()) return;
   editingCampaignId = null;
   campaignState = { title: '', description: '' };
   campaignMemberSelection = new Set();
@@ -375,7 +371,7 @@ function newCampaign() {
 }
 
 async function openCampaignEditor(id) {
-  if (!isUniverseOwner()) return;
+  if (!isUniverseGM()) return;
   editingCampaignId = id;
   campaignState = { ...campaigns[id] };
   await loadCampaignMembers(id);
@@ -393,7 +389,7 @@ async function renderCampaignEditor() {
   document.getElementById('campaign-f-title').value       = campaignState.title || '';
   document.getElementById('campaign-f-description').value = campaignState.description || '';
   if (!universeMemberOptions.length) await loadUniverseMemberOptions();
-  await loadGMObjectOptions();
+  await loadPublicObjectOptions();
   renderMemberPicker();
   renderObjectPicker();
   renderSelectionSummary();
@@ -458,15 +454,15 @@ const CAMPAIGN_OBJECT_TYPE_LABEL_KEYS = {
 function renderObjectPicker() {
   const container = document.getElementById('campaign-object-picker');
   if (!container) return;
-  const types = Object.keys(CAMPAIGN_OBJECT_TYPE_LABEL_KEYS).filter(type => gmObjectOptions[type]?.length);
+  const types = Object.keys(CAMPAIGN_OBJECT_TYPE_LABEL_KEYS).filter(type => publicObjectOptions[type]?.length);
 
   if (!types.length) {
-    container.innerHTML = `<div style="color:var(--text3);font-size:12px;font-style:italic;padding:6px 0">${t('campaign_no_gm_objects')}</div>`;
+    container.innerHTML = `<div style="color:var(--text3);font-size:12px;font-style:italic;padding:6px 0">${t('campaign_no_public_objects')}</div>`;
     return;
   }
 
   container.innerHTML = types.map(type => {
-    const items = gmObjectOptions[type].map(o => {
+    const items = publicObjectOptions[type].map(o => {
       const sel = campaignObjectSelection[type]?.has(o.id);
       return `<div class="campaign-selectable-item ${sel ? 'selected' : ''}"
         onclick="toggleCampaignObject('${type}', '${o.id}', this)">
