@@ -11,12 +11,11 @@ It ships as a **GitHub template**: fork it, connect your own free Supabase proje
 - **Universe** — a self-contained game world. Each universe has its own characters, chronicles, documents and maps. A user can own several universes and also join universes created by others.
 - **Roles** — inside a universe, a member is the **owner** (full control), a **GM** (can edit shared content), or a **player** (manages their own characters/notes).
 - **Campaign** — a group of universe members who can see each other's public content (characters, chronicles, documents, maps), without anything to sync manually — visibility is enforced server-side.
-- **Sharing** — a universe can be joined by anyone with its 8-character invite code.
 
 ## Features
 
 **Content**
-- Characters, with an optional custom stat system per game
+- Characters, with an optional custom stat system
 - Chronicles — campaign logs with Markdown entries
 - Shareable Markdown documents
 - Maps with pins, per-color legends, and shareable marker layers
@@ -26,7 +25,6 @@ It ships as a **GitHub template**: fork it, connect your own free Supabase proje
 **Collaboration**
 - Discord authentication (via Supabase)
 - Campaigns grouping members' public content
-- Subscribing to other players' content
 - Ownership transfer of objects and of whole universes
 - Unread-content indicators
 - Export of your visible data (full archive or Markdown, e.g. to feed an AI)
@@ -54,7 +52,7 @@ Vanilla HTML/CSS/JS + [Supabase](https://supabase.com/) (Postgres, Auth, Storage
 | `editor.js`, `game-system.js` | Character sheet editor — **adapt these for your own game system** |
 | `i18n.js` | FR/EN translations |
 | `themes/` | Alternate visual themes |
-| `sql/` | Supabase schema (`00_fresh_install.sql`) and incremental migrations |
+| `sql/` | Supabase schema (`00_fresh_install.sql`) |
 
 ## New project setup
 
@@ -77,26 +75,3 @@ Vanilla HTML/CSS/JS + [Supabase](https://supabase.com/) (Postgres, Auth, Storage
    const SUPABASE_KEY = 'sb_publishable_XXXX';
    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
    ```
-
-5. **Update the branding**
-
-   In `index.html`:
-   ```html
-   <title>My Game — Campaign Manager</title>
-   ```
-   In `site.webmanifest`:
-   ```json
-   {
-     "name": "My Game",
-     "short_name": "My Game",
-     "start_url": "/my-repo/"
-   }
-   ```
-
-6. **Set up maps** (optional)
-
-   Maps aren't configured by editing a file. Once the app is running and connected to Supabase, sign in as a universe owner and go to **Configuration > Cartes** to upload map images, configure them, and define the color legend used for markers.
-
-7. **Adapt the game system** (optional)
-
-   Replace `game-system.js` (and adjust `editor.js` if needed) to define your own character stats — see the contract documented at the top of `game-system.js`.
