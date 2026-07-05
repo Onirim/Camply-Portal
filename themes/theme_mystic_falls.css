@@ -1,3 +1,8 @@
+/* ════════════════════════════════════════════════════════
+   IMPORTS POLICES
+   ════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&family=Share+Tech+Mono&display=swap');
+
 /* ── Reset & Variables ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -60,11 +65,6 @@ a:hover { color: var(--accent2); }
   --glow-accent: 0 0 12px rgba(192,132,232,0.25);
   --glow-blood:  0 0 12px rgba(192,57,43,0.3);
 }
-
-/* ════════════════════════════════════════════════════════
-   IMPORTS POLICES
-   ════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;500;600;700&family=Raleway:wght@300;400;500;600&family=Share+Tech+Mono&display=swap');
 
 html, body {
   height: 100%;
