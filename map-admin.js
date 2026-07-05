@@ -221,10 +221,12 @@ async function saveMapAdmin() {
   let targetId = mapAdminEditingId || null;
   if (mapAdminStaging) {
     if (!targetId) targetId = crypto.randomUUID();
-    mapAdminState.image_url = await promoteStagedIllustration(
+    const { url, error: promoteError } = await promoteStagedIllustration(
       'map-images', mapAdminStaging, `${currentUniverse.id}/${targetId}.jpg`, mapAdminState.image_url
     );
+    mapAdminState.image_url = url;
     mapAdminStaging = null;
+    if (promoteError) showToast(t('toast_illus_upload_error') + promoteError.message);
   }
 
   const marker_colors = MAP_CONFIG.markerColors.map(c => ({

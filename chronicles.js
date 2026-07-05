@@ -84,10 +84,12 @@ async function saveChronicleToDB() {
   let targetId = isUUID ? editingChrId : null;
   if (chrIllusStaging) {
     if (!targetId) targetId = crypto.randomUUID();
-    chrState.illustration_url = await promoteStagedIllustration(
+    const { url, error: promoteError } = await promoteStagedIllustration(
       'character-illustrations', chrIllusStaging, `${currentUser.id}/chr_${targetId}.jpg`, chrState.illustration_url
     );
+    chrState.illustration_url = url;
     chrIllusStaging = null;
+    if (promoteError) showToast(t('toast_illus_upload_error') + promoteError.message);
   }
 
   const payload = {

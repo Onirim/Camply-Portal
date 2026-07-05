@@ -70,10 +70,12 @@ async function saveDocumentToDB() {
   let targetId = isUUID ? editingDocId : null;
   if (docIllusStaging) {
     if (!targetId) targetId = crypto.randomUUID();
-    docState.illustration_url = await promoteStagedIllustration(
+    const { url, error: promoteError } = await promoteStagedIllustration(
       'character-illustrations', docIllusStaging, `${currentUser.id}/doc_${targetId}.jpg`, docState.illustration_url
     );
+    docState.illustration_url = url;
     docIllusStaging = null;
+    if (promoteError) showToast(t('toast_illus_upload_error') + promoteError.message);
   }
 
   const payload = {

@@ -199,10 +199,12 @@ async function saveCharToDB() {
   let targetId = isValidUUID ? editingId : null;
   if (charIllusStaging) {
     if (!targetId) targetId = crypto.randomUUID();
-    state.illustration_url = await promoteStagedIllustration(
+    const { url, error: promoteError } = await promoteStagedIllustration(
       'character-illustrations', charIllusStaging, `${currentUser.id}/${targetId}.jpg`, state.illustration_url
     );
+    state.illustration_url = url;
     charIllusStaging = null;
+    if (promoteError) showToast(t('toast_illus_upload_error') + promoteError.message);
   }
 
   const payload = {
@@ -666,10 +668,11 @@ async function submitCreateUniverse() {
   }
 
   if (universeFormStaging && data?.id) {
-    const finalUrl = await promoteStagedIllustration(
+    const { url: finalUrl, error: promoteError } = await promoteStagedIllustration(
       'character-illustrations', universeFormStaging, `${currentUser.id}/universe_${data.id}.jpg`, ''
     );
     universeFormStaging = null;
+    if (promoteError) showToast(t('toast_illus_upload_error') + promoteError.message);
     if (finalUrl) {
       await sb.from('universes').update({
         illustration_url: finalUrl,
@@ -1146,10 +1149,12 @@ async function saveUniverseConfig() {
   });
 
   if (universeConfigStaging) {
-    universeConfigState.illustration_url = await promoteStagedIllustration(
+    const { url, error: promoteError } = await promoteStagedIllustration(
       'character-illustrations', universeConfigStaging, `${currentUser.id}/universe_${currentUniverse.id}.jpg`, universeConfigState.illustration_url
     );
+    universeConfigState.illustration_url = url;
     universeConfigStaging = null;
+    if (promoteError) showToast(t('toast_illus_upload_error') + promoteError.message);
   }
 
   const { data, error } = await sb.from('universes')
@@ -1529,21 +1534,34 @@ async function discardStagedIllustration(bucket, stagingPath) {
 // (en remplaçant ce qui s'y trouve déjà) et supprime l'ancien fichier
 // s'il vivait ailleurs (ex : personnage transféré à un autre owner,
 // dont l'ancienne image est restée dans le dossier de l'ex-propriétaire).
-// Sans staging en attente, renvoie oldUrl tel quel (aucun changement).
+// Sans staging en attente, renvoie { url: oldUrl } (aucun changement).
+//
+// L'ancien fichier au chemin canonique (s'il existe) est d'abord mis de
+// côté plutôt que supprimé directement : si le déplacement du nouveau
+// fichier échoue ensuite (réseau, quota...), on restaure l'ancien au lieu
+// de laisser l'élément avec une image cassée pendant que le nouveau
+// fichier reste orphelin en staging (cf. list_orphan_illustrations()).
 async function promoteStagedIllustration(bucket, stagingPath, canonicalPath, oldUrl) {
-  if (!stagingPath) return oldUrl || '';
-  await sb.storage.from(bucket).remove([canonicalPath]).catch(() => {});
+  if (!stagingPath) return { url: oldUrl || '' };
+
+  const backupPath = `${canonicalPath}.bak_${crypto.randomUUID()}`;
+  const { error: moveAsideError } = await sb.storage.from(bucket).move(canonicalPath, backupPath);
+  const hadExistingFile = !moveAsideError;
+
   const { error } = await sb.storage.from(bucket).move(stagingPath, canonicalPath);
   if (error) {
     console.warn('Promotion illustration échouée:', error);
-    return oldUrl || '';
+    if (hadExistingFile) await sb.storage.from(bucket).move(backupPath, canonicalPath).catch(() => {});
+    return { url: oldUrl || '', error };
   }
+  if (hadExistingFile) await sb.storage.from(bucket).remove([backupPath]).catch(() => {});
+
   if (oldUrl && !oldUrl.includes(canonicalPath)) {
     const match = oldUrl.match(new RegExp(bucket + '/([^?#]+)'));
     if (match) await sb.storage.from(bucket).remove([match[1]]).catch(() => {});
   }
   const { data } = sb.storage.from(bucket).getPublicUrl(canonicalPath);
-  return `${data.publicUrl}?v=${Date.now()}`;
+  return { url: `${data.publicUrl}?v=${Date.now()}` };
 }
 
 let charIllusStaging = null; // chemin de staging en attente de sauvegarde, ou null
