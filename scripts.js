@@ -953,52 +953,6 @@ async function confirmDeleteUniverse() {
   showToast(ti('toast_universe_deleted', { name: universeName }));
 }
 
-// ── Nettoyage des illustrations orphelines ─────────────────────
-// list_orphan_illustrations() (RPC serveur) ne renvoie que des fichiers
-// dont plus aucune ligne (univers/personnage/chronique/document/carte)
-// ne référence l'URL : leur suppression est donc toujours sans risque,
-// quel que soit qui les a uploadés à l'origine.
-async function cleanupOrphanIllustrations() {
-  const btn = document.getElementById('config-cleanup-btn');
-  const resultEl = document.getElementById('config-cleanup-result');
-  if (resultEl) resultEl.textContent = '';
-  if (btn) btn.disabled = true;
-
-  const { data, error } = await sb.rpc('list_orphan_illustrations');
-  if (error) {
-    showToast(t('toast_cleanup_error') + error.message);
-    if (btn) btn.disabled = false;
-    return;
-  }
-
-  const orphans = data || [];
-  if (!orphans.length) {
-    if (resultEl) resultEl.textContent = t('config_cleanup_none');
-    if (btn) btn.disabled = false;
-    return;
-  }
-
-  const totalMB = (orphans.reduce((sum, o) => sum + (o.size_bytes || 0), 0) / (1024 * 1024)).toFixed(1);
-  if (!confirm(ti('confirm_cleanup_orphans', { count: orphans.length, size: totalMB }))) {
-    if (btn) btn.disabled = false;
-    return;
-  }
-
-  const pathsByBucket = {};
-  orphans.forEach(o => { (pathsByBucket[o.bucket_id] ||= []).push(o.path); });
-
-  let deletedCount = 0;
-  for (const [bucketId, paths] of Object.entries(pathsByBucket)) {
-    const { data: removed, error: rmError } = await sb.storage.from(bucketId).remove(paths);
-    if (rmError) { console.warn('Nettoyage storage', bucketId, rmError); continue; }
-    deletedCount += (removed || []).length;
-  }
-
-  if (resultEl) resultEl.textContent = ti('config_cleanup_done', { count: deletedCount, size: totalMB });
-  showToast(ti('toast_cleanup_done', { count: deletedCount }));
-  if (btn) btn.disabled = false;
-}
-
 function renderUniverseMembersList(members) {
   const container = document.getElementById('config-members-list');
   if (!container) return;
