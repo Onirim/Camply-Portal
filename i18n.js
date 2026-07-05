@@ -89,6 +89,7 @@ const TRANSLATIONS = {
     role_owner:              'Propriétaire',
     universe_greeting:       'Bonjour',
     universe_hero_sub:       'Choisissez l\'univers dans lequel vous souhaitez plonger',
+    universe_quota_remaining: 'Vous pouvez encore créer ${remaining} univers sur vos ${max} univers alloués.',
     universe_empty_title:    'Aucun univers pour l\'instant',
     universe_empty_desc:     'Créez votre premier univers pour commencer à jouer.',
     universe_updated_prefix: 'Modifié',
@@ -462,6 +463,7 @@ const TRANSLATIONS = {
     role_owner:              'Owner',
     universe_greeting:       'Hello',
     universe_hero_sub:       'Choose the universe you want to dive into',
+    universe_quota_remaining: 'You can still create ${remaining} universe(s) out of your ${max} allotted universes.',
     universe_empty_title:    'No universe yet',
     universe_empty_desc:     'Create your first universe to start playing.',
     universe_updated_prefix: 'Updated',
@@ -795,6 +797,9 @@ function setLang(lang) {
   // par défaut) et ne portent pas de [data-i18n] : il faut les regénérer.
   if (typeof renderUniverseList === 'function' && document.getElementById('universe-list')) {
     renderUniverseList();
+  }
+  if (typeof renderUniverseQuota === 'function' && document.getElementById('universe-quota')) {
+    renderUniverseQuota();
   }
 }
 

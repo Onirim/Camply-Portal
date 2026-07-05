@@ -581,6 +581,7 @@ html, body {
 .universe-greeting { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin-bottom: 8px; }
 .universe-greeting-name { color: var(--accent); }
 .universe-hero-sub { font-size: 14px; color: var(--text3); }
+.universe-quota { font-size: 13px; color: var(--text3); margin-top: 4px; }
 
 .universe-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; }
 

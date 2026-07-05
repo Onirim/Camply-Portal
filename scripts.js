@@ -7,6 +7,7 @@
 let currentUser      = null;
 let currentUniverse  = null;
 let userUniverses    = [];
+let currentUserMaxUniverses = 1;
 let isAppReady       = false;
 let chars            = {};
 let editingId        = null;
@@ -353,10 +354,13 @@ async function loadUniversesFromDB() {
   const errEl = document.getElementById('universe-error');
   if (errEl) errEl.classList.remove('show');
 
-  const { data: universes, error } = await sb
-    .from('universes')
-    .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, char_block_config, created_at, updated_at, last_visited_at, paused_at')
-    .order('updated_at', { ascending: false });
+  const [{ data: universes, error }, { data: profile }] = await Promise.all([
+    sb.from('universes')
+      .select('id, owner_id, name, description, illustration_url, illustration_position, theme_name, char_block_config, created_at, updated_at, last_visited_at, paused_at')
+      .order('updated_at', { ascending: false }),
+    sb.from('profiles').select('max_universes').eq('id', currentUser.id).single(),
+  ]);
+  currentUserMaxUniverses = profile?.max_universes ?? 1;
 
   if (error) {
     console.error('Erreur chargement univers:', error);
@@ -395,7 +399,16 @@ async function loadUniversesFromDB() {
   }
 
   renderUniverseList();
+  renderUniverseQuota();
   return userUniverses;
+}
+
+function renderUniverseQuota() {
+  const el = document.getElementById('universe-quota');
+  if (!el || !currentUser) return;
+  const owned = userUniverses.filter(u => u.owner_id === currentUser.id).length;
+  const remaining = Math.max(0, currentUserMaxUniverses - owned);
+  el.textContent = ti('universe_quota_remaining', { remaining, max: currentUserMaxUniverses });
 }
 
 function showUniverseScreen() {
@@ -406,6 +419,7 @@ function showUniverseScreen() {
   document.getElementById('universe-screen')?.classList.add('active');
   closeUniverseCreateForm();
   renderUniverseList();
+  renderUniverseQuota();
   applyTranslations();
   applyTheme('');
   loadUniverseUnreadFlags();
