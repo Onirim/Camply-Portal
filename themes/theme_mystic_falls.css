@@ -306,7 +306,7 @@ body::before {
   font-family: var(--font-mono); font-size: 11px;
   background: rgba(192,132,232,0.08); color: var(--accent);
   border: 1px solid rgba(192,132,232,0.2);
-  padding: 2px 9px; border-radius: 2px; margin-bottom: 16px;
+  padding: 2px 9px; border-radius: 2px;
 }
 .char-card .card-attrs { display: flex; gap: 14px; }
 

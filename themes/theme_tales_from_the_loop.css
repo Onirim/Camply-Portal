@@ -302,7 +302,7 @@ html, body {
   font-family: var(--font-mono); font-size: 11px;
   background: rgba(232,196,106,0.12); color: var(--accent);
   border: 1px solid rgba(232,196,106,0.25);
-  padding: 2px 8px; border-radius: 3px; margin-bottom: 14px;
+  padding: 2px 8px; border-radius: 3px;
 }
 .char-card .card-attrs {
   display: flex; gap: 12px;

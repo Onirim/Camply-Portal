@@ -423,7 +423,6 @@ a:hover { color: var(--gold-bright); }
   border: 1px solid rgba(200,150,30,0.25);
   border-radius: 0;
   padding: 2px 9px;
-  margin-bottom: 14px;
 }
 
 .card-attr .val {
