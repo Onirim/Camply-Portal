@@ -76,7 +76,7 @@ async function refreshMapsConfigAndRerender() {
   _mapImage = null;
   if (currentMapKey) _buildMapImage();
   _renderAllMarkers();
-  _renderLayerPanel();
+  _renderVisibilityToggle();
   _renderMapAccessState();
   _renderMapLegend();
 }
@@ -295,7 +295,7 @@ async function initMap() {
   _buildMapImage();
 
   _renderAllMarkers();
-  _renderLayerPanel();
+  _renderVisibilityToggle();
   _renderMapAccessState();
   _renderMapLegend();
   mapLoaded = true;
@@ -403,7 +403,7 @@ async function switchMap(key) {
   Object.values(mapMarkers).filter(m => _isMarkerOnCurrentMap(m)).forEach(m => _renderMarker(m, true));
   _updateMarkerCount();
 
-  _renderLayerPanel();
+  _renderVisibilityToggle();
   _renderMapAccessState();
   _renderMapLegend();
 }
@@ -704,8 +704,8 @@ async function loadAllOwnLayersFromDB() {
   _recomputeMapAccess();
 }
 
-async function saveOwnLayerToDB() {
-  const pub     = document.getElementById('map-layer-public')?.checked || false;
+async function toggleMapLayerPublic() {
+  const pub     = !(_ownLayer()?.is_public || false);
   const payload = { is_public: pub };
 
   const layer = _ownLayer();
@@ -722,9 +722,10 @@ async function saveOwnLayerToDB() {
     if (error) { showToast(t('map_toast_error')); return; }
     mapOwnLayers[data.map_key] = data;
   }
-  _renderLayerPanel();
+  _renderVisibilityToggle();
   _recomputeMapAccess();
   _refreshMapSelectorAccess();
+  showToast(pub ? t('map_toast_now_public') : t('map_toast_now_private'));
   _ensureCurrentMapImage();
   _renderMapAccessState();
   showToast(t('map_toast_saved'));
@@ -1052,76 +1053,17 @@ document.addEventListener('keydown', e => {
 });
 
 // ══════════════════════════════════════════════════════════════
-// PANNEAU LATÉRAL — PARTAGE & ABONNEMENTS
+// SWITCH PUBLIC/PRIVÉ DE LA COUCHE DE MARQUEURS
 // ══════════════════════════════════════════════════════════════
 
-function _renderLayerPanel() {
-  const panel = document.getElementById('map-layer-panel');
-  if (!panel) return;
-
-  const layer    = _ownLayer();
-  const isPublic = layer?.is_public || false;
-  const cfg      = _getCurrentMapConfig();
-
-  // Ne montre que les couches partagées pour la carte courante
-  const followedForThisMap = Object.values(mapFollowedLayers)
-    .filter(({ layer: l }) => l.map_key === currentMapKey);
-
-  const followedHtml = followedForThisMap.length
-    ? followedForThisMap.map(({ layer: l }) => `
-        <div class="map-followed-row">
-          <div class="map-followed-dot"></div>
-          <div class="map-followed-info">
-            <div class="map-followed-title">${t('followed_owner_prefix')}${esc(l._owner_name)}</div>
-          </div>
-        </div>`).join('')
-    : `<div class="map-followed-empty">${t('map_followed_empty')}</div>`;
-
-  panel.innerHTML = `
-    <div class="map-panel-inner">
-
-      <div class="map-panel-section">
-        <div class="map-panel-title">
-          ${t('map_own_layer')}
-          ${cfg ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3)"> — ${esc(cfg.name)}</span>` : ''}
-        </div>
-        <div class="map-panel-public-row">
-          <label>${t('editor_field_public')}</label>
-          <label class="map-panel-toggle">
-            <input type="checkbox" id="map-layer-public"
-              ${isPublic ? 'checked' : ''}
-              onchange="_onLayerPublicChange(this.checked)">
-            <span id="map-layer-public-label">${isPublic ? t('map_public_active') : t('map_public_private')}</span>
-          </label>
-        </div>
-        <button class="map-panel-save-btn" onclick="saveOwnLayerToDB()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"
-            width="12" height="12"><polyline points="2,8 6,12 14,4"/></svg>
-          ${t('btn_save')}
-        </button>
-      </div>
-
-      <div class="map-panel-section">
-        <div class="map-panel-title">${t('map_followed_layers')}
-          ${cfg ? `<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3)"> — ${esc(cfg.name)}</span>` : ''}
-        </div>
-        <div class="map-followed-list">${followedHtml}</div>
-      </div>
-
-    </div>`;
-}
-
-function _onLayerPublicChange(checked) {
-  const label = document.getElementById('map-layer-public-label');
-  if (label) label.textContent = checked ? t('map_public_active') : t('map_public_private');
-}
-
-function toggleMapPanel() {
-  const panel = document.getElementById('map-layer-panel');
-  const btn   = document.getElementById('map-panel-btn');
-  if (!panel) return;
-  const open = panel.classList.toggle('open');
-  if (btn) btn.classList.toggle('active', open);
+function _renderVisibilityToggle() {
+  const btn = document.getElementById('map-visibility-btn');
+  if (!btn) return;
+  const isPublic = _ownLayer()?.is_public || false;
+  btn.classList.toggle('public', isPublic);
+  btn.title = isPublic ? t('map_visibility_title_public') : t('map_visibility_title_private');
+  const label = document.getElementById('map-visibility-label');
+  if (label) label.textContent = isPublic ? t('map_public_active') : t('map_public_private');
 }
 
 const MAP_LEGEND_I18N = {

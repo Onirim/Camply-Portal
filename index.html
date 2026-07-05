@@ -1300,13 +1300,9 @@
         <!-- Hint clavier -->
         <div class="map-hint" data-i18n="map_add_marker_hint"><kbd>Maj</kbd> + clic gauche pour ajouter un marqueur</div>
 
-      <button class="map-panel-btn" id="map-panel-btn" onclick="toggleMapPanel()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
-        width="13" height="13">
-        <circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
-        <line x1="5.5" y1="7" x2="10.5" y2="4.3"/><line x1="5.5" y1="9" x2="10.5" y2="11.7"/>
-        </svg>
-        <span data-i18n="map_share_panel_btn">Partage</span>
+      <button class="map-visibility-btn" id="map-visibility-btn" onclick="toggleMapLayerPublic()">
+        <span class="map-visibility-switch"><span class="map-visibility-dot"></span></span>
+        <span id="map-visibility-label" data-i18n="map_public_private">Privé</span>
       </button>
 
       <button class="map-panel-btn" id="map-legend-btn" onclick="toggleMapLegendPanel()" style="display:none">
@@ -1330,7 +1326,6 @@
      
       <!-- Zone de carte -->
       <div class="map-viewport" id="map-viewport">
-        <div id="map-layer-panel"></div>
         <div id="map-legend-panel" class="map-legend-panel"></div>
         <div class="map-canvas" id="map-canvas"></div>
       </div>

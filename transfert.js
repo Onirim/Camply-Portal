@@ -360,7 +360,7 @@ async function _reloadAllDataAfterTransfer() {
   if (typeof renderCampaignsList === 'function') renderCampaignsList();
 
   if (typeof _renderAllMarkers === 'function') _renderAllMarkers();
-  if (typeof _renderLayerPanel === 'function') _renderLayerPanel();
+  if (typeof _renderVisibilityToggle === 'function') _renderVisibilityToggle();
 }
 
 // ══════════════════════════════════════════════════════════════
