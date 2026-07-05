@@ -3,18 +3,28 @@
    À ajouter à styles.css (ou importer en <link> séparé)
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Tag Race / Classe sur les cartes ── */
-.card-rc-tag {
+/* ── Tags Race / Classe sur les cartes ── */
+.card-race-tag,
+.card-class-tag {
   display: inline-block;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.card-race-tag {
   background: rgba(155, 125, 232, 0.13);
   color: var(--sup);
   border: 1px solid rgba(155, 125, 232, 0.28);
-  padding: 2px 8px;
-  border-radius: 4px;
+}
+
+.card-class-tag {
+  background: rgba(68, 136, 221, 0.13);
+  color: var(--def);
+  border: 1px solid rgba(68, 136, 221, 0.28);
 }
 
 /* ── Caractéristiques sur la carte roster ── */

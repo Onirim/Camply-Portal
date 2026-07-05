@@ -19,7 +19,8 @@ function freshState() {
   return {
     name:                  '',
     subtitle:              '',      // titre / occupation
-    race_class:            '',      // race / classe
+    race:                  '',      // race
+    class:                 '',      // classe
     level:                 0,       // 0 = pas de niveau affiché
     is_public:             false,
     illustration_url:      '',
@@ -48,7 +49,8 @@ function _clamp(v, min, max) {
 
 const CHAR_BLOCKS = {
   subtitle:        'editor_field_subtitle',
-  race_class:      'editor_field_race_class',
+  race:            'editor_field_race',
+  class:           'editor_field_class',
   level:           'editor_field_level',
   characteristics: 'section_characteristics',
   skills:          'section_skills',
@@ -87,9 +89,11 @@ function levelRenderPrefix() {
 // ══════════════════════════════════════════════════════════════
 
 function renderCharCardBody(c) {
-  // Race/classe + niveau (niveau masqué si 0 ou si bloc désactivé)
-  const rcTag = c.race_class && blockVisible('race_class')
-    ? `<span class="card-rc-tag">${esc(c.race_class)}</span>` : '';
+  // Race + classe + niveau (niveau masqué si 0 ou si bloc désactivé)
+  const raceTag = c.race && blockVisible('race')
+    ? `<span class="card-race-tag">${esc(c.race)}</span>` : '';
+  const classTag = c.class && blockVisible('class')
+    ? `<span class="card-class-tag">${esc(c.class)}</span>` : '';
   const lvlTag = c.level !== undefined && c.level !== 0 && c.level !== null && blockVisible('level')
     ? `<span class="card-rank">${levelRenderPrefix()}${c.level}</span>` : '';
 
@@ -107,7 +111,7 @@ function renderCharCardBody(c) {
     <div class="card-name">${esc(c.name) || '—'}</div>
     ${c.subtitle && blockVisible('subtitle') ? `<div class="card-sub">${esc(c.subtitle)}</div>` : ''}
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-      ${rcTag}${lvlTag}
+      ${raceTag}${classTag}${lvlTag}
     </div>
     ${descriptionHtml}
   `;
@@ -128,8 +132,10 @@ function renderCharSheet(data) {
          onclick="openLightbox('${esc(data.illustration_url)}')" alt="">` : '';
 
   // ── En-tête ───────────────────────────────────────────────
-  const rcTag = data.race_class && blockVisible('race_class')
-    ? `<span class="card-rc-tag" style="margin-top:8px">${esc(data.race_class)}</span>` : '';
+  const raceTag = data.race && blockVisible('race')
+    ? `<span class="card-race-tag" style="margin-top:8px">${esc(data.race)}</span>` : '';
+  const classTag = data.class && blockVisible('class')
+    ? `<span class="card-class-tag" style="margin-top:8px">${esc(data.class)}</span>` : '';
 
   // Niveau masqué si 0, null, ou si bloc désactivé
   const lvlBadge = data.level !== undefined && data.level !== 0 && data.level !== null && blockVisible('level')
@@ -140,7 +146,8 @@ function renderCharSheet(data) {
       <div class="preview-name">${esc(data.name) || '—'}</div>
       ${data.subtitle && blockVisible('subtitle') ? `<div class="preview-sub">${esc(data.subtitle)}</div>` : ''}
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
-        ${rcTag}
+        ${raceTag}
+        ${classTag}
         ${lvlBadge}
       </div>
     </div>`;
@@ -209,7 +216,8 @@ const GAME_I18N = {
   fr: {
     // Identité
     editor_field_subtitle:     'Titre / Occupation',
-    editor_field_race_class:   'Race / Classe',
+    editor_field_race:         'Race',
+    editor_field_class:        'Classe',
     editor_field_level:        'Niveau',
 
     // Carte roster
@@ -264,7 +272,8 @@ const GAME_I18N = {
 
   en: {
     editor_field_subtitle:     'Title / Occupation',
-    editor_field_race_class:   'Race / Class',
+    editor_field_race:         'Race',
+    editor_field_class:        'Class',
     editor_field_level:        'Level',
 
     card_level: 'Lv. ',

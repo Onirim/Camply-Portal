@@ -40,10 +40,11 @@ function editChar(id, dataOverride) {
 }
 
 function populateEditor() {
-  document.getElementById('f-name').value       = state.name || '';
-  document.getElementById('f-sub').value        = state.subtitle || '';
-  document.getElementById('f-race-class').value = state.race_class || '';
-  document.getElementById('f-level').value      = state.level ?? 0;
+  document.getElementById('f-name').value  = state.name || '';
+  document.getElementById('f-sub').value   = state.subtitle || '';
+  document.getElementById('f-race').value  = state.race || '';
+  document.getElementById('f-class').value = state.class || '';
+  document.getElementById('f-level').value = state.level ?? 0;
   const lvlDisplay = document.getElementById('level-display');
   if (lvlDisplay) lvlDisplay.textContent = state.level ?? 0;
 
@@ -85,9 +86,10 @@ function applyCharBlockConfig() {
     if (labelEl) labelEl.textContent = blockLabel(key);
   };
 
-  setBlock('field-subtitle-wrap',   'lbl-subtitle',   'subtitle');
-  setBlock('field-race-class-wrap', 'lbl-race-class', 'race_class');
-  setBlock('field-level-wrap',      'lbl-level',      'level');
+  setBlock('field-subtitle-wrap', 'lbl-subtitle', 'subtitle');
+  setBlock('field-race-wrap',     'lbl-race',     'race');
+  setBlock('field-class-wrap',    'lbl-class',    'class');
+  setBlock('field-level-wrap',    'lbl-level',    'level');
   const lvlInline = document.getElementById('lbl-level-inline');
   if (lvlInline) lvlInline.textContent = blockLabel('level');
 
@@ -319,10 +321,11 @@ function changeLevel(delta, event) {
 // ══════════════════════════════════════════════════════════════
 
 function updatePreview() {
-  state.name       = document.getElementById('f-name').value;
-  state.subtitle   = document.getElementById('f-sub').value;
-  state.race_class = document.getElementById('f-race-class').value;
-  state.level      = parseInt(document.getElementById('f-level')?.value) ?? 0;
+  state.name     = document.getElementById('f-name').value;
+  state.subtitle = document.getElementById('f-sub').value;
+  state.race     = document.getElementById('f-race').value;
+  state.class    = document.getElementById('f-class').value;
+  state.level    = parseInt(document.getElementById('f-level')?.value) ?? 0;
   state.description = document.getElementById('f-description')?.value || state.description || '';
   state.background = document.getElementById('f-background')?.value || state.background || '';
 
