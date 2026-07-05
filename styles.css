@@ -62,11 +62,14 @@ html, body {
 
 /* ── Switch public/privé réutilisable (perso, chronique, document, carte) ──
    --toggle-color permet à chaque contexte de garder sa couleur (accent, sup, def…),
-   color-mix() suit automatiquement le thème actif. */
-.pub-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-.pub-toggle input {
+   color-mix() suit automatiquement le thème actif.
+   Spécificité doublée (.pub-toggle.pub-toggle / input[type]) pour battre les
+   règles génériques ".field label" et ".field input" du formulaire perso. */
+.pub-toggle.pub-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 0; }
+.pub-toggle input[type="checkbox"] {
   position: absolute;
   width: 1px; height: 1px;
+  padding: 0; margin: 0; border: none; background: none;
   opacity: 0; pointer-events: none;
 }
 .pub-toggle-track {
