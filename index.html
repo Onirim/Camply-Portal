@@ -551,9 +551,15 @@
               oninput="updatePreview()">
           </div>
 
-          <div class="field" id="field-race-class-wrap">
-            <label id="lbl-race-class" data-i18n="editor_field_race_class">Race / Classe</label>
-            <input type="text" id="f-race-class"
+          <div class="field" id="field-race-wrap">
+            <label id="lbl-race" data-i18n="editor_field_race">Race</label>
+            <input type="text" id="f-race"
+              oninput="updatePreview()">
+          </div>
+
+          <div class="field" id="field-class-wrap">
+            <label id="lbl-class" data-i18n="editor_field_class">Classe</label>
+            <input type="text" id="f-class"
               oninput="updatePreview()">
           </div>
 
@@ -1143,10 +1149,18 @@
               </div>
               <div class="config-block-row" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
                 <label style="display:flex;align-items:center;gap:6px;min-width:180px;margin-bottom:0;cursor:pointer">
-                  <input type="checkbox" id="config-block-race_class-visible" checked style="width:auto;accent-color:var(--accent)">
-                  <span data-i18n="editor_field_race_class">Race / Classe</span>
+                  <input type="checkbox" id="config-block-race-visible" checked style="width:auto;accent-color:var(--accent)">
+                  <span data-i18n="editor_field_race">Race</span>
                 </label>
-                <input type="text" id="config-block-race_class-label" class="generic-input" style="flex:1"
+                <input type="text" id="config-block-race-label" class="generic-input" style="flex:1"
+                  data-i18n="config_block_label_ph" data-i18n-attr="placeholder" placeholder="Libellé par défaut">
+              </div>
+              <div class="config-block-row" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <label style="display:flex;align-items:center;gap:6px;min-width:180px;margin-bottom:0;cursor:pointer">
+                  <input type="checkbox" id="config-block-class-visible" checked style="width:auto;accent-color:var(--accent)">
+                  <span data-i18n="editor_field_class">Classe</span>
+                </label>
+                <input type="text" id="config-block-class-label" class="generic-input" style="flex:1"
                   data-i18n="config_block_label_ph" data-i18n-attr="placeholder" placeholder="Libellé par défaut">
               </div>
               <div class="config-block-row" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
