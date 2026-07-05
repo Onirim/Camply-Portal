@@ -577,7 +577,16 @@ html, body {
 
 .universe-page { flex: 1; width: 100%; max-width: 1080px; margin: 0 auto; padding: 48px 32px 64px; }
 
-.universe-hero { text-align: center; margin-bottom: 32px; }
+.universe-hero { text-align: center; }
+.universe-hero-logo {
+  display: block;
+  width: 168px;
+  height: 168px;
+  margin: 0 auto -56px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+}
+.universe-hero-row { position: relative; margin-bottom: 24px; }
 .universe-greeting { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin-bottom: 8px; }
 .universe-greeting-name { color: var(--accent); }
 .universe-hero-sub { font-size: 14px; color: var(--text3); }
@@ -637,6 +646,7 @@ html, body {
   .universe-topbar { padding: 12px 16px; }
   .universe-topbar .brand-name { font-size: 14px; }
   .universe-page { padding: 28px 16px 48px; }
+  .universe-hero-logo { width: 120px; height: 120px; margin-bottom: -36px; }
   .universe-greeting { font-size: 21px; }
   .universe-list { grid-template-columns: 1fr; }
   .universe-actions .btn-primary { width: 100%; justify-content: center; }

@@ -169,12 +169,15 @@
     <!-- List view: choose an existing universe -->
     <div id="universe-list-view">
       <div class="universe-hero">
-        <h1 class="universe-greeting"><span data-i18n="universe_greeting">Bonjour</span><span class="universe-greeting-name"></span> <span class="universe-wave">👋</span></h1>
-        <p class="universe-hero-sub" data-i18n="universe_hero_sub">Choisissez l'univers dans lequel vous souhaitez plonger</p>
-        <p class="universe-quota" id="universe-quota"></p>
+        <img class="universe-hero-logo" src="android-chrome-512x512.png" alt="" width="512" height="512">
       </div>
 
-      <div class="universe-actions">
+      <div class="list-header universe-hero-row">
+        <div>
+          <h1 class="universe-greeting"><span data-i18n="universe_greeting">Bonjour</span><span class="universe-greeting-name"></span> <span class="universe-wave">👋</span></h1>
+          <p class="universe-hero-sub" data-i18n="universe_hero_sub">Choisissez l'univers dans lequel vous souhaitez plonger</p>
+          <p class="universe-quota" id="universe-quota"></p>
+        </div>
         <button class="btn-primary" onclick="openUniverseCreateForm()" data-i18n="universe_create_btn">+ Créer un univers</button>
       </div>
 
