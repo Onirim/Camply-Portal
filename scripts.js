@@ -474,7 +474,17 @@ function renderUniverseList() {
     return;
   }
   const dateLocale = currentLang === 'en' ? 'en-GB' : 'fr-FR';
-  list.innerHTML = userUniverses.map(u => {
+  const roleOrder = { owner: 0, gm: 1, player: 2 };
+  const sortedUniverses = [...userUniverses].sort((a, b) => {
+    const pausedA = universePause.isPaused(a) ? 1 : 0;
+    const pausedB = universePause.isPaused(b) ? 1 : 0;
+    if (pausedA !== pausedB) return pausedA - pausedB;
+    const roleA = roleOrder[a.role] ?? 2;
+    const roleB = roleOrder[b.role] ?? 2;
+    if (roleA !== roleB) return roleA - roleB;
+    return (a.name || '').localeCompare(b.name || '', 'fr', { sensitivity: 'base' });
+  });
+  list.innerHTML = sortedUniverses.map(u => {
     const roleKey = u.role === 'owner' ? 'role_owner' : (u.role === 'gm' ? 'role_gm' : 'role_player');
     const updated = u.updated_at
       ? new Date(u.updated_at).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short' })
