@@ -10,6 +10,18 @@
 }
 .legal-link:hover { color: var(--text2); text-decoration: underline; }
 
+/* Topbar de sélection d'univers : place limitée à côté du sélecteur de
+   langue et du menu utilisateur, on réduit le lien à une icône. */
+@media (max-width: 640px) {
+  .universe-topbar-right .legal-link {
+    font-size: 0;
+  }
+  .universe-topbar-right .legal-link::after {
+    content: "⚖";
+    font-size: 15px;
+  }
+}
+
 /* Lien fixe en bas de l'écran de login (pas de topbar sur cet écran). */
 .auth-legal-footer {
   position: absolute;
