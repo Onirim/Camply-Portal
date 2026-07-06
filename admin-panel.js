@@ -23,6 +23,9 @@ Object.assign(TRANSLATIONS.fr, {
   admin_card_orphans:   'Images orphelines',
   admin_card_users:          'Utilisateurs',
   admin_card_universes_list: 'Univers',
+  admin_card_users_total:    'Utilisateurs (total)',
+  admin_card_users_active:   'Utilisateurs actifs (30 jours)',
+  admin_users_active_pct:    '${pct}% des comptes',
   admin_purge_btn:      'Purger les fichiers orphelins',
   admin_universes_active_paused: '${active} actifs · ${paused} en pause',
   admin_orphans_count:  '${count} fichier(s) · ${size}',
@@ -30,6 +33,10 @@ Object.assign(TRANSLATIONS.fr, {
   admin_purge_done:     '${count} fichier(s) supprimé(s) (${size}).',
   admin_load_error:     'Erreur lors du chargement des statistiques.',
   toast_admin_purge_done: 'Fichiers orphelins purgés !',
+  admin_search_users_ph:      'Rechercher par nom ou email…',
+  admin_search_universes_ph:  'Rechercher par nom ou propriétaire…',
+  admin_no_results:           'Aucun résultat.',
+  admin_pagination_info:      'Page ${page}/${pages} · ${count} résultat(s)',
   admin_th_user:             'Utilisateur',
   admin_th_universes_owned:  'Univers possédés',
   admin_th_objects:          'Objets',
@@ -66,6 +73,9 @@ Object.assign(TRANSLATIONS.en, {
   admin_card_orphans:   'Orphan images',
   admin_card_users:          'Users',
   admin_card_universes_list: 'Universes',
+  admin_card_users_total:    'Users (total)',
+  admin_card_users_active:   'Active users (30 days)',
+  admin_users_active_pct:    '${pct}% of accounts',
   admin_purge_btn:      'Purge orphan files',
   admin_universes_active_paused: '${active} active · ${paused} paused',
   admin_orphans_count:  '${count} file(s) · ${size}',
@@ -73,6 +83,10 @@ Object.assign(TRANSLATIONS.en, {
   admin_purge_done:     '${count} file(s) deleted (${size}).',
   admin_load_error:     'Error while loading statistics.',
   toast_admin_purge_done: 'Orphan files purged!',
+  admin_search_users_ph:      'Search by name or email…',
+  admin_search_universes_ph:  'Search by name or owner…',
+  admin_no_results:           'No results.',
+  admin_pagination_info:      'Page ${page}/${pages} · ${count} result(s)',
   admin_th_user:             'User',
   admin_th_universes_owned:  'Owned universes',
   admin_th_objects:          'Objects',
@@ -103,6 +117,13 @@ const adminPanel = {
   _lastOrphans: [],
   _users: [],
   _universes: [],
+  _pageSize: 10,
+  _usersSearch: '',
+  _usersPage: 1,
+  _usersTotalPages: 1,
+  _universesSearch: '',
+  _universesPage: 1,
+  _universesTotalPages: 1,
 
   formatBytes(bytes) {
     if (!bytes) return '0 MB';
@@ -181,6 +202,12 @@ const adminPanel = {
       active: stats.universes.active, paused: stats.universes.paused,
     });
 
+    document.getElementById('admin-users-total-value').textContent = stats.users.total;
+    document.getElementById('admin-users-active-value').textContent = stats.users.active_30d;
+    document.getElementById('admin-users-active-breakdown').textContent = ti('admin_users_active_pct', {
+      pct: stats.users.total ? Math.round((stats.users.active_30d / stats.users.total) * 100) : 0,
+    });
+
     const storagePct = Math.min(100, (stats.storage.bytes / stats.storage.limit_bytes) * 100);
     document.getElementById('admin-storage-value').textContent =
       `${this.formatBytes(stats.storage.bytes)} / ${this.formatBytes(stats.storage.limit_bytes)}`;
@@ -200,11 +227,56 @@ const adminPanel = {
     });
   },
 
+  // ── Pagination / recherche générique ────────────────────────────
+
+  _paginate(items, page) {
+    const totalPages = Math.max(1, Math.ceil(items.length / this._pageSize));
+    const clampedPage = Math.min(Math.max(1, page), totalPages);
+    const start = (clampedPage - 1) * this._pageSize;
+    return { pageItems: items.slice(start, start + this._pageSize), page: clampedPage, totalPages };
+  },
+
+  _renderPagination(containerId, page, totalPages, count, onPrev, onNext) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = `
+      <button class="btn-cancel admin-row-btn" ${page <= 1 ? 'disabled' : ''} onclick="${onPrev}">‹</button>
+      <span>${ti('admin_pagination_info', { page, pages: totalPages, count })}</span>
+      <button class="btn-cancel admin-row-btn" ${page >= totalPages ? 'disabled' : ''} onclick="${onNext}">›</button>`;
+  },
+
   // ── Utilisateurs ──────────────────────────────────────────────
 
+  onUsersSearch(value) {
+    this._usersSearch = value;
+    this._usersPage = 1;
+    this._renderUsers();
+  },
+
+  usersPrevPage() {
+    if (this._usersPage <= 1) return;
+    this._usersPage--;
+    this._renderUsers();
+  },
+
+  usersNextPage() {
+    if (this._usersPage >= this._usersTotalPages) return;
+    this._usersPage++;
+    this._renderUsers();
+  },
+
   _renderUsers() {
+    const q = this._usersSearch.trim().toLowerCase();
+    const filtered = q
+      ? this._users.filter(u => (u.username || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q))
+      : this._users;
+
+    const { pageItems, page, totalPages } = this._paginate(filtered, this._usersPage);
+    this._usersPage = page;
+    this._usersTotalPages = totalPages;
+
     const tbody = document.getElementById('admin-users-tbody');
-    tbody.innerHTML = this._users.map(u => `
+    tbody.innerHTML = pageItems.length ? pageItems.map(u => `
       <tr>
         <td>
           <div class="admin-cell-title">${esc(u.username || '—')}</div>
@@ -218,7 +290,10 @@ const adminPanel = {
         <td>
           <button class="btn-cancel admin-row-btn" onclick="adminPanel.saveUserLimit('${u.user_id}')" data-i18n="admin_save_btn">Enregistrer</button>
         </td>
-      </tr>`).join('');
+      </tr>`).join('') : `<tr><td colspan="5" class="admin-empty-row" data-i18n="admin_no_results">Aucun résultat.</td></tr>`;
+
+    this._renderPagination('admin-users-pagination', page, totalPages, filtered.length,
+      'adminPanel.usersPrevPage()', 'adminPanel.usersNextPage()');
   },
 
   async saveUserLimit(userId) {
@@ -238,9 +313,36 @@ const adminPanel = {
 
   // ── Univers ───────────────────────────────────────────────────
 
+  onUniversesSearch(value) {
+    this._universesSearch = value;
+    this._universesPage = 1;
+    this._renderUniverses();
+  },
+
+  universesPrevPage() {
+    if (this._universesPage <= 1) return;
+    this._universesPage--;
+    this._renderUniverses();
+  },
+
+  universesNextPage() {
+    if (this._universesPage >= this._universesTotalPages) return;
+    this._universesPage++;
+    this._renderUniverses();
+  },
+
   _renderUniverses() {
+    const q = this._universesSearch.trim().toLowerCase();
+    const filtered = q
+      ? this._universes.filter(u => (u.name || '').toLowerCase().includes(q) || (u.owner_username || '').toLowerCase().includes(q))
+      : this._universes;
+
+    const { pageItems, page, totalPages } = this._paginate(filtered, this._universesPage);
+    this._universesPage = page;
+    this._universesTotalPages = totalPages;
+
     const tbody = document.getElementById('admin-universes-tbody');
-    tbody.innerHTML = this._universes.map(u => `
+    tbody.innerHTML = pageItems.length ? pageItems.map(u => `
       <tr>
         <td class="admin-cell-title">${esc(u.name)}</td>
         <td>${esc(u.owner_username || '—')}</td>
@@ -257,7 +359,10 @@ const adminPanel = {
           </button>
           <button class="btn-danger-outline admin-row-btn" onclick="adminPanel.deleteUniverseAsAdmin('${u.universe_id}')" data-i18n="admin_delete_btn">Supprimer</button>
         </td>
-      </tr>`).join('');
+      </tr>`).join('') : `<tr><td colspan="6" class="admin-empty-row" data-i18n="admin_no_results">Aucun résultat.</td></tr>`;
+
+    this._renderPagination('admin-universes-pagination', page, totalPages, filtered.length,
+      'adminPanel.universesPrevPage()', 'adminPanel.universesNextPage()');
   },
 
   async togglePauseUniverse(universeId) {

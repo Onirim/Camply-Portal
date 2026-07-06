@@ -297,6 +297,17 @@
       </div>
 
       <div class="admin-card">
+        <div class="admin-card-title" data-i18n="admin_card_users_total">Utilisateurs (total)</div>
+        <div class="admin-card-value" id="admin-users-total-value">—</div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-title" data-i18n="admin_card_users_active">Utilisateurs actifs (30 jours)</div>
+        <div class="admin-card-value" id="admin-users-active-value">—</div>
+        <div class="admin-card-breakdown" id="admin-users-active-breakdown"></div>
+      </div>
+
+      <div class="admin-card">
         <div class="admin-card-title" data-i18n="admin_card_storage">Stockage (fichiers)</div>
         <div class="admin-card-value" id="admin-storage-value">—</div>
         <div class="admin-progress"><div class="admin-progress-bar" id="admin-storage-bar"></div></div>
@@ -317,6 +328,12 @@
 
       <div class="admin-card admin-card-wide">
         <div class="admin-card-title" data-i18n="admin_card_users">Utilisateurs</div>
+        <div class="admin-table-toolbar">
+          <input type="text" id="admin-users-search" class="admin-search-input"
+                 oninput="adminPanel.onUsersSearch(this.value)"
+                 data-i18n="admin_search_users_ph" data-i18n-attr="placeholder"
+                 placeholder="Rechercher par nom ou email…">
+        </div>
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead>
@@ -331,10 +348,17 @@
             <tbody id="admin-users-tbody"></tbody>
           </table>
         </div>
+        <div class="admin-pagination" id="admin-users-pagination"></div>
       </div>
 
       <div class="admin-card admin-card-wide">
         <div class="admin-card-title" data-i18n="admin_card_universes_list">Univers</div>
+        <div class="admin-table-toolbar">
+          <input type="text" id="admin-universes-search" class="admin-search-input"
+                 oninput="adminPanel.onUniversesSearch(this.value)"
+                 data-i18n="admin_search_universes_ph" data-i18n-attr="placeholder"
+                 placeholder="Rechercher par nom ou propriétaire…">
+        </div>
         <div class="admin-table-wrap">
           <table class="admin-table">
             <thead>
@@ -350,6 +374,7 @@
             <tbody id="admin-universes-tbody"></tbody>
           </table>
         </div>
+        <div class="admin-pagination" id="admin-universes-pagination"></div>
       </div>
 
     </div>
