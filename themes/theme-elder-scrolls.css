@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Share+Tech+Mono&display=swap');
 
 /* ══════════════════════════════════════════════════════════════
    THE ELDER SCROLLS — Thème Tamriel
@@ -9,7 +9,7 @@
    INSTALLATION :
    1. Ajoutez dans <head> de index.html, AVANT styles.css :
       <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
    
    2. Après tous les autres <link rel="stylesheet"> :
       <link rel="stylesheet" href="./themes/theme-elder-scrolls.css" />
@@ -69,7 +69,7 @@
 
   /* Typographies — manuscrits et codex */
   --font-display: 'Uncial Antiqua', 'Palatino Linotype', Georgia, serif;
-  --font-body:    'Crimson Pro', 'Palatino Linotype', Georgia, serif;
+  --font-body:    'Alegreya', 'Palatino Linotype', Georgia, serif;
   --font-mono:    'Share Tech Mono', 'Courier New', monospace;
 }
 
@@ -228,8 +228,8 @@ a:hover { color: var(--gold-bright); }
 }
 #topbar .logo span {
   color: var(--text3);
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-weight: 300;
+  font-family: 'Alegreya', Georgia, serif;
+  font-weight: 400;
   font-size: 13px;
   letter-spacing: 0.04em;
 }
@@ -239,7 +239,7 @@ a:hover { color: var(--gold-bright); }
   background: none;
   border: none;
   cursor: pointer;
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -276,7 +276,7 @@ a:hover { color: var(--gold-bright); }
   background: var(--bg3);
   border: 1px solid var(--border2);
   color: var(--text2);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -305,7 +305,7 @@ a:hover { color: var(--gold-bright); }
 .form-section-title,
 .preview-section-title,
 .campaign-section-title {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.2em;
@@ -413,7 +413,7 @@ a:hover { color: var(--gold-bright); }
 }
 .char-card .card-rank {
   display: inline-block;
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -431,7 +431,7 @@ a:hover { color: var(--gold-bright); }
   font-weight: 700;
 }
 .card-attr .lbl {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -443,7 +443,7 @@ a:hover { color: var(--gold-bright); }
 .card-attr.v .val { color: var(--vigor-color); }
 
 .card-power-tag {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -457,7 +457,7 @@ a:hover { color: var(--gold-bright); }
 .btn-primary {
   background: linear-gradient(135deg, #2a1e06 0%, #3e2c08 55%, #2a1e06 100%);
   color: var(--accent);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -494,7 +494,7 @@ a:hover { color: var(--gold-bright); }
 }
 
 .field label {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.16em;
@@ -528,7 +528,7 @@ a:hover { color: var(--gold-bright); }
   border-radius: 0;
 }
 .pts-bar .pts-label {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -589,7 +589,7 @@ a:hover { color: var(--gold-bright); }
   border: 1px dashed var(--border);
   border-radius: 0;
   color: var(--text3);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -605,7 +605,7 @@ a:hover { color: var(--gold-bright); }
 .apt-val.zero { color: var(--text3); }
 .apt-pts-bar { background: var(--bg3); border: 1px solid var(--border); border-radius: 0; }
 .apt-pts-bar .lbl {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600;
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3);
 }
 .apt-pts-bar .val { font-family: var(--font-mono); font-weight: 700; }
@@ -655,7 +655,7 @@ a:hover { color: var(--gold-bright); }
 /* XP */
 .xp-field { background: var(--bg3); border: 1px solid var(--border); border-radius: 0; }
 .xp-field .xp-label {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 11px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2);
 }
 .xp-field .xp-detail { font-family: var(--font-body); font-style: italic; font-size: 11px; color: var(--text3); }
@@ -665,7 +665,7 @@ a:hover { color: var(--gold-bright); }
 .btn-save {
   background: linear-gradient(135deg, #2a1e06 0%, #3e2c08 55%, #2a1e06 100%);
   color: var(--accent);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -683,7 +683,7 @@ a:hover { color: var(--gold-bright); }
   border: 1px solid var(--border);
   border-radius: 0;
   color: var(--text2);
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -727,7 +727,7 @@ a:hover { color: var(--gold-bright); }
   margin-top: 6px;
 }
 .preview-rank-badge {
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
@@ -791,7 +791,7 @@ a:hover { color: var(--gold-bright); }
 .preview-attr.r .val { color: var(--recovery-color); }
 .preview-attr.v .val { color: var(--vigor-color); }
 .preview-attr .lbl {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 9px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 9px; font-weight: 600;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3);
 }
 .preview-attr .cost { font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
@@ -806,7 +806,7 @@ a:hover { color: var(--gold-bright); }
 .preview-power:hover { border-color: var(--border2); }
 
 .pow-badge {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600;
   letter-spacing: 0.06em; border-radius: 0;
 }
 .pow-badge.offc { background: rgba(184,48,48,0.15); color: var(--offc);  border: 1px solid rgba(184,48,48,0.3); }
@@ -863,7 +863,7 @@ a:hover { color: var(--gold-bright); }
   border: 1px solid rgba(200,150,30,0.2);
   border-radius: 0;
   padding: 10px 14px; margin-bottom: 24px;
-  font-family: 'Crimson Pro', Georgia, serif;
+  font-family: 'Alegreya', Georgia, serif;
   font-size: 12px; font-weight: 600; letter-spacing: 0.08em;
   color: var(--text3);
 }
@@ -898,13 +898,13 @@ a:hover { color: var(--gold-bright); }
 /* Entrées */
 .entry-row { background: var(--bg2); border: 1px solid var(--border); border-radius: 0; }
 .entry-row:hover { border-color: var(--border2); transform: translateX(4px); }
-.entry-row-title { font-family: 'Crimson Pro', Georgia, serif; font-size: 15px; font-weight: 600; color: var(--text); }
+.entry-row-title { font-family: 'Alegreya', Georgia, serif; font-size: 15px; font-weight: 600; color: var(--text); }
 .entry-row-date  { font-family: var(--font-mono); font-size: 9px; color: var(--text3); }
 .entry-row-preview { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
 
 /* Breadcrumb */
 .chr-reader-breadcrumb {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 11px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-weight: 600;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3);
   cursor: pointer; transition: color 0.15s;
 }
@@ -1017,7 +1017,7 @@ a:hover { color: var(--gold-bright); }
 .doc-reader-body table { width: 100%; border-collapse: collapse; margin-bottom: 22px; font-size: 14px; }
 .doc-reader-body thead { background: rgba(40,96,184,0.08); border-bottom: 1px solid var(--border2); }
 .doc-reader-body th {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--magic-blue);
   padding: 10px 14px; text-align: left;
 }
@@ -1083,7 +1083,7 @@ a:hover { color: var(--gold-bright); }
   background: var(--accent); border-color: var(--accent);
 }
 .campaign-selectable-name {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 13px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 13px; font-weight: 600;
   letter-spacing: 0.04em; text-transform: uppercase; color: var(--text);
 }
 
@@ -1093,7 +1093,7 @@ a:hover { color: var(--gold-bright); }
    ══════════════════════════════════════════════════════════════ */
 .rulebook-toc { background: var(--bg2); border-right: 1px solid var(--border); }
 .rulebook-toc-title {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600;
   letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent);
   text-shadow: var(--glow-gold);
 }
@@ -1105,7 +1105,7 @@ a:hover { color: var(--gold-bright); }
 
 .rulebook-toc-link { font-family: var(--font-body); font-size: 13px; color: var(--text3); }
 .rulebook-toc-link[data-level="1"] {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 11px; font-weight: 700;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--text2);
 }
 .rulebook-toc-link:hover { color: var(--text2); background: rgba(200,150,30,0.05); }
@@ -1126,12 +1126,12 @@ a:hover { color: var(--gold-bright); }
 }
 .rulebook-body h1::before { content: '❖'; color: var(--accent); background: transparent; }
 .rulebook-body h2 {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 18px; font-weight: 700;
+  font-family: 'Alegreya', Georgia, serif; font-size: 18px; font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--text);
 }
 .rulebook-body h2::before { background: linear-gradient(180deg, var(--accent), var(--border2)); }
 .rulebook-body h3 {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 13px; font-weight: 700;
+  font-family: 'Alegreya', Georgia, serif; font-size: 13px; font-weight: 700;
   letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--text3); border-left: 1px solid var(--border2);
 }
@@ -1151,7 +1151,7 @@ a:hover { color: var(--gold-bright); }
 }
 .rulebook-body pre { background: var(--bg3); border: 1px solid var(--border); border-radius: 0; }
 .rulebook-body th {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 700;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 700;
   letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
 }
 .rulebook-body td {
@@ -1177,7 +1177,7 @@ a:hover { color: var(--gold-bright); }
 .tags-autocomplete-item { font-family: var(--font-body); font-size: 13px; color: var(--text2); }
 .tags-autocomplete-item:hover, .tags-autocomplete-item.active { background: var(--bg3); color: var(--text); }
 .filter-label {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600;
   letter-spacing: 0.16em; text-transform: uppercase; color: var(--text3);
 }
 
@@ -1188,17 +1188,17 @@ a:hover { color: var(--gold-bright); }
 .card-visibility.public {
   background: rgba(56,120,64,0.12); color: var(--mov);
   border: 1px solid rgba(56,120,64,0.25); border-radius: 0;
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
 }
 .card-visibility.private {
   background: rgba(40,96,184,0.08); color: var(--text3);
   border: 1px solid var(--border); border-radius: 0;
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
 }
 .followed-badge {
   background: rgba(200,150,30,0.1); color: var(--accent);
   border: 1px solid rgba(200,150,30,0.25); border-radius: 0;
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
   display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
 }
 .card-followed-owner { font-family: var(--font-body); font-style: italic; font-size: 11px; color: var(--text3); }
@@ -1245,8 +1245,8 @@ a:hover { color: var(--gold-bright); }
   text-shadow: var(--glow-gold);
 }
 .auth-logo span {
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-weight: 300; color: var(--text3); font-size: 16px; letter-spacing: 0.06em;
+  font-family: 'Alegreya', Georgia, serif;
+  font-weight: 400; color: var(--text3); font-size: 16px; letter-spacing: 0.06em;
 }
 .auth-tagline {
   font-family: var(--font-body); font-style: italic; font-size: 13px;
@@ -1266,7 +1266,7 @@ a:hover { color: var(--gold-bright); }
 }
 
 .discord-btn {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 14px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 14px; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase; border-radius: 0;
 }
 
@@ -1277,7 +1277,7 @@ a:hover { color: var(--gold-bright); }
 #loading-overlay { background: var(--bg); }
 .spinner { border-color: var(--border); border-top-color: var(--accent); }
 .loading-text {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 11px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-weight: 600;
   letter-spacing: 0.2em; text-transform: uppercase; color: var(--text3);
 }
 
@@ -1287,14 +1287,14 @@ a:hover { color: var(--gold-bright); }
    ══════════════════════════════════════════════════════════════ */
 .user-btn {
   background: var(--bg3); border: 1px solid var(--border); border-radius: 0;
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 11px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2);
 }
 .user-btn:hover { border-color: var(--border2); color: var(--text); }
 .user-btn .avatar {
   background: linear-gradient(135deg, #8c3a00, var(--accent));
   color: #050709;
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 11px; font-weight: 700; border-radius: 50%;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-weight: 700; border-radius: 50%;
 }
 .user-dropdown {
   background: var(--bg2); border: 1px solid var(--border); border-radius: 0;
@@ -1360,14 +1360,14 @@ a:hover { color: var(--gold-bright); }
 }
 .illus-overlay-btn {
   background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 11px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase; border-radius: 0;
 }
 .illus-overlay-btn:hover { border-color: var(--gold-muted); color: var(--accent); }
 .illus-overlay-btn.danger:hover { border-color: var(--offc); color: var(--offc); }
 .preview-illus, .card-illus { border: 1px solid var(--border); border-radius: 0; }
 .illus-slider-wrap label {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600;
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3);
 }
 
@@ -1387,14 +1387,14 @@ a:hover { color: var(--gold-bright); }
 }
 .transfer-desc { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
 .transfer-section-label {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 10px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 10px; font-weight: 600;
   letter-spacing: 0.2em; text-transform: uppercase; color: var(--text3);
 }
 .transfer-type-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 0; color: var(--text2); }
 .transfer-type-btn:hover { border-color: var(--border2); color: var(--text); }
 .transfer-type-btn.active { border-color: var(--tcolor, var(--accent)); }
 .transfer-type-label {
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  font-family: 'Alegreya', Georgia, serif; font-size: 9px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
 }
 .transfer-code-input {
   background: var(--bg3); border: 1px solid var(--border); border-radius: 0;
@@ -1407,7 +1407,7 @@ a:hover { color: var(--gold-bright); }
 .transfer-confirm-btn {
   background: linear-gradient(135deg, #2a1e06 0%, #3e2c08 100%);
   color: var(--accent);
-  font-family: 'Crimson Pro', Georgia, serif; font-size: 11px; font-weight: 600;
+  font-family: 'Alegreya', Georgia, serif; font-size: 11px; font-weight: 600;
   letter-spacing: 0.12em; text-transform: uppercase;
   border: 1px solid rgba(200,150,30,0.4); border-radius: 0;
 }
@@ -1440,7 +1440,7 @@ a:hover { color: var(--gold-bright); }
   background: var(--bg3) !important;
   border: 1px solid var(--border) !important;
   color: var(--text2) !important;
-  font-family: 'Crimson Pro', Georgia, serif !important;
+  font-family: 'Alegreya', Georgia, serif !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   letter-spacing: 0.08em !important;
