@@ -1,0 +1,79 @@
+name: Restore Camply Database & Storage (nouveau projet uniquement)
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_run_id:
+        description: "ID du run 'Backup' à restaurer (visible dans l'URL du run, ex: 28779085077)"
+        required: true
+      confirm_phrase:
+        description: "Tapez exactement RESTORE-NEW-PROJECT pour confirmer que la cible est un projet Supabase neuf et vide"
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier la phrase de confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm_phrase }}" != "RESTORE-NEW-PROJECT" ]; then
+            echo "::error::Phrase de confirmation incorrecte. Restore annulé pour éviter un déclenchement accidentel."
+            exit 1
+          fi
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Télécharger l'archive de backup
+        uses: actions/download-artifact@v4
+        with:
+          name: camply-backup-${{ github.event.inputs.backup_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.inputs.backup_run_id }}
+          path: backup_download
+
+      - name: Extraire l'archive
+        run: |
+          cd backup_download
+          zip_file=$(ls camply_backup_*.zip)
+          unzip -o "$zip_file" -d extracted
+
+      - name: Appliquer le schéma (00_fresh_install.sql)
+        env:
+          DB_URL: ${{ secrets.RESTORE_TARGET_DB_URL }}
+        # 00_fresh_install.sql concatène déjà 00_schema.sql -> 38_*.sql (vérifié via
+        # ses marqueurs "-- BEGIN sql/X.sql"), donc rejouer les migrations séparément
+        # serait redondant. Seule exception : sql/34_split_race_class.sql, un simple
+        # UPDATE ponctuel de données existantes, non pertinent pour une base neuve.
+        run: docker run --rm -v "$PWD":/work -w /work postgres:17 psql "$DB_URL" -v ON_ERROR_STOP=1 -f sql/00_fresh_install.sql
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Extraire les données (public + auth.users) du dump
+        run: node scripts/extract-data.mjs backup_download/extracted/backup_output/db_backup.sql restore_public_data.sql restore_auth_users.sql
+
+      - name: Restaurer les données auth.users
+        env:
+          DB_URL: ${{ secrets.RESTORE_TARGET_DB_URL }}
+        run: docker run --rm -v "$PWD":/work -w /work postgres:17 psql "$DB_URL" -v ON_ERROR_STOP=1 -f restore_auth_users.sql
+
+      - name: Restaurer les données du schéma public
+        env:
+          DB_URL: ${{ secrets.RESTORE_TARGET_DB_URL }}
+        run: docker run --rm -v "$PWD":/work -w /work postgres:17 psql "$DB_URL" -v ON_ERROR_STOP=1 -f restore_public_data.sql
+
+      - name: Installer le client Supabase
+        run: npm install @supabase/supabase-js@2
+
+      - name: Restaurer le Storage
+        env:
+          RESTORE_TARGET_SUPABASE_URL: ${{ secrets.RESTORE_TARGET_SUPABASE_URL }}
+          RESTORE_TARGET_SERVICE_ROLE_KEY: ${{ secrets.RESTORE_TARGET_SERVICE_ROLE_KEY }}
+        run: node scripts/restore-storage.mjs backup_download/extracted/backup_output/storage_backup
