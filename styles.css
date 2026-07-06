@@ -693,7 +693,7 @@ html, body {
   .universe-topbar { padding: 12px 16px; }
   .universe-topbar .brand-name { font-size: 14px; }
   .universe-page { padding: 28px 16px 48px; }
-  .universe-hero-logo { width: 120px; height: 120px; margin-bottom: -36px; }
+  .universe-hero-logo { width: 50%; height: 50%; margin: -29px auto -58px; }
   .universe-greeting { font-size: 21px; }
   .universe-list { grid-template-columns: 1fr; }
   .universe-actions .btn-primary { width: 100%; justify-content: center; }
