@@ -1,4 +1,4 @@
-![Camply Logo](https://onirim.github.io/Camply/android-chrome-192x192.png)
+![Camply Logo](https://onirim.github.io/Camply-Portal/android-chrome-192x192.png)
 
 # Camply Portal — a lite TTRPG campaign manager
 
