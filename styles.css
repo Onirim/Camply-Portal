@@ -583,9 +583,17 @@ html, body {
 #auth-screen { display: none; position: fixed; inset: 0; z-index: 300; background: var(--bg); align-items: center; justify-content: center; padding: 24px; }
 #auth-screen.active { display: flex; }
 .auth-box     { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 40px 36px; width: 100%; max-width: 400px; box-shadow: 0 24px 80px rgba(0,0,0,0.5); }
-.brand-lockup { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; }
-.brand-lockup .brand-mark { border-radius: 10px; flex-shrink: 0; }
-.auth-logo    { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); text-align: center; margin-bottom: 0; }
+.auth-hero { text-align: center; }
+.auth-hero-logo {
+  display: block;
+  width: 55%;
+  max-width: 220px;
+  height: auto;
+  margin: -8px auto -52px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent 85%);
+  mask-image: linear-gradient(to bottom, #000 35%, transparent 85%);
+}
+.auth-logo    { position: relative; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); text-align: center; margin-bottom: 0; }
 .auth-logo span { color: var(--text3); font-weight: 400; }
 .auth-tagline { text-align: center; font-size: 13px; color: var(--text3); margin-bottom: 32px; line-height: 1.6; }
 .discord-btn  { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: #5865F2; color: #fff; font-size: 14px; font-weight: 500; padding: 13px 20px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.15s; }
