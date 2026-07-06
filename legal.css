@@ -1,0 +1,76 @@
+/* ══════════════════════════════════════════════════════════════
+   Mentions légales & confidentialité (cf. legal.js)
+   ══════════════════════════════════════════════════════════════ */
+
+.legal-link {
+  font-size: 12px;
+  color: var(--text3);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.legal-link:hover { color: var(--text2); text-decoration: underline; }
+
+/* Lien fixe en bas de l'écran de login (pas de topbar sur cet écran). */
+.auth-legal-footer {
+  position: absolute;
+  left: 0; right: 0; bottom: 20px;
+  text-align: center;
+}
+
+/* Modale — même chrome que transfert.css / universe-pause.css.
+   Au-dessus de #auth-screen et #universe-screen (z-index 300), car
+   ce modal s'ouvre depuis l'un ou l'autre de ces deux écrans. */
+#legal-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+#legal-modal-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: slideUp 0.18s ease;
+}
+
+@media (max-width: 520px) {
+  #legal-modal-panel { max-height: 100vh; border-radius: 0; }
+}
+
+.legal-body {
+  padding: 20px 24px 24px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text2);
+}
+.legal-body h3 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin: 20px 0 8px;
+}
+.legal-body h3:first-child { margin-top: 0; }
+.legal-body p { margin: 0 0 10px; }
+.legal-body ul { margin: 0 0 10px; padding-left: 18px; }
+.legal-body li { margin-bottom: 4px; }
+.legal-body a { color: var(--accent); }
+
+.legal-note {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text3);
+  font-style: italic;
+}

@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="map.css" />
 <link rel="stylesheet" href="transfert.css" />
 <link rel="stylesheet" href="universe-pause.css" />
+<link rel="stylesheet" href="legal.css" />
 <link rel="stylesheet" href="admin-panel.css" />
 <link rel="stylesheet" id="theme-stylesheet" href="" disabled>
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
@@ -124,6 +125,9 @@
 
   <div class="auth-error" id="discord-error"></div>
 </div>
+<div class="auth-legal-footer">
+  <a href="#" class="legal-link" data-i18n="footer_legal_link" onclick="event.preventDefault(); legalInfo.open()">Mentions légales</a>
+</div>
 </div>
 
 <!-- Universe selection screen -->
@@ -134,6 +138,7 @@
       <span class="brand-name">CAMPLY <em>Portal</em></span>
     </div>
     <div class="universe-topbar-right">
+      <a href="#" class="legal-link" data-i18n="footer_legal_link" onclick="event.preventDefault(); legalInfo.open()">Mentions légales</a>
       <select id="lang-select-universe" class="lang-select" onchange="setLang(this.value)">
         <option value="fr">FR</option>
         <option value="en">EN</option>
@@ -1595,6 +1600,7 @@
 <script src="map-admin.js"></script>
 <script src="export.js"></script>
 <script src="universe-pause.js"></script>
+<script src="legal.js"></script>
 <script src="admin-panel.js"></script>
 <script src="scripts.js"></script>
   <div id="transfer-modal">
