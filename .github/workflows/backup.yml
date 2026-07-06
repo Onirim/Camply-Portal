@@ -2,6 +2,8 @@ name: Backup Camply Database & Storage
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'   # tous les lundis à 3h00 UTC (~4h/5h en France selon heure d'été/hiver)
 
 jobs:
   backup:
