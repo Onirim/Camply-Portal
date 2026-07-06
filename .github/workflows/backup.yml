@@ -1,0 +1,44 @@
+name: Backup Camply Database & Storage
+
+on:
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Dump database (schema, data, fonctions, RLS, triggers)
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: docker run --rm postgres:17 pg_dump "$DB_URL" --no-owner --no-privileges > db_backup.sql
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Supabase client
+        run: npm install @supabase/supabase-js@2
+
+      - name: Backup storage buckets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/backup-storage.mjs
+
+      - name: Package backup archive
+        run: |
+          mkdir -p backup_output
+          mv db_backup.sql backup_output/
+          [ -d storage_backup ] && mv storage_backup backup_output/
+          zip -r "camply_backup_$(date -u +%Y%m%d_%H%M%S).zip" backup_output
+
+      - name: Upload backup as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: camply-backup-${{ github.run_id }}
+          path: camply_backup_*.zip
+          retention-days: 90
