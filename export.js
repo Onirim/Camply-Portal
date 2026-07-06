@@ -71,12 +71,12 @@ function _slugify(text) {
 }
 
 function _tagsForChar(c) {
-  const map = (c._source === 'followed' ? followedTagMap : charTagMap) || {};
+  const map = charTagMap || {};
   return (map[c._db_id] || []).map(id => (allTags || []).find(tg => tg.id === id)).filter(Boolean);
 }
 
 function _tagsForDoc(d) {
-  const map = (d._source === 'followed' ? followedDocTagMap : docTagMap) || {};
+  const map = docTagMap || {};
   return (map[d.id] || []).map(id => (allDocTags || []).find(tg => tg.id === id)).filter(Boolean);
 }
 
