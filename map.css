@@ -861,4 +861,17 @@
   #map-admin-modal-panel  { max-height: 100vh; border-radius: 0; }
   #map-layer-panel { width: 100%; border-left: none; border-top: 1px solid var(--border); height: 60%; top: auto; bottom: 0; transform: translateY(100%); }
   #map-layer-panel.open { transform: translateY(0); }
+
+  /* Popup marqueur en quasi plein écran : fixée au viewport, plus au marqueur */
+  .map-popup {
+    position: fixed;
+    left: 16px; right: 16px; top: 16px; bottom: 16px;
+    width: auto; height: auto;
+    max-width: none; max-height: none;
+    z-index: 210;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+  }
+  .map-popup-desc { flex: 1; overflow-y: auto; }
 }
