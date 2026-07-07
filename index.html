@@ -24,6 +24,7 @@
 <link rel="stylesheet" href="campaigns.css" />
 <link rel="stylesheet" href="map.css" />
 <link rel="stylesheet" href="transfert.css" />
+<link rel="stylesheet" href="invites.css" />
 <link rel="stylesheet" href="universe-pause.css" />
 <link rel="stylesheet" href="legal.css" />
 <link rel="stylesheet" href="admin-panel.css" />
@@ -1268,18 +1269,10 @@
           <div class="config-block">
             <div class="form-section-title" data-i18n="config_section_members">Membres de l'univers</div>
             <p class="config-block-hint" data-i18n="config_members_hint">
-              Invitez un utilisateur du site en entrant son nom d'utilisateur. Il aura alors accès à cet univers.
+              Générez un lien d'invitation à partager. Il expire au bout de 7 jours et donne accès à cet univers.
             </p>
 
-            <div class="chr-follow-wrap" style="margin-bottom:16px">
-              <input type="text" id="config-invite-input"
-                data-i18n="config_invite_placeholder" data-i18n-attr="placeholder"
-                placeholder="Nom d'utilisateur"
-                onkeydown="if(event.key==='Enter') inviteUniverseMember()">
-              <button class="btn-follow-chr" onclick="inviteUniverseMember()" data-i18n="config_invite_btn">+ Inviter</button>
-            </div>
-
-            <div id="config-invite-error" class="auth-error"></div>
+            <div id="config-invite-link-block" style="margin-bottom:16px"></div>
 
             <div id="config-members-list"></div>
           </div>
@@ -1595,6 +1588,7 @@
 <script src="tags.js"></script>
 <script src="editor.js"></script>
 <script src="transfert.js"></script>
+<script src="invites.js"></script>
 <script src="map-config.js"></script>
 <script src="map.js"></script>
 <script src="map-admin.js"></script>
@@ -1654,6 +1648,23 @@
           <span data-i18n="delete_universe_confirm_btn">Supprimer définitivement</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <div id="invite-join-modal">
+    <div id="invite-join-modal-panel">
+      <div class="transfer-header">
+        <div class="transfer-title">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+            <path d="M6.5 9.5a3 3 0 0 0 4 0.3l2-2a3 3 0 0 0-4-4.3l-1 1" stroke-linecap="round"/>
+            <path d="M9.5 6.5a3 3 0 0 0-4-0.3l-2 2a3 3 0 0 0 4 4.3l1-1" stroke-linecap="round"/>
+          </svg>
+          <span data-i18n="invite_modal_title">Invitation à rejoindre un univers</span>
+        </div>
+        <button class="transfer-close-btn" onclick="closeInviteJoinModal()" title="Annuler">✕</button>
+      </div>
+
+      <div id="invite-join-modal-body"></div>
     </div>
   </div>
 

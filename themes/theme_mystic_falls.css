@@ -87,7 +87,10 @@ body::before {
     radial-gradient(ellipse 40% 50% at 50% 50%, rgba(192,132,232,0.03) 0%, transparent 70%);
 }
 
-#app, #main, #topbar, #view-list, #view-editor, #view-shared,
+/* #main est volontairement absent : lui donner son propre z-index piège
+   les overlays position:fixed qu'il contient (ex. popup marqueur de carte)
+   sous #topbar sur mobile. Être descendant de #app (déjà élevé) suffit. */
+#app, #topbar, #view-list, #view-editor, #view-shared,
 #preview-panel, #editor-form, .form-section, #auth-screen { position: relative; z-index: 1; }
 
 /* ── Scrollbar ── */
