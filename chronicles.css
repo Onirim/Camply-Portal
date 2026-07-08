@@ -339,6 +339,9 @@
 .entry-like-btn.liked  { color: var(--offc); border-color: var(--offc); background: color-mix(in srgb, var(--offc) 10%, transparent); }
 .entry-like-btn svg    { width: 15px; height: 15px; transition: transform 0.15s; }
 .entry-like-btn:active svg { transform: scale(1.25); }
+.entry-like-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+.entry-like-btn:disabled:hover { border-color: var(--border); color: var(--text3); }
+.entry-like-btn:disabled:active svg { transform: none; }
 
 /* ── Mobile tabs ── */
 #entry-mobile-tabs {

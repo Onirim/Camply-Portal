@@ -79,9 +79,19 @@ CREATE POLICY "entry_likes_select_anon" ON public.chronicle_entry_likes FOR SELE
     WHERE e.id = chronicle_entry_likes.entry_id AND c.is_public = TRUE
   ));
 
+-- On ne peut pas aimer une entrée de sa propre chronique (le like doit
+-- venir d'un autre lecteur pour refléter une appréciation du groupe).
 DROP POLICY IF EXISTS "entry_likes_insert" ON public.chronicle_entry_likes;
 CREATE POLICY "entry_likes_insert" ON public.chronicle_entry_likes FOR INSERT
-  WITH CHECK (auth.uid() = user_id AND public.can_view_chronicle_entry(entry_id));
+  WITH CHECK (
+    auth.uid() = user_id
+    AND public.can_view_chronicle_entry(entry_id)
+    AND NOT EXISTS (
+      SELECT 1 FROM public.chronicle_entries e
+      JOIN public.chronicles c ON c.id = e.chronicle_id
+      WHERE e.id = chronicle_entry_likes.entry_id AND c.user_id = auth.uid()
+    )
+  );
 
 DROP POLICY IF EXISTS "entry_likes_delete" ON public.chronicle_entry_likes;
 CREATE POLICY "entry_likes_delete" ON public.chronicle_entry_likes FOR DELETE

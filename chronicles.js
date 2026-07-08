@@ -516,6 +516,7 @@ function openEntryReader(entryId) {
   const entry = (chrEntries[activeChrId] || []).find(e => e.id === entryId);
   if (!entry) return;
   const chr = chronicles[activeChrId] || followedChronicles[activeChrId];
+  const isOwn = !!chronicles[activeChrId];
   const date = entry.created_at
     ? new Date(entry.created_at).toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'fr-FR', { day:'numeric', month:'long', year:'numeric' })
     : '';
@@ -527,7 +528,9 @@ function openEntryReader(entryId) {
     <div class="chr-reader-meta">${date}</div>
     <div class="chr-reader-body">${entry.content ? renderMarkdown(entry.content) : ''}</div>
     <div class="chr-reader-likes">
-      <button id="entry-like-btn" class="entry-like-btn${entry.liked_by_me ? ' liked' : ''}" onclick="toggleEntryLike('${entry.id}')" title="${t('entry_like_title')}">
+      <button id="entry-like-btn" class="entry-like-btn${entry.liked_by_me ? ' liked' : ''}"
+        ${isOwn ? 'disabled' : `onclick="toggleEntryLike('${entry.id}')"`}
+        title="${isOwn ? t('entry_like_own_disabled') : t('entry_like_title')}">
         ${HEART_SVG}
         <span class="entry-like-count">${entry.like_count || 0}</span>
       </button>
@@ -541,7 +544,7 @@ function openEntryReader(entryId) {
 
 async function toggleEntryLike(entryId) {
   const entry = (chrEntries[activeChrId] || []).find(e => e.id === entryId);
-  if (!entry || !currentUser) return;
+  if (!entry || !currentUser || chronicles[activeChrId]) return;
   const wasLiked = !!entry.liked_by_me;
   entry.liked_by_me = !wasLiked;
   entry.like_count  = Math.max(0, (entry.like_count || 0) + (wasLiked ? -1 : 1));
