@@ -14,6 +14,12 @@ let editingEntryId       = null;
 let chrState             = null;
 let entryState           = null;
 
+const HEART_SVG = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 13.6s-5.4-3.2-5.4-6.98A2.98 2.98 0 0 1 8 4.85a2.98 2.98 0 0 1 5.4 1.77c0 3.78-5.4 6.98-5.4 6.98z"/></svg>';
+
+function chrLikeBadgeHTML(count) {
+  return `<span class="chr-card-likes">${count || 0}${HEART_SVG}</span>`;
+}
+
 // ══════════════════════════════════════════════════════════════
 // CHARGEMENT
 // ══════════════════════════════════════════════════════════════
@@ -29,6 +35,7 @@ async function loadChroniclesFromDB() {
   const ids = (data || []).map(r => r.id);
   let countMap = {};
   let entryIdsByChronicle = {};
+  let likeCountByChronicle = {};
   if (ids.length) {
     const { data: entries } = await sb
       .from('chronicle_entries')
@@ -39,6 +46,20 @@ async function loadChroniclesFromDB() {
       if (!entryIdsByChronicle[e.chronicle_id]) entryIdsByChronicle[e.chronicle_id] = [];
       entryIdsByChronicle[e.chronicle_id].push(e.id);
     });
+
+    const allEntryIds = (entries || []).map(e => e.id);
+    if (allEntryIds.length) {
+      const { data: likes } = await sb
+        .from('chronicle_entry_likes')
+        .select('entry_id')
+        .in('entry_id', allEntryIds);
+      const entryToChronicle = {};
+      (entries || []).forEach(e => { entryToChronicle[e.id] = e.chronicle_id; });
+      (likes || []).forEach(l => {
+        const chrId = entryToChronicle[l.entry_id];
+        if (chrId) likeCountByChronicle[chrId] = (likeCountByChronicle[chrId] || 0) + 1;
+      });
+    }
   }
 
   const ownerIds = [...new Set((data || []).filter(r => r.user_id !== currentUser.id).map(r => r.user_id))];
@@ -51,7 +72,7 @@ async function loadChroniclesFromDB() {
   chronicles = {};
   followedChronicles = {};
   (data || []).forEach(r => {
-    const entry = { ...r, entry_count: countMap[r.id] || 0 };
+    const entry = { ...r, entry_count: countMap[r.id] || 0, like_count: likeCountByChronicle[r.id] || 0 };
     if (r.user_id === currentUser.id) {
       chronicles[r.id] = entry;
     } else {
@@ -69,6 +90,25 @@ async function loadEntriesForChronicle(chrId) {
     .order('created_at', { ascending: false });
   if (error) { console.error('Erreur chargement entrées:', error); return; }
   chrEntries[chrId] = data || [];
+
+  const entryIds = chrEntries[chrId].map(e => e.id);
+  if (entryIds.length) {
+    const { data: likes } = await sb
+      .from('chronicle_entry_likes')
+      .select('entry_id, user_id')
+      .in('entry_id', entryIds);
+    const likeCountByEntry = {};
+    const likedByMeSet = new Set();
+    (likes || []).forEach(l => {
+      likeCountByEntry[l.entry_id] = (likeCountByEntry[l.entry_id] || 0) + 1;
+      if (l.user_id === currentUser.id) likedByMeSet.add(l.entry_id);
+    });
+    chrEntries[chrId].forEach(e => {
+      e.like_count   = likeCountByEntry[e.id] || 0;
+      e.liked_by_me  = likedByMeSet.has(e.id);
+    });
+  }
+
   unreadMarkers.syncChronicleEntries(chrId, chrEntries[chrId].map(e => e.id));
 }
 
@@ -189,6 +229,7 @@ async function deleteEntryFromDB(entryId) {
 
   if (chronicles[activeChrId]) {
     chronicles[activeChrId].entry_count = Math.max(0, (chronicles[activeChrId].entry_count || 1) - 1);
+    chronicles[activeChrId].like_count  = Math.max(0, (chronicles[activeChrId].like_count || 0) - (entry?.like_count || 0));
   }
 
   renderChrDetail();
@@ -238,6 +279,8 @@ function chrCardHTML(id, c, isFollowed) {
       ${lastDate ? `<span class="chr-card-last-date">${t('chr_last_update')}${lastDate}</span>` : ''}
     </div>`;
 
+  const likesTag = chrLikeBadgeHTML(c.like_count);
+
   if (isFollowed) {
     const entryIds = (chrEntries[id] || []).map(e => e.id);
     const hasUnreadEntry = unreadMarkers.chronicleHasUnreadEntries(id, entryIds, false);
@@ -248,6 +291,7 @@ function chrCardHTML(id, c, isFollowed) {
       ${desc ? `<div class="chr-card-desc">${esc(desc)}</div>` : ''}
       ${metaHtml}
       <div class="chr-card-footer">
+        ${likesTag}
         <span class="followed-badge">${t('followed_badge')}</span>
         <span class="chr-card-owner">${t('chr_followed_owner')}${esc(c._owner_name)}</span>
       </div>
@@ -272,6 +316,7 @@ function chrCardHTML(id, c, isFollowed) {
     ${desc ? `<div class="chr-card-desc">${esc(desc)}</div>` : ''}
     ${metaHtml}
     <div class="chr-card-footer">
+      ${likesTag}
       ${visTag}
     </div>
   </div>`;
@@ -310,6 +355,7 @@ function renderChrDetail() {
     : `<span class="card-visibility private">${t('visibility_private_chr')}</span>`;
   const ownerTag = chr._owner_name
     ? `<span class="chr-detail-owner">${t('chr_followed_owner')}${esc(chr._owner_name)}</span>` : '';
+  const likesTag = `<span id="chr-detail-like-badge">${chrLikeBadgeHTML(chr.like_count)}</span>`;
 
   const entriesHtml = entries.length
     ? entries.map(e => entryRowHTML(e, isOwn, activeChrId, canEdit)).join('')
@@ -322,7 +368,7 @@ function renderChrDetail() {
       <div>
         <div class="chr-detail-title">${esc(chr.title)}</div>
         ${chr.description ? `<div class="chr-detail-desc">${esc(chr.description)}</div>` : ''}
-        <div class="chr-detail-meta">${visTag}${ownerTag}</div>
+        <div class="chr-detail-meta">${visTag}${likesTag}${ownerTag}</div>
       </div>
       ${canEdit ? `<div class="chr-detail-actions">
         <button class="btn-cancel" onclick="openChrEditor('${activeChrId}')">
@@ -478,11 +524,55 @@ function openEntryReader(entryId) {
     <h1 class="chr-reader-title">${esc(entry.title)}</h1>
     <div class="chr-reader-meta">${date}</div>
     <div class="chr-reader-body">${entry.content ? renderMarkdown(entry.content) : ''}</div>
+    <div class="chr-reader-likes">
+      <button id="entry-like-btn" class="entry-like-btn${entry.liked_by_me ? ' liked' : ''}" onclick="toggleEntryLike('${entry.id}')" title="${t('entry_like_title')}">
+        ${HEART_SVG}
+        <span class="entry-like-count">${entry.like_count || 0}</span>
+      </button>
+    </div>
   `;
   showView('entry-reader');
   if (!chronicles[activeChrId]) unreadMarkers.markEntryRead(activeChrId, entryId);
   unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
   setHash('entry', activeChrId, entryId);
+}
+
+async function toggleEntryLike(entryId) {
+  const entry = (chrEntries[activeChrId] || []).find(e => e.id === entryId);
+  if (!entry || !currentUser) return;
+  const wasLiked = !!entry.liked_by_me;
+  entry.liked_by_me = !wasLiked;
+  entry.like_count  = Math.max(0, (entry.like_count || 0) + (wasLiked ? -1 : 1));
+  updateEntryLikeUI(entry);
+  updateChronicleLikeTotal(activeChrId, wasLiked ? -1 : 1);
+
+  const { error } = wasLiked
+    ? await sb.from('chronicle_entry_likes').delete().eq('entry_id', entryId).eq('user_id', currentUser.id)
+    : await sb.from('chronicle_entry_likes').insert({ entry_id: entryId, user_id: currentUser.id });
+
+  if (error) {
+    entry.liked_by_me = wasLiked;
+    entry.like_count  = Math.max(0, (entry.like_count || 0) + (wasLiked ? 1 : -1));
+    updateEntryLikeUI(entry);
+    updateChronicleLikeTotal(activeChrId, wasLiked ? 1 : -1);
+    showToast(t('toast_like_error'));
+  }
+}
+
+function updateEntryLikeUI(entry) {
+  const btn = document.getElementById('entry-like-btn');
+  if (!btn) return;
+  btn.classList.toggle('liked', !!entry.liked_by_me);
+  const countEl = btn.querySelector('.entry-like-count');
+  if (countEl) countEl.textContent = entry.like_count || 0;
+}
+
+function updateChronicleLikeTotal(chrId, delta) {
+  const chr = chronicles[chrId] || followedChronicles[chrId];
+  if (!chr) return;
+  chr.like_count = Math.max(0, (chr.like_count || 0) + delta);
+  const badge = document.getElementById('chr-detail-like-badge');
+  if (badge) badge.innerHTML = chrLikeBadgeHTML(chr.like_count);
 }
 
 function shareEntryReaderBtn() {
