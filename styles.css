@@ -730,7 +730,7 @@ html, body {
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
 
-.card-visibility         { font-size: 10px; font-family: var(--font-mono); padding: 2px 6px; border-radius: 4px; margin-top: 6px; display: inline-block; }
+.card-visibility         { font-size: 10px; font-family: var(--font-mono); padding: 2px 6px; border-radius: 4px; display: inline-block; }
 .card-visibility.public  { background: rgba(68,170,119,0.12); color: var(--mov); border: 1px solid rgba(68,170,119,0.25); }
 .card-visibility.private { background: rgba(68,136,221,0.08); color: var(--text3); border: 1px solid var(--border); }
 
@@ -763,6 +763,8 @@ html, body {
 
 .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
 
+.card-footer { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+
 .roster-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
 .filter-label   { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); white-space: nowrap; }
 .filter-tag     { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; cursor: pointer; border: 2px solid transparent; transition: all 0.15s; opacity: 0.55; }
@@ -776,8 +778,8 @@ html, body {
 .share-code-box button { background: none; border: none; cursor: pointer; color: var(--text3); padding: 2px 4px; border-radius: 4px; transition: color 0.15s; font-size: 11px; font-family: var(--font-body); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 .share-code-box button:hover { color: var(--accent); }
 
-.followed-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-family: var(--font-mono); background: rgba(153,102,221,0.12); color: var(--sup); border: 1px solid rgba(153,102,221,0.25); padding: 2px 7px; border-radius: 4px; margin-top: 6px; }
-.card-followed-owner { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.followed-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-family: var(--font-mono); background: rgba(153,102,221,0.12); color: var(--sup); border: 1px solid rgba(153,102,221,0.25); padding: 2px 7px; border-radius: 4px; }
+.card-followed-owner { font-size: 11px; color: var(--text3); margin-left: auto; }
 
 .follow-input-wrap { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; }
 .follow-input-wrap input { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 12px; outline: none; transition: border-color 0.15s; max-width: 200px; }

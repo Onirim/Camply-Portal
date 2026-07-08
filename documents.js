@@ -228,7 +228,7 @@ function docCardHTML(id, d, isFollowed) {
         ${tagBtn}
       </div>
       <div class="doc-card-title">${esc(d.title) || 'Sans titre'}</div>
-      ${previewTxt ? `<div class="doc-card-preview">${esc(previewTxt)}</div>` : ''}
+      <div class="doc-card-preview">${esc(previewTxt)}</div>
       ${cardTags ? `<div class="card-tags">${cardTags}</div>` : ''}
       <div class="doc-card-footer">
         <span class="followed-badge">${t('followed_badge')}</span>
@@ -254,7 +254,7 @@ function docCardHTML(id, d, isFollowed) {
       </button>
     </div>
     <div class="doc-card-title">${esc(d.title) || 'Sans titre'}</div>
-    ${previewTxt ? `<div class="doc-card-preview">${esc(previewTxt)}</div>` : ''}
+    <div class="doc-card-preview">${esc(previewTxt)}</div>
     ${cardTags ? `<div class="card-tags">${cardTags}</div>` : ''}
     <div class="doc-card-footer">
       ${visTag}

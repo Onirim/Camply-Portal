@@ -943,7 +943,7 @@ body::before {
 .loading-text { font-family: 'Cinzel', serif; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); }
 
 /* Visibility toggle */
-.card-visibility { font-size: 10px; font-family: var(--font-mono); padding: 2px 7px; border-radius: 2px; margin-top: 6px; display: inline-block; }
+.card-visibility { font-size: 10px; font-family: var(--font-mono); padding: 2px 7px; border-radius: 2px; display: inline-block; }
 .card-visibility.public { background: rgba(78,203,113,0.1); color: var(--hex); border: 1px solid rgba(78,203,113,0.22); }
 .card-visibility.private { background: rgba(90,74,102,0.15); color: var(--text3); border: 1px solid var(--border); }
 
@@ -991,8 +991,8 @@ body::before {
 .share-code-box button { background: none; border: none; cursor: pointer; color: var(--text3); padding: 2px 4px; border-radius: 3px; transition: color 0.15s; font-size: 10px; font-family: 'Cinzel', serif; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 .share-code-box button:hover { color: var(--accent); }
 
-.followed-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-family: var(--font-mono); background: rgba(192,132,232,0.1); color: var(--accent); border: 1px solid rgba(192,132,232,0.22); padding: 2px 7px; border-radius: 2px; margin-top: 6px; }
-.card-followed-owner { font-size: 11px; color: var(--text3); margin-top: 4px; font-style: italic; }
+.followed-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-family: var(--font-mono); background: rgba(192,132,232,0.1); color: var(--accent); border: 1px solid rgba(192,132,232,0.22); padding: 2px 7px; border-radius: 2px; }
+.card-followed-owner { font-size: 11px; color: var(--text3); margin-left: auto; font-style: italic; }
 
 .follow-input-wrap { display: flex; gap: 8px; align-items: center; margin-bottom: 22px; }
 .follow-input-wrap input { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 3px; color: var(--text); font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 12px; outline: none; transition: border-color 0.15s; max-width: 220px; }

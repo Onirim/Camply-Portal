@@ -79,7 +79,7 @@
 .chr-card-last-date {
   font-size: 11px; color: var(--text3);
 }
-.chr-card-owner { font-size: 11px; color: var(--text3); font-style: italic; }
+.chr-card-owner { font-size: 11px; color: var(--text3); font-style: italic; margin-left: auto; }
 
 .chr-card-likes {
   display: inline-flex; align-items: center; gap: 4px;

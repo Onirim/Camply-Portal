@@ -103,9 +103,7 @@ function renderCharCardBody(c) {
   const descriptionExcerpt = rawDescription
     ? rawDescription.slice(0, maxDescriptionLength).trimEnd() + (rawDescription.length > maxDescriptionLength ? '…' : '')
     : '';
-  const descriptionHtml = descriptionExcerpt
-    ? `<div class="card-desc">${esc(descriptionExcerpt)}</div>`
-    : '';
+  const descriptionHtml = `<div class="card-desc">${esc(descriptionExcerpt)}</div>`;
 
   return `
     <div class="card-name">${esc(c.name) || '—'}</div>

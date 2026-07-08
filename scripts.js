@@ -1310,8 +1310,10 @@ function cardHTML(id, c, isFollowed = false) {
       </div>
       ${body}
       ${cardTags ? `<div class="card-tags">${cardTags}</div>` : ''}
-      <div class="followed-badge">${t('followed_badge')}</div>
-      <div class="card-followed-owner">${t('followed_owner_prefix')}${esc(c._owner_name)}</div>
+      <div class="card-footer">
+        <span class="followed-badge">${t('followed_badge')}</span>
+        <span class="card-followed-owner">${t('followed_owner_prefix')}${esc(c._owner_name)}</span>
+      </div>
     </div>`;
   }
 
@@ -1334,7 +1336,7 @@ function cardHTML(id, c, isFollowed = false) {
     </div>
     ${body}
     ${cardTags ? `<div class="card-tags">${cardTags}</div>` : ''}
-    ${visTag}
+    <div class="card-footer">${visTag}</div>
   </div>`;
 }
 

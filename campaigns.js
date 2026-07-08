@@ -295,7 +295,7 @@ function campaignCardHTML(id, c) {
       </button>
     </div>` : ''}
     <div class="campaign-card-title">${esc(c.title) || 'Sans titre'}</div>
-    ${desc ? `<div class="campaign-card-desc">${esc(desc)}</div>` : ''}
+    <div class="campaign-card-desc">${esc(desc)}</div>
     <div class="campaign-card-footer">
       <span class="campaign-count-chip"><span class="n">${memberCount}</span> ${t('campaign_member_plural')}</span>
     </div>

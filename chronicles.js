@@ -289,7 +289,7 @@ function chrCardHTML(id, c, isFollowed) {
     return `<div class="chr-card" onclick="showChrDetail('${id}')">${unreadMarkers.cardDotHTML(showUnread)}
       ${c.illustration_url ? `<img class="card-illus" src="${esc(c.illustration_url)}" style="object-position:center ${c.illustration_position||0}%" onclick="event.stopPropagation();openLightbox('${esc(c.illustration_url)}')" alt="">` : ''}
       <div class="chr-card-title">${esc(c.title) || 'Sans titre'}</div>
-      ${desc ? `<div class="chr-card-desc">${esc(desc)}</div>` : ''}
+      <div class="chr-card-desc">${esc(desc)}</div>
       ${metaHtml}
       <div class="chr-card-footer">
         <span class="followed-badge">${t('followed_badge')}</span>
@@ -314,7 +314,7 @@ function chrCardHTML(id, c, isFollowed) {
       </button>
     </div>
     <div class="chr-card-title">${esc(c.title) || 'Sans titre'}</div>
-    ${desc ? `<div class="chr-card-desc">${esc(desc)}</div>` : ''}
+    <div class="chr-card-desc">${esc(desc)}</div>
     ${metaHtml}
     <div class="chr-card-footer">
       ${visTag}
