@@ -264,6 +264,7 @@ html, body {
   cursor: pointer; transition: all 0.15s;
   position: relative; overflow: hidden;
   font-size: 12px;
+  display: flex; flex-direction: column;
 }
 .char-card::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -311,6 +312,7 @@ html, body {
     font-size: 13px;
     color: var(--text3);
     line-height: 1.6;
+    flex: 1;
 }
 
 /* ══════════════════ EDITOR VIEW ══════════════════ */

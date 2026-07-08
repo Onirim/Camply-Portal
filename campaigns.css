@@ -47,6 +47,7 @@
 }
 .campaign-card-desc {
   font-size: 13px; color: var(--text3); line-height: 1.6;
+  flex: 1;
 }
 .campaign-card-footer {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px;
