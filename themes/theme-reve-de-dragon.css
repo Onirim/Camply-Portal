@@ -1,0 +1,1077 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Share+Tech+Mono&display=swap');
+
+/* ══════════════════════════════════════════════════════════════
+   RÊVE DE DRAGON — Thème "Onirique Fantaisie" (Denis Gerfaud)
+   Palette des couvertures peintes : nuit bleu-encre, émeraude du
+   dragon, or des bougies et enluminures, rouge des tentures,
+   violet mystique des fées. Ambiance douce, peinte, un peu floue —
+   comme un rêve dont on se souvient à moitié.
+   ══════════════════════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════════════════════════
+   VARIABLES — Palette du Rêve
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  /* Fonds — nuit profonde, bleu d'encre onirique */
+  --bg:  #080b14;
+  --bg2: #0e1422;
+  --bg3: #141c30;
+  --bg4: #1b2740;
+
+  /* Bordures — brume nocturne */
+  --border:  #26314d;
+  --border2: #3a4a72;
+
+  /* Textes — parchemin enluminé */
+  --text:  #ece4d0;   /* ivoire chaud des pages peintes */
+  --text2: #a89e84;   /* parchemin atténué */
+  --text3: #5f6580;   /* brume bleu-gris discrète */
+
+  /* Accent — émeraude du dragon */
+  --accent:  #4fae8c;
+  --accent2: #3a8069;
+
+  /* Couleurs fonctionnelles — tons des couvertures */
+  --offc: #cf5f42;   /* rouge tenture / souffle du dragon */
+  --offd: #d9a24e;   /* or des bougies et enluminures */
+  --def:  #4d7ec4;   /* bleu nocturne du chevalier */
+  --mov:  #5aab6a;   /* vert feuillage de la forêt onirique */
+  --sup:  #9b7ec9;   /* violet mystique — ailes de fée */
+
+  /* Alias jeu */
+  --energy-color:   #cf5f42;
+  --recovery-color: #d9a24e;
+  --vigor-color:    #5aab6a;
+  --rank-color:     #4fae8c;
+
+  /* Typographies — manuscrit peint, graisses renforcées pour
+     rester lisible à l'écran (les tracés fins des couvertures
+     originales passent mal en petite taille sur un moniteur)  */
+  /* Fraunces        → grands titres, empattements peints, très lisible en gras */
+  /* EB Garamond     → corps de texte, chroniques (graisse 500 par défaut)      */
+  /* Share Tech Mono → valeurs, codes, chiffres                                 */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body:    'EB Garamond', Georgia, serif;
+  --font-mono:    'Share Tech Mono', 'Courier New', monospace;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BASE — Ciel nocturne onirique, poussière d'étoiles et brumes
+   ══════════════════════════════════════════════════════════════ */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.65;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    /* poussière d'étoiles / rêve scintillant */
+    radial-gradient(1px 1px at 8% 12%, rgba(236,228,208,0.55) 0%, transparent 100%),
+    radial-gradient(1px 1px at 22% 32%, rgba(217,162,78,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 38% 6%, rgba(236,228,208,0.7) 0%, transparent 100%),
+    radial-gradient(1px 1px at 52% 20%, rgba(217,162,78,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 66% 48%, rgba(236,228,208,0.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 78% 10%, rgba(217,162,78,0.65) 0%, transparent 100%),
+    radial-gradient(1px 1px at 86% 34%, rgba(236,228,208,0.5) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 92% 62%, rgba(217,162,78,0.45) 0%, transparent 100%),
+    radial-gradient(1px 1px at 14% 72%, rgba(236,228,208,0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 84%, rgba(217,162,78,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 46% 92%, rgba(236,228,208,0.4) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 76%, rgba(217,162,78,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 96% 86%, rgba(236,228,208,0.3) 0%, transparent 100%),
+    /* lueur de la lune — coin supérieur droit */
+    radial-gradient(ellipse 480px 380px at 90% 4%, rgba(217,162,78,0.14), transparent 70%),
+    /* brume émeraude du dragon endormi — coin inférieur gauche */
+    radial-gradient(ellipse 640px 440px at 4% 102%, rgba(79,174,140,0.12), transparent 65%),
+    /* brume mauve de la fée — centre du rêve */
+    radial-gradient(ellipse 780px 520px at 55% 42%, rgba(155,126,201,0.07), transparent 70%),
+    /* horizon nocturne */
+    linear-gradient(175deg, #05070d 0%, #090e19 40%, #0a1120 70%, #070a12 100%);
+}
+
+/* Le contenu passe devant la brume onirique */
+#app, #topbar,
+#view-list, #view-editor, #view-shared,
+#preview-panel, #editor-form,
+#auth-screen, #loading-overlay,
+#view-chronicles, #view-chr-detail, #view-chr-editor,
+#view-entry-editor, #view-entry-reader,
+#view-documents, #view-doc-editor, #view-doc-reader,
+#view-campaigns, #view-campaign-detail, #view-campaign-editor,
+#view-rulebook {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 6px;
+  border-left: 1px solid rgba(79,174,140,0.3);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent2); }
+
+/* ── Liens ── */
+a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+a:hover { color: #6cc4a2; }
+.chr-reader-body a,
+.doc-reader-body a {
+  color: var(--accent);
+  border-bottom: 1px solid rgba(79,174,140,0.35);
+  transition: color 0.2s, border-color 0.2s;
+}
+.chr-reader-body a:hover,
+.doc-reader-body a:hover { color: #6cc4a2; border-bottom-color: #6cc4a2; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TOPBAR — Le seuil du rêve
+   ══════════════════════════════════════════════════════════════ */
+#topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  box-shadow:
+    0 1px 0 rgba(217,162,78,0.28),
+    0 4px 22px rgba(0,0,0,0.6);
+  position: relative;
+}
+#topbar::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(79,174,140,0.5) 20%, rgba(217,162,78,0.5) 80%, transparent 100%);
+  pointer-events: none;
+}
+
+#topbar .logo {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  text-shadow: 0 0 18px rgba(79,174,140,0.35), 0 1px 0 rgba(0,0,0,0.8);
+}
+#topbar .logo span {
+  color: var(--text3);
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+}
+
+#topbar nav button {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text3);
+  transition: all 0.2s;
+  position: relative;
+}
+#topbar nav button::after {
+  content: '';
+  position: absolute;
+  bottom: 2px; left: 12px; right: 12px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.25s ease;
+}
+#topbar nav button:hover { color: var(--text2); }
+#topbar nav button:hover::after { transform: scaleX(0.6); }
+#topbar nav button.active { color: var(--accent); }
+#topbar nav button.active::after { transform: scaleX(1); }
+
+#topbar .share-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+#topbar .share-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(79,174,140,0.08);
+  box-shadow: 0 0 10px rgba(79,174,140,0.15);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   SÉPARATEURS DE SECTION
+   ══════════════════════════════════════════════════════════════ */
+.form-section-title,
+.preview-section-title,
+.campaign-section-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent2);
+}
+.form-section-title::after,
+.preview-section-title::after,
+.campaign-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border2) 0%, var(--border) 60%, transparent 100%);
+}
+.form-section {
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.form-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 20px; right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217,162,78,0.12), transparent);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ROSTER — Le Livre des Songes (liste personnages)
+   ══════════════════════════════════════════════════════════════ */
+.list-header h1 {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-shadow: 0 0 30px rgba(79,174,140,0.14);
+}
+.list-header h1 span { color: var(--accent); }
+.list-header .count {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text3);
+}
+
+.char-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  position: relative;
+  transition: all 0.25s;
+}
+.char-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.char-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-3px);
+  box-shadow:
+    0 10px 32px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(79,174,140,0.12),
+    inset 0 0 24px rgba(79,174,140,0.03);
+}
+.char-card:hover::before { opacity: 1; }
+
+.char-card .card-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.char-card .card-sub {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text3);
+}
+.char-card .card-rank {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  background: rgba(79,174,140,0.1);
+  color: var(--accent);
+  border: 1px solid rgba(79,174,140,0.28);
+}
+
+.card-attr .val { font-family: var(--font-mono); font-weight: 700; }
+.card-attr .lbl {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.card-attr.e .val { color: var(--energy-color); }
+.card-attr.r .val { color: var(--recovery-color); }
+.card-attr.v .val { color: var(--vigor-color); }
+
+.card-power-tag {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.card-desc {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.55;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BOUTON PRINCIPAL — Rosée dorée
+   ══════════════════════════════════════════════════════════════ */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
+  color: #06110c;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(79,174,140,0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.12) inset,
+    0 4px 16px rgba(79,174,140,0.18);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.16) inset,
+    0 6px 22px rgba(79,174,140,0.32);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ÉDITEUR — Formulaire de la fiche
+   ══════════════════════════════════════════════════════════════ */
+#editor-form { background: var(--bg2); border-right: 1px solid var(--border); }
+
+.field label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.field input,
+.field select,
+.field textarea {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--accent2);
+  box-shadow: 0 0 0 2px rgba(79,174,140,0.12);
+  outline: none;
+}
+.field select option { background: var(--bg3); }
+
+.pts-bar { background: var(--bg3); border: 1px solid var(--border); }
+.pts-bar .pts-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.pts-bar .pts-value { font-family: var(--font-mono); }
+.pts-bar .pts-value.ok { color: var(--mov); }
+.pts-bar .pts-value.over { color: var(--offc); }
+
+.attr-ctrl button,
+.apt-ctrl button,
+.xp-ctrl button {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  transition: all 0.15s;
+}
+.attr-ctrl button:hover,
+.apt-ctrl button:hover,
+.xp-ctrl button:hover {
+  border-color: var(--accent2);
+  color: var(--accent);
+  background: rgba(79,174,140,0.08);
+}
+.attr-val.e { color: var(--energy-color); }
+.attr-val.r { color: var(--recovery-color); }
+.attr-val.v { color: var(--vigor-color); }
+.attr-row .attr-name { font-family: var(--font-body); font-size: 12px; color: var(--text2); }
+
+.power-entry {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--border2);
+}
+.power-entry-header input,
+.power-entry-footer select {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-body);
+}
+.power-entry-header input:focus,
+.power-entry-footer select:focus { border-color: var(--accent2); }
+.power-desc-textarea {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-body);
+}
+.power-desc-textarea:focus { border-color: var(--accent2); }
+
+.rm-btn:hover { color: var(--offc); }
+
+.add-btn {
+  border: 1px dashed var(--border);
+  color: var(--text3);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.add-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+.apt-row .apt-name { font-family: var(--font-body); font-size: 12px; color: var(--text2); }
+.apt-val { color: var(--sup); }
+.apt-val.zero { color: var(--text3); }
+.apt-pts-bar { background: var(--bg3); border: 1px solid var(--border); }
+.apt-pts-bar .lbl {
+  font-family: var(--font-body); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3);
+}
+.apt-pts-bar .val.ok { color: var(--mov); }
+.apt-pts-bar .val.over { color: var(--offc); }
+
+.trait-row input.trait-name {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--font-body); font-size: 13px;
+}
+.trait-row input.trait-name:focus { border-color: var(--accent2); }
+.trait-bonus-val { color: var(--accent); }
+
+.compl-entry { background: var(--bg3); border: 1px solid var(--border); }
+.compl-entry-header input,
+.compl-entry textarea {
+  background: var(--bg4); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--font-body);
+}
+.compl-entry-header input:focus,
+.compl-entry textarea:focus { border-color: var(--accent2); }
+.compl-chip {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 3px solid rgba(217,162,78,0.4);
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text2);
+}
+.compl-detail { font-size: 12px; color: var(--text3); font-style: italic; }
+
+.background-field textarea {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--font-body);
+  font-size: 14px; line-height: 1.7;
+}
+.background-field textarea:focus { border-color: var(--accent2); }
+.background-preview {
+  font-family: var(--font-body); font-size: 14px; color: var(--text2);
+  line-height: 1.75; white-space: pre-wrap; word-break: break-word;
+}
+
+.xp-field { background: var(--bg3); border: 1px solid var(--border); }
+.xp-field .xp-label {
+  font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--text2);
+}
+.xp-field .xp-detail { font-family: var(--font-body); font-style: italic; font-size: 11px; color: var(--text3); }
+.xp-val { color: var(--accent); }
+
+.btn-save {
+  background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
+  color: #06110c;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: 1px solid rgba(79,174,140,0.5);
+}
+.btn-save:hover { box-shadow: 0 4px 18px rgba(79,174,140,0.3); }
+.btn-cancel {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+}
+.btn-cancel:hover { border-color: var(--border2); color: var(--text); }
+
+.form-actions {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -1px 0 rgba(217,162,78,0.08);
+}
+
+.share-code-box { background: var(--bg3); border: 1px solid var(--border); }
+.share-code-box .code { font-family: var(--font-mono); color: var(--accent); letter-spacing: 0.14em; }
+
+.btn-danger-outline {
+  font-family: var(--font-body); font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   PREVIEW — La fiche telle qu'un rêve la révèle
+   ══════════════════════════════════════════════════════════════ */
+#preview-panel { background: transparent; }
+
+.preview-name {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  text-shadow: 0 0 40px rgba(79,174,140,0.16);
+}
+.preview-sub {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text3);
+}
+.preview-rank-badge {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  background: rgba(79,174,140,0.1);
+  color: var(--accent);
+  border: 1px solid rgba(79,174,140,0.3);
+}
+
+.preview-header { border-bottom: 1px solid var(--border); position: relative; }
+.preview-header::after {
+  content: '✧';
+  position: absolute;
+  bottom: -9px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--bg);
+  padding: 0 10px;
+  text-shadow: 0 0 8px rgba(79,174,140,0.5);
+}
+
+.preview-attr { background: var(--bg2); border: 1px solid var(--border); }
+.preview-attr.e { border-left: 3px solid var(--energy-color); }
+.preview-attr.r { border-left: 3px solid var(--recovery-color); }
+.preview-attr.v { border-left: 3px solid var(--vigor-color); }
+.preview-attr .val { font-family: var(--font-mono); }
+.preview-attr.e .val { color: var(--energy-color); }
+.preview-attr.r .val { color: var(--recovery-color); }
+.preview-attr.v .val { color: var(--vigor-color); }
+.preview-attr .lbl {
+  font-family: var(--font-body); font-size: 9px; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3);
+}
+
+.preview-power { background: var(--bg2); border: 1px solid var(--border); transition: border-color 0.15s; }
+.preview-power:hover { border-color: var(--border2); }
+.pow-badge { font-family: var(--font-body); font-size: 10px; font-weight: 700; letter-spacing: 0.04em; }
+.pow-badge.offc { background: rgba(207,95,66,0.15); color: var(--offc); border: 1px solid rgba(207,95,66,0.3); }
+.pow-badge.offd { background: rgba(217,162,78,0.15); color: var(--offd); border: 1px solid rgba(217,162,78,0.3); }
+.pow-badge.def  { background: rgba(77,126,196,0.15); color: var(--def);  border: 1px solid rgba(77,126,196,0.3); }
+.pow-badge.mov  { background: rgba(90,171,106,0.15); color: var(--mov);  border: 1px solid rgba(90,171,106,0.3); }
+.pow-badge.sup  { background: rgba(155,126,201,0.15); color: var(--sup); border: 1px solid rgba(155,126,201,0.3); }
+.pow-name { font-family: var(--font-body); font-size: 14px; color: var(--text); }
+.pow-desc { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text2); }
+.pow-mod-tag {
+  background: rgba(217,162,78,0.12); color: var(--offd);
+  border: 1px solid rgba(217,162,78,0.22);
+}
+
+.apt-preview-row { background: var(--bg2); border: 1px solid var(--border); }
+.apt-preview-row .name { font-family: var(--font-body); font-size: 12px; color: var(--text2); }
+.apt-preview-row .rank-num { color: var(--sup); }
+
+.trait-chip { background: var(--bg2); border: 1px solid var(--border); font-family: var(--font-body); color: var(--text2); }
+.trait-chip .bonus { color: var(--accent); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   VUE PARTAGÉE
+   ══════════════════════════════════════════════════════════════ */
+.shared-banner {
+  background: rgba(79,174,140,0.06);
+  border: 1px solid rgba(79,174,140,0.2);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text3);
+}
+.shared-banner svg { color: var(--accent); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   CHRONIQUES — Les Récits du Sommeil
+   ══════════════════════════════════════════════════════════════ */
+.chr-card { background: var(--bg2); border: 1px solid var(--border); }
+.chr-card::before { background: linear-gradient(90deg, transparent, var(--sup), transparent); }
+.chr-card:hover { border-color: var(--border2); box-shadow: 0 8px 26px rgba(0,0,0,0.5); }
+.chr-card-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); }
+.chr-card-desc { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
+.chr-card-entry-count { font-family: var(--font-mono); font-size: 10px; color: var(--accent); font-weight: 700; }
+.chr-card-last-date { font-family: var(--font-body); font-size: 11px; color: var(--text3); }
+
+.chr-detail-title { font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--text); }
+.chr-detail-desc { font-family: var(--font-body); font-style: italic; font-size: 13px; color: var(--text3); }
+
+.entry-row { background: var(--bg2); border: 1px solid var(--border); }
+.entry-row:hover { border-color: var(--border2); transform: translateX(4px); }
+.entry-row-title { font-family: var(--font-body); font-size: 14px; font-weight: 600; color: var(--text); }
+.entry-row-date { font-family: var(--font-mono); font-size: 9px; color: var(--text3); }
+.entry-row-preview { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
+
+.chr-reader-breadcrumb {
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text3); cursor: pointer;
+  transition: color 0.15s;
+}
+.chr-reader-breadcrumb:hover { color: var(--sup); }
+
+.chr-reader-title { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--text); }
+.chr-reader-meta { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
+.chr-reader-body { font-family: var(--font-body); font-size: 16px; color: var(--text2); line-height: 1.85; }
+.chr-reader-body h1, .chr-reader-body h2, .chr-reader-body h3 {
+  font-family: var(--font-display); font-weight: 700; color: var(--text);
+}
+.chr-reader-body h1 { font-size: 25px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.chr-reader-body h2 { font-size: 19px; }
+.chr-reader-body h3 { font-size: 14px; color: var(--text3); font-family: var(--font-body); font-style: italic; }
+.chr-reader-body strong { color: var(--text); font-weight: 700; }
+.chr-reader-body em { color: var(--accent2); font-style: italic; }
+.chr-reader-body blockquote {
+  border-left: 2px solid var(--sup);
+  background: rgba(155,126,201,0.06);
+  font-style: italic; color: var(--text2);
+}
+.chr-reader-body code {
+  font-family: var(--font-mono); font-size: 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--accent);
+}
+.chr-reader-body pre { background: var(--bg3); border: 1px solid var(--border); }
+.chr-reader-body hr { border: none; position: relative; margin: 32px 0; height: 20px; overflow: visible; }
+.chr-reader-body hr::before {
+  content: '✧ ☾ ✧';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  font-size: 12px; color: var(--accent2); letter-spacing: 0.3em;
+  background: transparent; padding: 0 12px; white-space: nowrap;
+  text-shadow: 0 0 8px rgba(79,174,140,0.4);
+}
+
+#chr-editor-form { background: var(--bg2); border-right: 1px solid var(--border); }
+.chr-form-actions { background: var(--bg2); border-top: 1px solid var(--border); }
+.chr-share-code-box { background: var(--bg3); border: 1px solid var(--border); }
+.chr-share-code-box .code { font-family: var(--font-mono); color: var(--sup); letter-spacing: 0.14em; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   DOCUMENTS — Les Grimoires du Rêveur
+   ══════════════════════════════════════════════════════════════ */
+.doc-card { background: var(--bg2); border: 1px solid var(--border); }
+.doc-card::before { background: linear-gradient(90deg, transparent, var(--def), transparent); }
+.doc-card:hover { border-color: var(--border2); box-shadow: 0 8px 26px rgba(0,0,0,0.5); }
+.doc-card-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); }
+.doc-card-preview { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
+
+.doc-reader-title { font-family: var(--font-display); font-size: 36px; font-weight: 700; color: var(--text); }
+.doc-reader-meta { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
+.doc-reader-body { font-family: var(--font-body); font-size: 16px; color: var(--text2); line-height: 1.9; }
+.doc-reader-body h1, .doc-reader-body h2, .doc-reader-body h3 {
+  font-family: var(--font-display); font-weight: 700; color: var(--text);
+}
+.doc-reader-body h1 { font-size: 29px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.doc-reader-body h2 { font-size: 22px; }
+.doc-reader-body h3 { font-size: 15px; color: var(--text3); font-family: var(--font-body); font-style: italic; }
+.doc-reader-body strong { color: var(--text); font-weight: 700; }
+.doc-reader-body em { color: var(--accent2); font-style: italic; }
+.doc-reader-body blockquote {
+  border-left: 2px solid var(--def); background: rgba(77,126,196,0.06);
+  font-style: italic; color: var(--text2);
+}
+.doc-reader-body code {
+  font-family: var(--font-mono); font-size: 13px;
+  background: var(--bg3); border: 1px solid var(--border); color: var(--def);
+}
+.doc-reader-body pre { background: var(--bg3); border: 1px solid var(--border); }
+.doc-reader-body hr { border: none; position: relative; margin: 36px 0; height: 20px; overflow: visible; }
+.doc-reader-body hr::before {
+  content: '✧ ☾ ✧';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  font-size: 12px; color: var(--accent2); letter-spacing: 0.3em;
+  background: transparent; padding: 0 12px; white-space: nowrap;
+}
+.doc-reader-body table { width: 100%; border-collapse: collapse; }
+.doc-reader-body thead { background: rgba(77,126,196,0.08); border-bottom: 1px solid var(--border2); }
+.doc-reader-body th {
+  font-family: var(--font-body); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--def);
+}
+.doc-reader-body td { color: var(--text2); border-bottom: 1px solid var(--border); }
+.doc-reader-body tbody tr:hover td { background: rgba(77,126,196,0.04); }
+.doc-reader-body img { border: 1px solid var(--border); }
+
+#doc-editor-form { background: var(--bg2); border-right: 1px solid var(--border); }
+.doc-title-field input {
+  border-bottom: 2px solid var(--border);
+  font-family: var(--font-display); font-size: 22px; font-weight: 700;
+  color: var(--text); background: transparent;
+}
+.doc-title-field input:focus { border-bottom-color: var(--def); }
+.doc-form-actions { background: var(--bg2); border-top: 1px solid var(--border); }
+.doc-content-field textarea {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
+}
+.doc-content-field textarea:focus { border-color: var(--def); }
+.doc-share-code-box { background: var(--bg3); border: 1px solid var(--border); }
+.doc-share-code-box .code { font-family: var(--font-mono); color: var(--def); letter-spacing: 0.14em; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   CAMPAGNES — Les Grandes Épopées Oniriques
+   ══════════════════════════════════════════════════════════════ */
+.campaign-card { background: var(--bg2); border: 1px solid var(--border); }
+.universe-card { background: var(--bg2); border: 1px solid var(--border); }
+.campaign-card::before { background: linear-gradient(90deg, var(--accent), var(--sup)); height: 2px; }
+.campaign-card:hover { border-color: var(--border2); box-shadow: 0 8px 26px rgba(0,0,0,0.5); }
+.campaign-card-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); }
+.campaign-card-desc { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
+.campaign-detail-title { font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--text); }
+.campaign-selectable-item { background: var(--bg2); border: 1px solid var(--border); }
+.campaign-selectable-item:hover { border-color: var(--border2); }
+.campaign-selectable-item.selected { border-color: var(--accent); background: rgba(79,174,140,0.06); }
+.campaign-selectable-item.selected .campaign-selectable-check { background: var(--accent); border-color: var(--accent); }
+.campaign-selectable-name { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--text); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   RÈGLES DU JEU — Le Grand Codex du Rêveur
+   ══════════════════════════════════════════════════════════════ */
+.rulebook-toc { background: var(--bg2); border-right: 1px solid var(--border); }
+.rulebook-toc-title {
+  font-family: var(--font-body); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent);
+  text-shadow: 0 0 10px rgba(79,174,140,0.3);
+}
+.rulebook-toc-search input {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text2); font-family: var(--font-body);
+}
+.rulebook-toc-search input:focus { border-color: var(--accent2); }
+.rulebook-toc-link { font-family: var(--font-body); font-size: 13px; color: var(--text3); }
+.rulebook-toc-link[data-level="1"] {
+  font-family: var(--font-body); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2);
+}
+.rulebook-toc-link:hover { color: var(--text2); background: rgba(79,174,140,0.05); }
+.rulebook-toc-link.active { color: var(--accent); border-left-color: var(--accent); background: rgba(79,174,140,0.08); }
+
+.rulebook-content { background: transparent; }
+.rulebook-body { font-family: var(--font-body); font-size: 15px; color: var(--text2); line-height: 1.9; }
+.rulebook-body h1 {
+  font-family: var(--font-display); font-size: 29px; font-weight: 700; color: var(--text);
+}
+.rulebook-body h1::after { background: linear-gradient(90deg, var(--accent), var(--border2), transparent); }
+.rulebook-body h1::before { content: '✧'; color: var(--accent); background: transparent; }
+.rulebook-body h2 { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--text); }
+.rulebook-body h2::before { background: linear-gradient(180deg, var(--accent), var(--border2)); }
+.rulebook-body h3 {
+  font-family: var(--font-body); font-style: italic; font-size: 13px; font-weight: 600;
+  color: var(--text3); border-left: 1px solid var(--border2);
+}
+.rulebook-body strong { color: var(--text); font-weight: 700; }
+.rulebook-body em { color: var(--accent2); font-style: italic; }
+.rulebook-body blockquote {
+  border-left: 2px solid var(--accent); background: rgba(79,174,140,0.04);
+  font-style: italic; color: var(--text2);
+}
+.rulebook-body blockquote::before { color: var(--accent); }
+.rulebook-body hr::before { content: '✧ ☾ ✧'; color: var(--accent2); opacity: 0.7; }
+.rulebook-body code {
+  font-family: var(--font-mono); background: var(--bg3); border: 1px solid var(--border); color: var(--accent);
+}
+.rulebook-body pre { background: var(--bg3); border: 1px solid var(--border); }
+.rulebook-body th {
+  font-family: var(--font-body); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
+}
+.rulebook-body td { font-family: var(--font-body); border-bottom: 1px solid var(--border); color: var(--text2); }
+.rulebook-body tbody tr:hover td { background: rgba(79,174,140,0.03); }
+.rulebook-body ul li::before { content: '›'; color: var(--accent); }
+.rulebook-body ol li::before { background: rgba(79,174,140,0.1); border: 1px solid rgba(79,174,140,0.25); color: var(--accent); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TAGS
+   ══════════════════════════════════════════════════════════════ */
+.tags-input-wrap { background: var(--bg3); border: 1px solid var(--border); }
+.tags-input-wrap:focus-within { border-color: var(--accent2); }
+.tags-input-wrap input { font-family: var(--font-body); font-size: 13px; color: var(--text); background: none; }
+.tags-autocomplete { background: var(--bg2); border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+.tags-autocomplete-item { font-family: var(--font-body); font-size: 13px; color: var(--text2); }
+.tags-autocomplete-item:hover, .tags-autocomplete-item.active { background: var(--bg3); color: var(--text); }
+.filter-label {
+  font-family: var(--font-body); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   BADGES & VISIBILITÉ
+   ══════════════════════════════════════════════════════════════ */
+.card-visibility.public {
+  background: rgba(90,171,106,0.12); color: var(--mov);
+  border: 1px solid rgba(90,171,106,0.25);
+  font-family: var(--font-body); font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+}
+.card-visibility.private {
+  background: rgba(77,126,196,0.08); color: var(--text3);
+  border: 1px solid var(--border);
+  font-family: var(--font-body); font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+}
+.followed-badge {
+  background: rgba(155,126,201,0.12); color: var(--sup);
+  border: 1px solid rgba(155,126,201,0.25);
+  font-family: var(--font-body); font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+}
+.card-followed-owner { font-family: var(--font-body); font-style: italic; font-size: 11px; color: var(--text3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   AUTH SCREEN — Le Seuil du Sommeil
+   ══════════════════════════════════════════════════════════════ */
+#auth-screen { background: transparent; }
+.auth-box {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  box-shadow:
+    0 0 0 1px rgba(79,174,140,0.12),
+    0 32px 80px rgba(0,0,0,0.75),
+    inset 0 0 0 1px rgba(217,162,78,0.05);
+  position: relative;
+}
+.auth-box::before {
+  content: '';
+  position: absolute;
+  top: 10px; left: 10px; right: 10px; bottom: 10px;
+  border: 1px solid rgba(217,162,78,0.12);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.auth-logo {
+  font-family: var(--font-display);
+  font-size: 26px; font-weight: 700; letter-spacing: 0.03em;
+  color: var(--accent); text-align: center;
+  text-shadow: 0 0 30px rgba(79,174,140,0.35);
+}
+.auth-logo span { font-family: var(--font-body); font-style: italic; color: var(--text3); font-size: 16px; }
+.auth-tagline { font-family: var(--font-body); font-style: italic; font-size: 13px; color: var(--text3); text-align: center; }
+.auth-tagline::before {
+  content: '✧ ☾ ✧';
+  display: block; font-style: normal; font-family: var(--font-body);
+  color: var(--accent2); font-size: 11px; letter-spacing: 0.3em;
+  margin-bottom: 10px; opacity: 0.7;
+}
+.discord-btn { font-family: var(--font-body); font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   LOADING OVERLAY
+   ══════════════════════════════════════════════════════════════ */
+#loading-overlay { background: var(--bg); }
+.spinner { border-color: var(--border); border-top-color: var(--accent); }
+.loading-text {
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--text3);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   MENU UTILISATEUR
+   ══════════════════════════════════════════════════════════════ */
+.user-btn {
+  background: var(--bg3); border: 1px solid var(--border);
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.04em; color: var(--text2);
+}
+.user-btn:hover { border-color: var(--border2); color: var(--text); }
+.user-btn .avatar {
+  background: linear-gradient(135deg, var(--accent2), var(--accent)); color: #06110c;
+  font-family: var(--font-body); font-weight: 700;
+}
+.user-dropdown { background: var(--bg2); border: 1px solid var(--border); box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
+.user-dropdown-header { border-bottom: 1px solid var(--border); }
+.user-dropdown-header .uname { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--text); }
+.user-dropdown-header .uemail { font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
+.user-dropdown-item { font-family: var(--font-body); font-size: 13px; color: var(--text2); }
+.user-dropdown-item:hover { background: var(--bg3); color: var(--text); }
+.user-dropdown-item.danger:hover { color: var(--offc); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   TOAST & INDICATEUR DE SAUVEGARDE
+   ══════════════════════════════════════════════════════════════ */
+#toast {
+  background: var(--bg3); border: 1px solid var(--border2);
+  font-family: var(--font-body); font-size: 13px; color: var(--text);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+}
+.save-indicator { font-family: var(--font-mono); font-size: 11px; }
+.save-indicator.saving { color: var(--accent); }
+.save-indicator.saved  { color: var(--mov); }
+.save-indicator.error  { color: var(--offc); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   LIGHTBOX
+   ══════════════════════════════════════════════════════════════ */
+#lightbox { background: rgba(5,7,10,0.94); }
+#lightbox-close { background: rgba(79,174,140,0.1); border: 1px solid rgba(79,174,140,0.2); color: var(--text2); }
+#lightbox-close:hover { background: rgba(79,174,140,0.2); color: var(--accent); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   ICÔNES BOUTONS
+   ══════════════════════════════════════════════════════════════ */
+.icon-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); }
+.icon-btn:hover { border-color: var(--border2); color: var(--text); }
+.icon-btn.danger:hover { border-color: var(--offc); color: var(--offc); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   ILLUSTRATIONS
+   ══════════════════════════════════════════════════════════════ */
+.illus-upload-zone { border: 2px dashed var(--border2); background: var(--bg3); }
+.illus-upload-zone:hover { border-color: var(--accent2); }
+.illus-upload-zone.has-image { border-style: solid; border-color: var(--border); }
+.illus-upload-placeholder { color: var(--text3); font-family: var(--font-body); font-style: italic; font-size: 12px; }
+.illus-overlay-btn {
+  background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
+  font-family: var(--font-body); font-size: 11px; font-weight: 600;
+}
+.illus-overlay-btn:hover { border-color: var(--accent2); color: var(--accent); }
+.illus-overlay-btn.danger:hover { border-color: var(--offc); color: var(--offc); }
+.preview-illus, .card-illus { border: 1px solid var(--border); }
+.illus-slider-wrap label {
+  font-family: var(--font-body); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   TRANSFERT — Le Passage des Songes
+   ══════════════════════════════════════════════════════════════ */
+#transfer-modal-panel {
+  background: var(--bg2); border: 1px solid var(--border2);
+  box-shadow: 0 0 0 1px rgba(79,174,140,0.08), 0 32px 80px rgba(0,0,0,0.8);
+}
+.transfer-title {
+  font-family: var(--font-body); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.06em; color: var(--accent);
+}
+.transfer-desc { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
+.transfer-section-label {
+  font-family: var(--font-body); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3);
+}
+.transfer-type-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); }
+.transfer-type-btn:hover { border-color: var(--border2); color: var(--text); }
+.transfer-type-btn.active { border-color: var(--tcolor, var(--accent)); }
+.transfer-type-label { font-family: var(--font-body); font-size: 10px; font-weight: 600; letter-spacing: 0.04em; }
+.transfer-code-input {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--font-mono); font-size: 16px; letter-spacing: 0.2em;
+}
+.transfer-code-input:focus { border-color: var(--accent2); }
+.transfer-username-wrap { background: var(--bg3); border: 1px solid var(--border); }
+.transfer-username-wrap:focus-within { border-color: var(--accent2); }
+.transfer-username-input { font-family: var(--font-body); font-size: 14px; color: var(--text); }
+.transfer-confirm-btn {
+  background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
+  color: #06110c;
+  font-family: var(--font-body); font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+  border: 1px solid rgba(79,174,140,0.5);
+}
+.transfer-confirm-btn:not(:disabled):hover { box-shadow: 0 4px 18px rgba(79,174,140,0.3); }
+
+
+/* ══════════════════════════════════════════════════════════════
+   ÉTATS VIDES
+   ══════════════════════════════════════════════════════════════ */
+.empty-state h2,
+#chr-empty-state h2,
+#doc-empty-state h2,
+#campaign-empty-state h2 {
+  font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--text2);
+}
+.empty-state p,
+#chr-empty-state p {
+  font-family: var(--font-body); font-style: italic; font-size: 13px; color: var(--text3);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   SÉLECTEUR DE LANGUE
+   ══════════════════════════════════════════════════════════════ */
+.lang-select {
+  background: var(--bg3) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text2) !important;
+  font-family: var(--font-body) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+.lang-select:hover { border-color: var(--border2) !important; color: var(--text) !important; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — rétablit le scroll de la page sur smartphone
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  html, body { overflow: auto; height: auto; }
+}
