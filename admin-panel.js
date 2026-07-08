@@ -402,11 +402,19 @@ const adminPanel = {
       sb.storage.from('character-illustrations').remove(charPaths)
         .catch(e => console.warn('Nettoyage storage character-illustrations:', e));
     }
+    const mapPaths = [...new Set((illustrationUrls || [])
+      .map(u => _extractStoragePath(u, 'map-images'))
+      .filter(Boolean))];
+    if (mapPaths.length) {
+      sb.storage.from('map-images').remove(mapPaths)
+        .catch(e => console.warn('Nettoyage storage map-images:', e));
+    }
+    // Filet de sécurité : rattrape les fichiers de carte non référencés en base.
     sb.storage.from('map-images').list(universeId).then(({ data }) => {
       const paths = (data || []).map(f => `${universeId}/${f.name}`);
       if (paths.length) {
         sb.storage.from('map-images').remove(paths)
-          .catch(e => console.warn('Nettoyage storage map-images:', e));
+          .catch(e => console.warn('Nettoyage storage map-images (filet de sécurité):', e));
       }
     }).catch(e => console.warn('Listage storage map-images:', e));
 
