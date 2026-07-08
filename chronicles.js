@@ -397,6 +397,7 @@ function entryRowHTML(e, isOwn, chrId, canEdit = isOwn) {
   return `<div class="entry-row" onclick="openEntryReader('${e.id}')">${unreadDot}
     <div class="entry-row-header">
       <div class="entry-row-title">${esc(e.title)}</div>
+      ${chrLikeBadgeHTML(e.like_count)}
       <div class="entry-row-date">${date}</div>
       ${canEdit ? `<div class="entry-row-actions" onclick="event.stopPropagation()">
         <button class="icon-btn" onclick="openEntryEditor('${e.id}')" title="${t('btn_edit')}">
