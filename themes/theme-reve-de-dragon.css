@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Almendra+Display&family=Almendra:ital,wght@0,400;0,700;1,400;1,700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Share+Tech+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Share+Tech+Mono&display=swap');
 
 /* ══════════════════════════════════════════════════════════════
    RÊVE DE DRAGON — Thème "Onirique Fantaisie" (Denis Gerfaud)
@@ -45,12 +45,13 @@
   --vigor-color:    #5aab6a;
   --rank-color:     #4fae8c;
 
-  /* Typographies — manuscrit peint, un peu flou et rêveur */
-  /* Almendra Display → grands titres (fiches, listes)     */
-  /* Almendra         → labels, nav, sous-titres UI        */
-  /* EB Garamond      → corps de texte, chroniques          */
-  /* Share Tech Mono  → valeurs, codes, chiffres            */
-  --font-display: 'Almendra Display', 'Almendra', Georgia, serif;
+  /* Typographies — manuscrit peint, graisses renforcées pour
+     rester lisible à l'écran (les tracés fins des couvertures
+     originales passent mal en petite taille sur un moniteur)  */
+  /* Fraunces        → grands titres, empattements peints, très lisible en gras */
+  /* EB Garamond     → corps de texte, chroniques (graisse 500 par défaut)      */
+  /* Share Tech Mono → valeurs, codes, chiffres                                 */
+  --font-display: 'Fraunces', Georgia, serif;
   --font-body:    'EB Garamond', Georgia, serif;
   --font-mono:    'Share Tech Mono', 'Courier New', monospace;
 }
@@ -63,6 +64,7 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
+  font-weight: 600;
   font-size: 15px;
   line-height: 1.65;
   overflow: hidden;
@@ -159,7 +161,7 @@ a:hover { color: #6cc4a2; }
 #topbar .logo {
   font-family: var(--font-display);
   font-size: 19px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--accent);
   text-shadow: 0 0 18px rgba(79,174,140,0.35), 0 1px 0 rgba(0,0,0,0.8);
@@ -174,7 +176,7 @@ a:hover { color: #6cc4a2; }
 #topbar nav button {
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--text3);
   transition: all 0.2s;
@@ -200,7 +202,7 @@ a:hover { color: #6cc4a2; }
   color: var(--text2);
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s;
 }
 #topbar .share-btn:hover {
@@ -219,7 +221,7 @@ a:hover { color: #6cc4a2; }
 .campaign-section-title {
   font-family: var(--font-display);
   font-size: 11px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent2);
@@ -251,7 +253,7 @@ a:hover { color: #6cc4a2; }
 .list-header h1 {
   font-family: var(--font-display);
   font-size: 30px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--text);
   text-shadow: 0 0 30px rgba(79,174,140,0.14);
@@ -292,7 +294,7 @@ a:hover { color: #6cc4a2; }
 .char-card .card-name {
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--text);
 }
@@ -459,7 +461,7 @@ a:hover { color: #6cc4a2; }
   color: var(--text3);
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s;
 }
 .add-btn:hover { border-color: var(--accent2); color: var(--accent2); }
@@ -513,7 +515,7 @@ a:hover { color: #6cc4a2; }
 
 .xp-field { background: var(--bg3); border: 1px solid var(--border); }
 .xp-field .xp-label {
-  font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--text2);
+  font-family: var(--font-body); font-size: 12px; font-weight: 600; color: var(--text2);
 }
 .xp-field .xp-detail { font-family: var(--font-body); font-style: italic; font-size: 11px; color: var(--text3); }
 .xp-val { color: var(--accent); }
@@ -534,7 +536,7 @@ a:hover { color: #6cc4a2; }
   color: var(--text2);
   font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
 }
 .btn-cancel:hover { border-color: var(--border2); color: var(--text); }
 
@@ -560,7 +562,7 @@ a:hover { color: #6cc4a2; }
 .preview-name {
   font-family: var(--font-display);
   font-size: 40px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--text);
   text-shadow: 0 0 40px rgba(79,174,140,0.16);
@@ -638,7 +640,7 @@ a:hover { color: #6cc4a2; }
   border: 1px solid rgba(79,174,140,0.2);
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text3);
 }
 .shared-banner svg { color: var(--accent); }
@@ -650,12 +652,12 @@ a:hover { color: #6cc4a2; }
 .chr-card { background: var(--bg2); border: 1px solid var(--border); }
 .chr-card::before { background: linear-gradient(90deg, transparent, var(--sup), transparent); }
 .chr-card:hover { border-color: var(--border2); box-shadow: 0 8px 26px rgba(0,0,0,0.5); }
-.chr-card-title { font-family: var(--font-display); font-size: 18px; font-weight: 400; color: var(--text); }
+.chr-card-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); }
 .chr-card-desc { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
 .chr-card-entry-count { font-family: var(--font-mono); font-size: 10px; color: var(--accent); font-weight: 700; }
 .chr-card-last-date { font-family: var(--font-body); font-size: 11px; color: var(--text3); }
 
-.chr-detail-title { font-family: var(--font-display); font-size: 28px; font-weight: 400; color: var(--text); }
+.chr-detail-title { font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--text); }
 .chr-detail-desc { font-family: var(--font-body); font-style: italic; font-size: 13px; color: var(--text3); }
 
 .entry-row { background: var(--bg2); border: 1px solid var(--border); }
@@ -671,11 +673,11 @@ a:hover { color: #6cc4a2; }
 }
 .chr-reader-breadcrumb:hover { color: var(--sup); }
 
-.chr-reader-title { font-family: var(--font-display); font-size: 32px; font-weight: 400; color: var(--text); }
+.chr-reader-title { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--text); }
 .chr-reader-meta { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
 .chr-reader-body { font-family: var(--font-body); font-size: 16px; color: var(--text2); line-height: 1.85; }
 .chr-reader-body h1, .chr-reader-body h2, .chr-reader-body h3 {
-  font-family: var(--font-display); font-weight: 400; color: var(--text);
+  font-family: var(--font-display); font-weight: 700; color: var(--text);
 }
 .chr-reader-body h1 { font-size: 25px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
 .chr-reader-body h2 { font-size: 19px; }
@@ -714,14 +716,14 @@ a:hover { color: #6cc4a2; }
 .doc-card { background: var(--bg2); border: 1px solid var(--border); }
 .doc-card::before { background: linear-gradient(90deg, transparent, var(--def), transparent); }
 .doc-card:hover { border-color: var(--border2); box-shadow: 0 8px 26px rgba(0,0,0,0.5); }
-.doc-card-title { font-family: var(--font-display); font-size: 18px; font-weight: 400; color: var(--text); }
+.doc-card-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); }
 .doc-card-preview { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
 
-.doc-reader-title { font-family: var(--font-display); font-size: 36px; font-weight: 400; color: var(--text); }
+.doc-reader-title { font-family: var(--font-display); font-size: 36px; font-weight: 700; color: var(--text); }
 .doc-reader-meta { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
 .doc-reader-body { font-family: var(--font-body); font-size: 16px; color: var(--text2); line-height: 1.9; }
 .doc-reader-body h1, .doc-reader-body h2, .doc-reader-body h3 {
-  font-family: var(--font-display); font-weight: 400; color: var(--text);
+  font-family: var(--font-display); font-weight: 700; color: var(--text);
 }
 .doc-reader-body h1 { font-size: 29px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
 .doc-reader-body h2 { font-size: 22px; }
@@ -757,7 +759,7 @@ a:hover { color: #6cc4a2; }
 #doc-editor-form { background: var(--bg2); border-right: 1px solid var(--border); }
 .doc-title-field input {
   border-bottom: 2px solid var(--border);
-  font-family: var(--font-display); font-size: 22px; font-weight: 400;
+  font-family: var(--font-display); font-size: 22px; font-weight: 700;
   color: var(--text); background: transparent;
 }
 .doc-title-field input:focus { border-bottom-color: var(--def); }
@@ -778,9 +780,9 @@ a:hover { color: #6cc4a2; }
 .universe-card { background: var(--bg2); border: 1px solid var(--border); }
 .campaign-card::before { background: linear-gradient(90deg, var(--accent), var(--sup)); height: 2px; }
 .campaign-card:hover { border-color: var(--border2); box-shadow: 0 8px 26px rgba(0,0,0,0.5); }
-.campaign-card-title { font-family: var(--font-display); font-size: 20px; font-weight: 400; color: var(--text); }
+.campaign-card-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); }
 .campaign-card-desc { font-family: var(--font-body); font-style: italic; font-size: 12px; color: var(--text3); }
-.campaign-detail-title { font-family: var(--font-display); font-size: 30px; font-weight: 400; color: var(--text); }
+.campaign-detail-title { font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--text); }
 .campaign-selectable-item { background: var(--bg2); border: 1px solid var(--border); }
 .campaign-selectable-item:hover { border-color: var(--border2); }
 .campaign-selectable-item.selected { border-color: var(--accent); background: rgba(79,174,140,0.06); }
@@ -812,14 +814,14 @@ a:hover { color: #6cc4a2; }
 .rulebook-content { background: transparent; }
 .rulebook-body { font-family: var(--font-body); font-size: 15px; color: var(--text2); line-height: 1.9; }
 .rulebook-body h1 {
-  font-family: var(--font-display); font-size: 29px; font-weight: 400; color: var(--text);
+  font-family: var(--font-display); font-size: 29px; font-weight: 700; color: var(--text);
 }
 .rulebook-body h1::after { background: linear-gradient(90deg, var(--accent), var(--border2), transparent); }
 .rulebook-body h1::before { content: '✧'; color: var(--accent); background: transparent; }
-.rulebook-body h2 { font-family: var(--font-display); font-size: 19px; font-weight: 400; color: var(--text); }
+.rulebook-body h2 { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--text); }
 .rulebook-body h2::before { background: linear-gradient(180deg, var(--accent), var(--border2)); }
 .rulebook-body h3 {
-  font-family: var(--font-body); font-style: italic; font-size: 13px; font-weight: 500;
+  font-family: var(--font-body); font-style: italic; font-size: 13px; font-weight: 600;
   color: var(--text3); border-left: 1px solid var(--border2);
 }
 .rulebook-body strong { color: var(--text); font-weight: 700; }
@@ -903,7 +905,7 @@ a:hover { color: #6cc4a2; }
 }
 .auth-logo {
   font-family: var(--font-display);
-  font-size: 26px; font-weight: 400; letter-spacing: 0.03em;
+  font-size: 26px; font-weight: 700; letter-spacing: 0.03em;
   color: var(--accent); text-align: center;
   text-shadow: 0 0 30px rgba(79,174,140,0.35);
 }
@@ -1045,7 +1047,7 @@ a:hover { color: #6cc4a2; }
 #chr-empty-state h2,
 #doc-empty-state h2,
 #campaign-empty-state h2 {
-  font-family: var(--font-display); font-size: 19px; font-weight: 400; color: var(--text2);
+  font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--text2);
 }
 .empty-state p,
 #chr-empty-state p {
