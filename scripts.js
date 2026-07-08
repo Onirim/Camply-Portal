@@ -828,11 +828,8 @@ function openUniverseConfigView() {
   });
   const errEl = document.getElementById('config-error');
   if (errEl) errEl.classList.remove('show');
-  const inviteErrEl = document.getElementById('config-invite-error');
-  if (inviteErrEl) inviteErrEl.classList.remove('show');
-  const inviteInput = document.getElementById('config-invite-input');
-  if (inviteInput) inviteInput.value = '';
   loadUniverseMembersForConfig();
+  loadUniverseInviteForConfig();
   loadMapsForConfig();
 }
 
@@ -1019,40 +1016,6 @@ async function updateUniverseMemberRole(userId, role) {
   if (error) { showToast(t('toast_role_update_error')); await loadUniverseMembersForConfig(); return; }
   showToast(t('toast_role_update_success'));
   await loadUniverseMembersForConfig();
-}
-
-async function inviteUniverseMember() {
-  if (!canConfigureUniverse() || !currentUniverse) return;
-  const input  = document.getElementById('config-invite-input');
-  const errEl  = document.getElementById('config-invite-error');
-  const username = input?.value.trim();
-  if (errEl) errEl.classList.remove('show');
-  if (!username) return;
-
-  const escapedUsername = username.replace(/[%_\\]/g, '\\$&');
-  const { data: profile, error: profileError } = await sb.from('profiles')
-    .select('id, username').ilike('username', escapedUsername).maybeSingle();
-  if (profileError) console.error('Erreur recherche utilisateur:', profileError);
-  if (profileError || !profile) {
-    if (errEl) { errEl.textContent = t('toast_invite_user_not_found'); errEl.classList.add('show'); }
-    return;
-  }
-  if (profile.id === currentUser.id) {
-    if (errEl) { errEl.textContent = t('toast_invite_self'); errEl.classList.add('show'); }
-    return;
-  }
-
-  const { error: insertError } = await sb.from('universe_members')
-    .insert({ universe_id: currentUniverse.id, user_id: profile.id, role: 'player' });
-  if (insertError) {
-    const msg = insertError.code === '23505' ? t('toast_invite_already_member') : t('toast_invite_error');
-    if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
-    return;
-  }
-
-  if (input) input.value = '';
-  await loadUniverseMembersForConfig();
-  showToast(ti('toast_invite_success', { username: profile.username }));
 }
 
 async function removeUniverseMember(userId) {
@@ -1704,6 +1667,7 @@ function navigateFromHash() {
     case 'entry':    return navigateToEntry(ids[0], ids[1]);
     case 'doc':      return navigateToDoc(ids[0]);
     case 'campaign': return navigateToCampaign(ids[0]);
+    case 'invite':   handleInviteHash(ids[0]); return true;
     default:         return false;
   }
 }

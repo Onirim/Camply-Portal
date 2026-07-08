@@ -916,6 +916,7 @@ function _repositionPopup() {
 }
 
 function _repositionPopupOn(markerId, popup) {
+  if (window.matchMedia('(max-width: 768px)').matches) return; // pleine écran, fixée par CSS
   let m = mapMarkers[markerId];
   if (!m) {
     for (const { markers } of Object.values(mapFollowedLayers)) {

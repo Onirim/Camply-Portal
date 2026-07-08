@@ -1,0 +1,39 @@
+/* ══════════════════════════════════════════════════════════════
+   Camply — Styles Invitation d'univers
+   Réutilise le design system des modales (transfert.css)
+   ══════════════════════════════════════════════════════════════ */
+
+#invite-join-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 210;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+#invite-join-modal-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.18s ease;
+}
+
+.invite-modal-illus {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px 8px 0 0;
+  margin-bottom: 16px;
+  display: block;
+}
+
+@media (max-width: 520px) {
+  #invite-join-modal-panel { max-height: 100vh; border-radius: 0; }
+  .invite-modal-illus { border-radius: 0; }
+}

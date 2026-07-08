@@ -105,8 +105,12 @@ body::before {
   opacity: 1;
 }
 
-/* Assure que le contenu passe devant le fond */
-#app, #main, #topbar,
+/* Assure que le contenu passe devant le fond.
+   #main et #view-map ne sont volontairement PAS ici : leur donner leur
+   propre z-index piège les overlays position:fixed qu'ils contiennent
+   (ex. popup marqueur de carte) sous #topbar sur mobile. Être descendant
+   de #app (déjà élevé) suffit à passer devant le fond. */
+#app, #topbar,
 #view-list, #view-editor, #view-shared,
 #preview-panel, #editor-form,
 #auth-screen, #loading-overlay,
@@ -114,7 +118,7 @@ body::before {
 #view-entry-editor, #view-entry-reader,
 #view-documents, #view-doc-editor, #view-doc-reader,
 #view-campaigns, #view-campaign-detail, #view-campaign-editor,
-#view-map, #view-rulebook {
+#view-rulebook {
   position: relative;
   z-index: 1;
 }
@@ -1407,6 +1411,14 @@ a:hover { color: #e0b050; }
   border-radius: 0 !important;
 }
 .lang-select:hover { border-color: var(--border2) !important; color: var(--text) !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — rétablit le scroll de la page sur smartphone
+   (le html,body{overflow:hidden} de la base ne doit pas persister)
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  html, body { overflow: auto; height: auto; }
+}
 
 /* ══════════════════════════════════════════════════════════════
    CARTES — Description texte (générique)
