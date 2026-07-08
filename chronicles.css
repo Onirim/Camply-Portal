@@ -84,6 +84,7 @@
   display: inline-flex; align-items: center; gap: 4px;
   font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--offc);
 }
+.chr-card-likes.zero { color: var(--text3); }
 .chr-card-likes svg { width: 11px; height: 11px; }
 
 #chr-empty-state {

@@ -17,7 +17,8 @@ let entryState           = null;
 const HEART_SVG = '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 13.6s-5.4-3.2-5.4-6.98A2.98 2.98 0 0 1 8 4.85a2.98 2.98 0 0 1 5.4 1.77c0 3.78-5.4 6.98-5.4 6.98z"/></svg>';
 
 function chrLikeBadgeHTML(count) {
-  return `<span class="chr-card-likes">${count || 0}${HEART_SVG}</span>`;
+  const n = count || 0;
+  return `<span class="chr-card-likes${n === 0 ? ' zero' : ''}">${n}${HEART_SVG}</span>`;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -291,8 +292,8 @@ function chrCardHTML(id, c, isFollowed) {
       ${desc ? `<div class="chr-card-desc">${esc(desc)}</div>` : ''}
       ${metaHtml}
       <div class="chr-card-footer">
-        ${likesTag}
         <span class="followed-badge">${t('followed_badge')}</span>
+        ${likesTag}
         <span class="chr-card-owner">${t('chr_followed_owner')}${esc(c._owner_name)}</span>
       </div>
     </div>`;
@@ -316,8 +317,8 @@ function chrCardHTML(id, c, isFollowed) {
     ${desc ? `<div class="chr-card-desc">${esc(desc)}</div>` : ''}
     ${metaHtml}
     <div class="chr-card-footer">
-      ${likesTag}
       ${visTag}
+      ${likesTag}
     </div>
   </div>`;
 }
