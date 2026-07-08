@@ -118,6 +118,19 @@ async function doLogout() {
   await sb.auth.signOut();
 }
 
+async function markAllContentAsRead() {
+  toggleUserMenu(false);
+  if (!currentUniverse?.id) return;
+  const ok = await unreadMarkers.markAllRead();
+  if (!ok) { showToast(t('toast_all_read_error')); return; }
+  unreadMarkers.refreshNavBadges({ followedChars, followedDocuments, followedChronicles, chrEntries });
+  renderList();
+  renderDocumentsList();
+  renderChroniclesList();
+  renderChrDetail();
+  showToast(t('toast_all_read'));
+}
+
 function toggleUserMenu(target, force) {
   // Legacy calls (toggleUserMenu() / toggleUserMenu(false)) close every open menu.
   if (typeof target === 'boolean' || target === undefined) {

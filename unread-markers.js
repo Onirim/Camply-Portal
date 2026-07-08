@@ -128,6 +128,56 @@
     if (!show && dot) dot.remove();
   }
 
+  async function markAllRead() {
+    if (!state.userId || !state.universeId) return false;
+
+    const [charsRes, docsRes, chrRes] = await Promise.all([
+      sb.from('characters').select('id').eq('universe_id', state.universeId).neq('user_id', state.userId),
+      sb.from('documents').select('id').eq('universe_id', state.universeId).neq('user_id', state.userId),
+      sb.from('chronicles').select('id').eq('universe_id', state.universeId).neq('user_id', state.userId)
+    ]);
+    if (charsRes.error || docsRes.error || chrRes.error) {
+      console.error('Erreur lecture contenu univers:', charsRes.error || docsRes.error || chrRes.error);
+      return false;
+    }
+
+    const charIds = (charsRes.data || []).map(r => r.id);
+    const docIds = (docsRes.data || []).map(r => r.id);
+    const chrIds = (chrRes.data || []).map(r => r.id);
+
+    let entryRows = [];
+    if (chrIds.length) {
+      const { data: entries, error: entriesError } = await sb
+        .from('chronicle_entries')
+        .select('id, chronicle_id')
+        .in('chronicle_id', chrIds);
+      if (entriesError) { console.error('Erreur lecture entrées:', entriesError); return false; }
+      entryRows = entries || [];
+    }
+
+    const now = new Date().toISOString();
+    const rows = [
+      ...charIds.map(id => ({ user_id: state.userId, universe_id: state.universeId, content_type: 'character', content_id: id, parent_id: null, read_at: now })),
+      ...docIds.map(id => ({ user_id: state.userId, universe_id: state.universeId, content_type: 'document', content_id: id, parent_id: null, read_at: now })),
+      ...chrIds.map(id => ({ user_id: state.userId, universe_id: state.universeId, content_type: 'chronicle', content_id: id, parent_id: null, read_at: now })),
+      ...entryRows.map(e => ({ user_id: state.userId, universe_id: state.universeId, content_type: 'chronicle_entry', content_id: e.id, parent_id: e.chronicle_id, read_at: now })),
+    ];
+
+    if (rows.length) {
+      const { error } = await sb
+        .from('read_markers')
+        .upsert(rows, { onConflict: 'universe_id,user_id,content_type,content_id' });
+      if (error) { console.error('Erreur marquage global lu:', error); return false; }
+    }
+
+    charIds.forEach(id => { state.characters[id] = true; });
+    docIds.forEach(id => { state.documents[id] = true; });
+    chrIds.forEach(id => { state.chronicles[id] = true; });
+    entryRows.forEach(e => { ensureChronicleMap(e.chronicle_id)[e.id] = true; });
+
+    return true;
+  }
+
   function refreshNavBadges(ctx = {}) {
     const followedChars = ctx.followedChars || {};
     const followedDocuments = ctx.followedDocuments || {};
@@ -151,6 +201,7 @@
   window.unreadMarkers = {
     initFromDB,
     resetCache: resetLocalState,
+    markAllRead,
     isCharacterUnread: (id, isOwn) => isUnread('characters', id, isOwn),
     markCharacterRead: (id) => markRead('characters', id, 'character'),
     isDocumentUnread: (id, isOwn) => isUnread('documents', id, isOwn),
