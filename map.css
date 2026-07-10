@@ -833,6 +833,14 @@
 }
 .map-admin-row-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
 .map-admin-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.map-admin-primary-badge {
+  display: inline-block; margin-left: 8px; vertical-align: middle;
+  font-family: var(--font-mono); font-size: 10px; text-transform: none;
+  letter-spacing: normal; font-weight: 400;
+  background: rgba(68,170,119,0.12); color: var(--mov);
+  border: 1px solid rgba(68,170,119,0.25);
+  padding: 2px 7px; border-radius: 4px;
+}
 
 /* Lignes de libellé de couleur dans la modale */
 .map-admin-color-row {
