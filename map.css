@@ -215,7 +215,7 @@
   transform: translate(-50%, -100%);
   cursor: pointer;
   z-index: 10;
-  /* filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6)); */
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,1));
   transition: filter 0.15s, transform 0.15s;
   /* La taille visuelle est fixe quelle que soit l'échelle de la carte.
      On compense via JS (scale inverse). */
