@@ -213,7 +213,7 @@
 .section-hint {
   font-size: 11px;
   color: var(--text3);
-  margin-top: -8px;
+  /*margin-top: -8px;*/
   margin-bottom: 4px;
   font-style: italic;
 }
