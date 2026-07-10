@@ -1222,6 +1222,7 @@ function showView(view) {
     'chr-detail-share-btn':   view === 'chr-detail',
     'entry-reader-share-btn': view === 'entry-reader',
     'doc-reader-share-btn':   view === 'doc-reader',
+    'map-share-btn':          view === 'map',
   };
   Object.entries(shareBtnMap).forEach(([id, show]) => {
     const el = document.getElementById(id);
@@ -1659,7 +1660,7 @@ function pipRow(val, cls, max) {
 // ══════════════════════════════════════════════════════════════
 // ROUTAGE PAR URL (hash)
 // Format : #char/CODE | #chr/CODE | #entry/CHR_CODE/ENTRY_ID
-//          #doc/CODE  | #campaign/CODE
+//          #doc/CODE  | #map/CODE | #campaign/CODE
 // ══════════════════════════════════════════════════════════════
 
 function buildShareUrl(type, ...ids) {
@@ -1690,6 +1691,7 @@ function navigateFromHash() {
     case 'chr':      return navigateToChr(ids[0]);
     case 'entry':    return navigateToEntry(ids[0], ids[1]);
     case 'doc':      return navigateToDoc(ids[0]);
+    case 'map':      return navigateToMap(ids[0]);
     case 'campaign': return navigateToCampaign(ids[0]);
     case 'invite':   handleInviteHash(ids[0]); return true;
     default:         return false;

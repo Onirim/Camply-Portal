@@ -35,14 +35,24 @@ function renderMapsAdminList(maps) {
     container.innerHTML = `<div style="color:var(--text3);font-size:13px;font-style:italic;padding:8px 0">${t('config_maps_empty')}</div>`;
     return;
   }
-  container.innerHTML = maps.map(m => `
+  container.innerHTML = maps.map((m, i) => `
     <div class="map-admin-row">
       <img class="map-admin-thumb" src="${esc(m.image_url)}" alt="">
       <div class="map-admin-row-info">
-        <div class="map-admin-row-name">${esc(m.name)}</div>
+        <div class="map-admin-row-name">${esc(m.name)}${i === 0 ? `<span class="map-admin-primary-badge">${t('map_admin_primary_badge')}</span>` : ''}</div>
         <div class="map-admin-row-meta">${m.image_width} × ${m.image_height} px</div>
       </div>
       <div class="map-admin-row-actions">
+        <button class="icon-btn" onclick="moveMapAdmin('${m.id}',-1)" title="${t('map_admin_move_up_title')}" ${i === 0 ? 'disabled' : ''}>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
+            <polyline points="3,6 8,2 13,6"/><line x1="8" y1="2" x2="8" y2="14"/>
+          </svg>
+        </button>
+        <button class="icon-btn" onclick="moveMapAdmin('${m.id}',1)" title="${t('map_admin_move_down_title')}" ${i === maps.length - 1 ? 'disabled' : ''}>
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
+            <polyline points="3,10 8,14 13,10"/><line x1="8" y1="14" x2="8" y2="2"/>
+          </svg>
+        </button>
         <button class="icon-btn" onclick="openMapAdminForm('${m.id}')" title="${t('btn_edit')}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="12" height="12">
             <path d="M11 2l3 3-9 9H2v-3z"/>
@@ -57,6 +67,28 @@ function renderMapsAdminList(maps) {
         </button>
       </div>
     </div>`).join('');
+}
+
+/** Échange la position de deux cartes adjacentes et persiste le nouvel ordre. */
+async function moveMapAdmin(mapId, delta) {
+  if (!canConfigureUniverse()) return;
+  const idx = mapAdminMaps.findIndex(m => m.id === mapId);
+  const newIdx = idx + delta;
+  if (idx < 0 || newIdx < 0 || newIdx >= mapAdminMaps.length) return;
+
+  [mapAdminMaps[idx], mapAdminMaps[newIdx]] = [mapAdminMaps[newIdx], mapAdminMaps[idx]];
+  renderMapsAdminList(mapAdminMaps); // retour visuel immédiat
+
+  const results = await Promise.all(
+    mapAdminMaps.map((m, i) => sb.from('maps').update({ sort_order: i }).eq('id', m.id))
+  );
+  if (results.some(r => r.error)) {
+    showToast(t('toast_map_save_error'));
+    await loadMapsForConfig();
+    return;
+  }
+  mapAdminMaps.forEach((m, i) => { m.sort_order = i; });
+  await refreshMapsConfigAndRerender();
 }
 
 // ── Modale ajout / édition ──────────────────────────────────────

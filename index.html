@@ -442,6 +442,14 @@
         </svg>
         <span data-i18n="topbar_share">Partager</span>
       </button>
+      <!-- Partage carte -->
+      <button class="share-btn" id="map-share-btn" onclick="shareMapBtn()" style="display:none">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="3" r="1.5"/><circle cx="4" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
+          <line x1="5.5" y1="7" x2="10.5" y2="4.3"/><line x1="5.5" y1="9" x2="10.5" y2="11.7"/>
+        </svg>
+        <span data-i18n="topbar_share">Partager</span>
+      </button>
       <div class="user-menu-wrap" id="user-menu-wrap">
         <button class="user-btn" onclick="toggleUserMenu(this.parentElement)">
           <div class="avatar" id="user-avatar">?</div>
@@ -1412,6 +1420,7 @@
                 <option value="" data-i18n="map_modal_link_none">Aucun</option>
                 <option value="char" data-i18n="map_modal_link_char">Personnage</option>
                 <option value="doc" data-i18n="map_modal_link_doc">Document</option>
+                <option value="map" data-i18n="map_modal_link_map">Carte</option>
               </select>
               <select id="map-modal-link-id"></select>
             </div>

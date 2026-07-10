@@ -302,6 +302,7 @@ html, body {
 .icon-btn:hover        { border-color: var(--border2); color: var(--text); }
 .icon-btn.danger:hover { border-color: var(--offc); color: var(--offc); }
 .icon-btn svg          { width: 13px; height: 13px; }
+.icon-btn:disabled     { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
 .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--text3); }
 .empty-state .icon { font-size: 48px; opacity: 0.3; }

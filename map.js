@@ -27,6 +27,7 @@ async function _loadMapsConfig() {
     .order('created_at', { ascending: true });
   if (error) { console.error('Erreur chargement cartes:', error); mapsConfig = []; return; }
   mapsConfig = (data || []).map(row => ({
+    id:          row.id,
     key:         row.map_key,
     name:        row.name,
     image:       row.image_url,
@@ -299,6 +300,47 @@ async function initMap() {
   _renderMapAccessState();
   _renderMapLegend();
   mapLoaded = true;
+}
+
+// ── Partage / navigation par lien ────────────────────────────
+
+/** Copie un lien de partage vers la carte actuellement affichée. */
+function shareMapBtn() {
+  const cfg = _getCurrentMapConfig();
+  if (!cfg?.id) return;
+  copyUrl(buildShareUrl('map', cfg.id));
+}
+
+/** Ouvre la vue Carte sur une carte précise une fois celle-ci chargée. */
+function _openMapById(mapKey, id) {
+  showView('map');
+  const trySwitch = () => {
+    if (!mapLoaded) return false;
+    if (mapKey !== currentMapKey) switchMap(mapKey);
+    setHash('map', id);
+    return true;
+  };
+  if (trySwitch()) return;
+  const wait = setInterval(() => { if (trySwitch()) clearInterval(wait); }, 100);
+  setTimeout(() => clearInterval(wait), 5000);
+}
+
+/** Navigue vers une carte à partir de son id (lien de partage, marqueur lié). */
+function navigateToMap(id) {
+  if (!id) return false;
+  const known = (mapsConfig || []).find(m => m.id === id);
+  if (known) { _openMapById(known.key, known.id); return true; }
+  sb.from('maps')
+    .select('id, map_key, name, universe_id')
+    .eq('id', id).single()
+    .then(async ({ data: row, error }) => {
+      if (error || !row) { showToast(t('toast_map_not_found')); if (currentUniverse) showView('map'); else showUniverseScreen(); return; }
+      const switched = await switchUniverseIfNeeded(row.universe_id);
+      if (switched === 'not_member') { showToast(t('toast_map_not_found')); showUniverseScreen(); return; }
+      if (switched) return;
+      _openMapById(row.map_key, row.id);
+    });
+  return true;
 }
 
 // ── Sélecteur de carte ────────────────────────────────────────
@@ -846,7 +888,16 @@ function _updateMarkerCount() {
 function _linkedObjectName(type, id) {
   if (type === 'char') return chars[id]?.name || followedChars[id]?.name || null;
   if (type === 'doc')  return documents[id]?.title || followedDocuments[id]?.title || null;
+  if (type === 'map')  return (mapsConfig || []).find(m => m.id === id)?.name || null;
   return null;
+}
+
+/** Icône affichée devant le lien d'un marqueur, selon le type d'objet lié. */
+function _linkedTypeIcon(type) {
+  if (type === 'char') return '👤';
+  if (type === 'doc')  return '📄';
+  if (type === 'map')  return '🗺️';
+  return '🔗';
 }
 
 /** Ouvre la fiche de l'objet lié à un marqueur et ferme la popup. */
@@ -854,6 +905,7 @@ function _openMarkerLinkedObject(type, id) {
   _closePopup();
   if (type === 'char') navigateToChar(id);
   else if (type === 'doc') navigateToDoc(id);
+  else if (type === 'map') navigateToMap(id);
 }
 
 function _openPopup(markerId, owned) {
@@ -882,7 +934,7 @@ function _openPopup(markerId, owned) {
     ${m.linked_type && m.linked_id ? `
     <div class="map-popup-link">
       <a href="#" onclick="event.preventDefault(); _openMarkerLinkedObject('${m.linked_type}','${m.linked_id}')">
-        ${m.linked_type === 'char' ? '👤' : '📄'} ${esc(_linkedObjectName(m.linked_type, m.linked_id) || t('map_popup_link_' + m.linked_type))}
+        ${_linkedTypeIcon(m.linked_type)} ${esc(_linkedObjectName(m.linked_type, m.linked_id) || t('map_popup_link_' + m.linked_type))}
       </a>
     </div>` : ''}
     ${ownerName ? `<div class="map-popup-owner">${t('followed_owner_prefix')}${esc(ownerName)}</div>` : ''}
@@ -998,6 +1050,9 @@ function _universeItemsOfType(type) {
     ...Object.values(documents).map(d => ({ id: d.id, name: d.title || '—' })),
     ...Object.values(followedDocuments).map(d => ({ id: d.id, name: `${d.title || '—'} (${d._owner_name})` })),
   ];
+  if (type === 'map') return (mapsConfig || [])
+    .filter(m => m.key !== currentMapKey)
+    .map(m => ({ id: m.id, name: m.name || '—' }));
   return [];
 }
 
