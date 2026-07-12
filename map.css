@@ -116,6 +116,7 @@
   white-space: nowrap;
   margin-left: 4px;
 }
+.map-hint-mobile { display: none; }
 .map-hint kbd {
   display: inline-flex;
   align-items: center;
@@ -141,6 +142,8 @@
     var(--bg);
   cursor: grab;
   user-select: none;
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 .map-viewport:active { cursor: grabbing; }
 .map-viewport.adding-marker { cursor: crosshair; }
@@ -864,6 +867,7 @@
 @media (max-width: 768px) {
   .map-toolbar { padding: 6px 12px; gap: 8px; }
   .map-hint    { display: none; }
+  .map-hint-mobile { display: flex; }
   .map-marker-count { margin-left: auto; }
   #map-marker-modal-panel { max-height: 100vh; border-radius: 0; }
   #map-admin-modal-panel  { max-height: 100vh; border-radius: 0; }

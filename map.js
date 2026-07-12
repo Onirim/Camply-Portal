@@ -611,20 +611,48 @@ function _bindMapEvents() {
   window.addEventListener('mouseup', () => { mapDrag.active = false; });
 
   let _touch = null;
+  let _longPressTimer = null;
+  const LONG_PRESS_MS = 550;
+  const LONG_PRESS_MOVE_TOLERANCE = 10;
+
+  function _clearLongPress() {
+    clearTimeout(_longPressTimer);
+    _longPressTimer = null;
+  }
+
   vp.addEventListener('touchstart', e => {
-    if (e.touches.length === 1)
-      _touch = { x: e.touches[0].clientX, y: e.touches[0].clientY,
-                 ox: mapTransform.x, oy: mapTransform.y };
+    if (e.touches.length === 1) {
+      const { clientX: x, clientY: y } = e.touches[0];
+      _touch = { x, y, ox: mapTransform.x, oy: mapTransform.y };
+      _clearLongPress();
+      if (_canAccessMap()) {
+        _longPressTimer = setTimeout(() => {
+          _longPressTimer = null;
+          _touch = null; // annule le pan en cours : c'était un appui long
+          if (navigator.vibrate) navigator.vibrate(15);
+          const popup = document.getElementById('map-popup');
+          if (popup) _closePopup();
+          const pos = _v2m(x, y);
+          openMapMarkerModal('add', pos.x, pos.y);
+        }, LONG_PRESS_MS);
+      }
+    }
   }, { passive: true });
   vp.addEventListener('touchmove', e => {
     if (!_canAccessMap()) return;
     if (e.touches.length === 1 && _touch) {
+      if (_longPressTimer &&
+          (Math.abs(e.touches[0].clientX - _touch.x) > LONG_PRESS_MOVE_TOLERANCE ||
+           Math.abs(e.touches[0].clientY - _touch.y) > LONG_PRESS_MOVE_TOLERANCE)) {
+        _clearLongPress();
+      }
+      e.preventDefault();
       mapTransform.x = _touch.ox + e.touches[0].clientX - _touch.x;
       mapTransform.y = _touch.oy + e.touches[0].clientY - _touch.y;
       _clampTransform(); _applyTransform();
     }
-  }, { passive: true });
-  vp.addEventListener('touchend', () => { _touch = null; });
+  }, { passive: false });
+  vp.addEventListener('touchend', () => { _touch = null; _clearLongPress(); });
 
   window.addEventListener('resize', () => {
     if (mapLoaded) { _clampTransform(); _applyTransform(); }
