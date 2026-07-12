@@ -167,14 +167,16 @@ async function saveChronicleToDB() {
 }
 
 async function deleteChronicleFromDB(id) {
-  const title = chronicles[id]?.title || 'cette chronique';
+  const src = chronicles[id] || followedChronicles[id];
+  const title = src?.title || 'cette chronique';
   if (!confirm(ti('confirm_delete_chr', { title }))) return;
 
-  const illustrationUrl = chronicles[id]?.illustration_url || '';
+  const illustrationUrl = src?.illustration_url || '';
 
   const { error } = await sb.from('chronicles').delete().eq('id', id).eq('universe_id', currentUniverse.id);
   if (error) { showToast(t('toast_chr_delete_error')); return; }
   delete chronicles[id];
+  delete followedChronicles[id];
   delete chrEntries[id];
 
   if (illustrationUrl) await deleteStorageFile(illustrationUrl);
@@ -380,6 +382,9 @@ function renderChrDetail() {
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
           ${t('chr_detail_btn_new_entry')}
         </button>
+        ${!isOwn ? `<button class="icon-btn danger" onclick="deleteChronicleFromDB('${activeChrId}')" title="${t('btn_delete')}">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,4 13,4"/><path d="M5 4V2h6v2M6 7v5M10 7v5"/><path d="M4 4l1 10h6l1-10"/></svg>
+        </button>` : ''}
       </div>` : ''}
     </div>
     <div class="chr-entries-list">${entriesHtml}</div>
@@ -403,7 +408,7 @@ function entryRowHTML(e, isOwn, chrId, canEdit = isOwn) {
         <button class="icon-btn" onclick="openEntryEditor('${e.id}')" title="${t('btn_edit')}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3z"/></svg>
         </button>
-        ${isOwn ? `<button class="icon-btn danger" onclick="deleteEntryFromDB('${e.id}')" title="${t('btn_delete')}">
+        ${canEdit ? `<button class="icon-btn danger" onclick="deleteEntryFromDB('${e.id}')" title="${t('btn_delete')}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,4 13,4"/><path d="M5 4V2h6v2M6 7v5M10 7v5"/><path d="M4 4l1 10h6l1-10"/></svg>
         </button>` : ''}
       </div>` : ''}

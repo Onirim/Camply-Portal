@@ -112,13 +112,15 @@ async function saveDocumentToDB() {
 }
 
 async function deleteDocumentFromDB(id) {
-  const title = documents[id]?.title || 'ce document';
+  const src = documents[id] || followedDocuments[id];
+  const title = src?.title || 'ce document';
   if (!confirm(ti('confirm_delete_doc', { title }))) return;
-  const illustrationUrl = documents[id]?.illustration_url || '';
+  const illustrationUrl = src?.illustration_url || '';
   const { error } = await sb.from('documents').delete().eq('id', id).eq('universe_id', currentUniverse.id);
   if (error) { showToast(t('toast_doc_delete_error')); return; }
   const tagIds = docTagMap[id] || [];
   delete documents[id];
+  delete followedDocuments[id];
   delete docTagMap[id];
   if (illustrationUrl) await deleteStorageFile(illustrationUrl);
   for (const tagId of tagIds) {
@@ -224,6 +226,9 @@ function docCardHTML(id, d, isFollowed) {
       <div class="doc-card-actions">
         ${(d.allow_write_share || isUniverseGM()) ? `<button class="icon-btn" onclick="event.stopPropagation();openDocEditor('${id}')" title="${t('btn_edit')}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 2l3 3-9 9H2v-3z"/></svg>
+        </button>` : ''}
+        ${isUniverseGM() ? `<button class="icon-btn danger" onclick="event.stopPropagation();deleteDocumentFromDB('${id}')" title="${t('btn_delete')}">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,4 13,4"/><path d="M5 4V2h6v2M6 7v5M10 7v5"/><path d="M4 4l1 10h6l1-10"/></svg>
         </button>` : ''}
         ${tagBtn}
       </div>

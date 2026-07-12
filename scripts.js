@@ -254,13 +254,15 @@ async function saveCharToDB() {
 }
 
 async function deleteCharFromDB(id) {
-  const name = chars[id]?.name || '';
+  const src = chars[id] || followedChars[id];
+  const name = src?.name || '';
   if (!confirm(ti('confirm_delete_char', { name }))) return;
   const tagIds         = charTagMap[id] || [];
-  const illustrationUrl = chars[id]?.illustration_url || '';
+  const illustrationUrl = src?.illustration_url || '';
   const { error } = await sb.from('characters').delete().eq('id', id).eq('universe_id', currentUniverse.id);
   if (error) { showToast(t('toast_char_deleted_error')); return; }
   delete chars[id];
+  delete followedChars[id];
   delete charTagMap[id];
   if (illustrationUrl) await deleteStorageFile(illustrationUrl);
   for (const tagId of tagIds) {
@@ -1306,6 +1308,10 @@ function cardHTML(id, c, isFollowed = false) {
         <button class="icon-btn" onclick="event.stopPropagation();editSharedFollowedChar('${id}')"
           title="${t('btn_edit')}">
           ${_editIcon()}
+        </button>
+        <button class="icon-btn danger" onclick="event.stopPropagation();deleteCharFromDB('${id}')"
+          title="${t('btn_delete')}">
+          ${_trashIcon()}
         </button>` : ''}
         ${tagBtn}
       </div>
