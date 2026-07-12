@@ -79,6 +79,7 @@ async function loadChroniclesFromDB() {
     } else {
       followedChronicles[r.id] = { ...entry, _followed: true, _owner_name: ownerMap[r.user_id] || '?' };
       unreadMarkers.syncChronicleEntries(r.id, entryIdsByChronicle[r.id] || []);
+      if (!chrEntries[r.id]) chrEntries[r.id] = (entryIdsByChronicle[r.id] || []).map(id => ({ id }));
     }
   });
 }
