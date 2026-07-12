@@ -116,7 +116,6 @@
   white-space: nowrap;
   margin-left: 4px;
 }
-.map-hint-mobile { display: none; }
 .map-hint kbd {
   display: inline-flex;
   align-items: center;
@@ -867,7 +866,6 @@
 @media (max-width: 768px) {
   .map-toolbar { padding: 6px 12px; gap: 8px; }
   .map-hint    { display: none; }
-  .map-hint-mobile { display: flex; }
   .map-marker-count { margin-left: auto; }
   #map-marker-modal-panel { max-height: 100vh; border-radius: 0; }
   #map-admin-modal-panel  { max-height: 100vh; border-radius: 0; }
