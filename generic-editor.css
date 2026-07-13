@@ -241,6 +241,119 @@
 }
 
 /* ══════════════════════════════════════════════════════════════
+   MODE RÉORGANISATION (voir reorder.js)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Ligne titre de section + bouton ⇅ */
+.form-section-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.form-section-title-row .form-section-title {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.reorder-toggle {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.reorder-toggle svg { width: 100%; height: 100%; }
+.reorder-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.reorder-toggle.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+/* Entrée compacte déplaçable */
+.reorder-entry {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  user-select: none;
+}
+.reorder-entry.dragging {
+  border-color: var(--accent);
+  opacity: 0.85;
+}
+
+.reorder-grip {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;   /* pas de scroll pendant le drag tactile */
+}
+.reorder-grip:active { cursor: grabbing; }
+.reorder-grip svg { width: 100%; height: 100%; }
+
+.reorder-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reorder-name-empty { color: var(--text3); font-style: italic; }
+
+.reorder-score {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.reorder-arrows {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.reorder-arrows button {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  transition: all 0.12s;
+  user-select: none;
+}
+.reorder-arrows button svg { width: 100%; height: 100%; }
+.reorder-arrows button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.reorder-arrows button:active:not(:disabled) { transform: scale(0.92); }
+.reorder-arrows button:disabled { opacity: 0.35; cursor: default; }
+
+/* ══════════════════════════════════════════════════════════════
    FICHE PERSONNAGE — Aperçu compétences (2 colonnes)
    ══════════════════════════════════════════════════════════════ */
 

@@ -635,7 +635,17 @@
 
         <!-- Caractéristiques -->
         <div class="form-section" id="section-characteristics-wrap">
-          <div class="form-section-title" id="lbl-characteristics" data-i18n="editor_section_characteristics">Caractéristiques</div>
+          <div class="form-section-title-row">
+            <div class="form-section-title" id="lbl-characteristics" data-i18n="editor_section_characteristics">Caractéristiques</div>
+            <button class="reorder-toggle" id="reorder-btn-characteristics"
+              onclick="toggleReorder('characteristics')"
+              data-i18n="editor_reorder_tooltip" data-i18n-attr="title" title="Réorganiser les entrées">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polyline points="3,5.5 5.5,3 8,5.5"/><line x1="5.5" y1="3" x2="5.5" y2="13"/>
+                <polyline points="8,10.5 10.5,13 13,10.5"/><line x1="10.5" y1="3" x2="10.5" y2="13"/>
+              </svg>
+            </button>
+          </div>
           <div class="section-hint" style="margin-bottom:8px" data-i18n="editor_char_score_hint">
             Shift+clic : ±10
           </div>
@@ -646,7 +656,17 @@
 
         <!-- Compétences -->
         <div class="form-section" id="section-skills-wrap">
-          <div class="form-section-title" id="lbl-skills" data-i18n="editor_section_skills">Compétences</div>
+          <div class="form-section-title-row">
+            <div class="form-section-title" id="lbl-skills" data-i18n="editor_section_skills">Compétences</div>
+            <button class="reorder-toggle" id="reorder-btn-skills"
+              onclick="toggleReorder('skills')"
+              data-i18n="editor_reorder_tooltip" data-i18n-attr="title" title="Réorganiser les entrées">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polyline points="3,5.5 5.5,3 8,5.5"/><line x1="5.5" y1="3" x2="5.5" y2="13"/>
+                <polyline points="8,10.5 10.5,13 13,10.5"/><line x1="10.5" y1="3" x2="10.5" y2="13"/>
+              </svg>
+            </button>
+          </div>
           <div class="section-hint" style="margin-bottom:8px" data-i18n="editor_skill_score_hint">
             Shift+clic : ±10
           </div>
@@ -657,7 +677,17 @@
 
         <!-- Traits (anciennement "Autres traits", sans champ type) -->
         <div class="form-section" id="section-traits-wrap">
-          <div class="form-section-title" id="lbl-traits" data-i18n="editor_section_traits">Traits</div>
+          <div class="form-section-title-row">
+            <div class="form-section-title" id="lbl-traits" data-i18n="editor_section_traits">Traits</div>
+            <button class="reorder-toggle" id="reorder-btn-traits"
+              onclick="toggleReorder('traits')"
+              data-i18n="editor_reorder_tooltip" data-i18n-attr="title" title="Réorganiser les entrées">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polyline points="3,5.5 5.5,3 8,5.5"/><line x1="5.5" y1="3" x2="5.5" y2="13"/>
+                <polyline points="8,10.5 10.5,13 13,10.5"/><line x1="10.5" y1="3" x2="10.5" y2="13"/>
+              </svg>
+            </button>
+          </div>
           <div id="traits-list"></div>
           <button class="add-btn" onclick="addTrait()"
             data-i18n="editor_add_trait">+ Ajouter un trait</button>
@@ -1597,6 +1627,7 @@
 <script src="campaigns.js"></script>
 <script src="tags.js"></script>
 <script src="editor.js"></script>
+<script src="reorder.js"></script>
 <script src="transfert.js"></script>
 <script src="invites.js"></script>
 <script src="map-config.js"></script>

@@ -56,6 +56,7 @@ function populateEditor() {
   }
 
   applyCharBlockConfig();
+  resetReorderModes();
   renderCharacteristics();
   renderSkills();
   renderTraits();
@@ -106,7 +107,8 @@ function applyCharBlockConfig() {
 function renderCharacteristics() {
   const list = document.getElementById('characteristics-list');
   if (!list) return;
-  list.innerHTML = (state.characteristics || []).map((ch, i) => characteristicHTML(ch, i)).join('');
+  list.innerHTML = (state.characteristics || []).map((ch, i) =>
+    reorderMode.characteristics ? reorderEntryHTML('characteristics', ch, i) : characteristicHTML(ch, i)).join('');
 }
 
 function characteristicHTML(ch, i) {
@@ -158,7 +160,8 @@ function removeCharacteristic(i) {
 function renderSkills() {
   const list = document.getElementById('skills-list');
   if (!list) return;
-  list.innerHTML = (state.skills || []).map((sk, i) => skillHTML(sk, i)).join('');
+  list.innerHTML = (state.skills || []).map((sk, i) =>
+    reorderMode.skills ? reorderEntryHTML('skills', sk, i) : skillHTML(sk, i)).join('');
 }
 
 function skillHTML(sk, i) {
@@ -203,7 +206,8 @@ function removeSkill(i) {
 function renderTraits() {
   const list = document.getElementById('traits-list');
   if (!list) return;
-  list.innerHTML = (state.traits || []).map((tr, i) => traitHTML(tr, i)).join('');
+  list.innerHTML = (state.traits || []).map((tr, i) =>
+    reorderMode.traits ? reorderEntryHTML('traits', tr, i) : traitHTML(tr, i)).join('');
 }
 
 function traitHTML(tr, i) {

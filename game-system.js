@@ -256,6 +256,9 @@ const GAME_I18N = {
     editor_section_background: 'Background',
     editor_background_ph:      'Histoire du personnage, origines, motivations…',
 
+    // Éditeur — réorganisation des entrées
+    editor_reorder_tooltip: 'Réorganiser les entrées',
+
     // Alertes
     alert_char_no_name:  'Veuillez donner un nom au personnage.',
     alert_trigram_3:     'Le trigramme doit faire exactement 3 lettres.',
@@ -305,6 +308,8 @@ const GAME_I18N = {
 
     editor_section_background: 'Background',
     editor_background_ph:      'Character history, origins, motivations…',
+
+    editor_reorder_tooltip: 'Reorder entries',
 
     alert_char_no_name:  'Please give the character a name.',
     alert_trigram_3:     'Trigram must be exactly 3 letters.',
