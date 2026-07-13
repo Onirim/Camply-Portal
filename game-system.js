@@ -151,17 +151,29 @@ function renderCharSheet(data) {
     </div>`;
 
   // ── Caractéristiques (toutes, sans limite) ─────────────────
+  // Au-delà de 6, on passe en petits blocs (comme les compétences)
+  // pour ne pas surcharger l'interface ; 6 ou moins → grands blocs.
   const chars = blockVisible('characteristics') ? (data.characteristics || []) : [];
+  const charsCompact = chars.length > 6;
+  const charsBody = charsCompact
+    ? `<div class="apt-preview-grid">
+        ${chars.map(ch => `
+          <div class="apt-preview-row">
+            <span class="name">${esc(ch.name)}${ch.trigram ? ` <span style="color:var(--text3)">(${esc(ch.trigram)})</span>` : ''}</span>
+            <span class="rank-num" style="color:var(--accent)">${ch.score ?? 0}</span>
+          </div>`).join('')}
+      </div>`
+    : `<div class="preview-attrs">
+        ${chars.map(ch => `
+          <div class="preview-attr" style="border-left:3px solid var(--accent)">
+            <div class="val" style="color:var(--accent);font-size:26px">${ch.score ?? 0}</div>
+            <div class="lbl">${esc(ch.trigram || '???')}</div>
+            <div class="cost" style="font-size:11px;color:var(--text2);margin-top:2px">${esc(ch.name)}</div>
+          </div>`).join('')}
+      </div>`;
   const charsHtml = chars.length ? `
     <div class="preview-section-title">${blockLabel('characteristics')}</div>
-    <div class="preview-attrs">
-      ${chars.map(ch => `
-        <div class="preview-attr" style="border-left:3px solid var(--accent)">
-          <div class="val" style="color:var(--accent);font-size:26px">${ch.score ?? 0}</div>
-          <div class="lbl">${esc(ch.trigram || '???')}</div>
-          <div class="cost" style="font-size:11px;color:var(--text2);margin-top:2px">${esc(ch.name)}</div>
-        </div>`).join('')}
-    </div>` : '';
+    ${charsBody}` : '';
 
   // ── Compétences ───────────────────────────────────────────
   const skills = blockVisible('skills') ? (data.skills || []) : [];
