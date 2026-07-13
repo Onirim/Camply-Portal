@@ -287,9 +287,22 @@
   padding: 7px 10px;
   user-select: none;
 }
+/* Entrée flottante qui suit le curseur pendant le drag */
 .reorder-entry.dragging {
   border-color: var(--accent);
-  opacity: 0.85;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  pointer-events: none;
+  cursor: grabbing;
+}
+
+/* Emplacement de destination pendant le drag */
+.reorder-placeholder {
+  border: 1px dashed var(--accent);
+  border-radius: 6px;
+  background: rgba(127, 127, 127, 0.08);
+  margin-bottom: 8px;
+  box-sizing: border-box;
 }
 
 .reorder-grip {

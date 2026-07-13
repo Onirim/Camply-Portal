@@ -116,36 +116,59 @@ function startEntryDrag(e, section) {
   const list   = entry?.parentElement;
   if (!entry || !list) return;
 
-  entry.classList.add('dragging');
+  const rect    = entry.getBoundingClientRect();
+  const offsetY = e.clientY - rect.top;   // décalage curseur → haut de l'entrée
 
-  // Capture du pointeur sur la poignée ; si elle échoue, on écoute
-  // sur window pour suivre le pointeur hors de la poignée.
-  let evTarget = handle;
-  try { handle.setPointerCapture(e.pointerId); } catch (_) { evTarget = window; }
+  // Emplacement fantôme : conserve la place dans le flux pendant que
+  // l'entrée passe en position flottante et suit le curseur.
+  const placeholder = document.createElement('div');
+  placeholder.className = 'reorder-placeholder';
+  placeholder.style.height = rect.height + 'px';
+  list.insertBefore(placeholder, entry.nextSibling);
+
+  entry.classList.add('dragging');
+  entry.style.width    = rect.width + 'px';
+  entry.style.position = 'fixed';
+  entry.style.left     = rect.left + 'px';
+  entry.style.top      = rect.top + 'px';
+
+  // Capture du pointeur : les événements suivants sont routés vers la
+  // poignée puis remontent jusqu'à window (où l'on écoute), même si le
+  // curseur sort de la poignée.
+  try { handle.setPointerCapture(e.pointerId); } catch (_) {}
 
   const onMove = ev => {
-    const y = ev.clientY;
-    for (const sib of Array.from(list.children)) {
-      if (sib === entry) continue;
+    entry.style.top = (ev.clientY - offsetY) + 'px';
+
+    // Repositionne le fantôme selon le milieu des autres entrées.
+    const sibs = Array.from(list.children).filter(c => c !== entry && c !== placeholder);
+    let placed = false;
+    for (const sib of sibs) {
       const r = sib.getBoundingClientRect();
-      if (y > r.top && y < r.bottom) {
-        list.insertBefore(entry, y < r.top + r.height / 2 ? sib : sib.nextSibling);
+      if (ev.clientY < r.top + r.height / 2) {
+        list.insertBefore(placeholder, sib);
+        placed = true;
         break;
       }
     }
+    if (!placed) list.appendChild(placeholder);
   };
 
   const onUp = () => {
-    evTarget.removeEventListener('pointermove', onMove);
-    evTarget.removeEventListener('pointerup', onUp);
-    evTarget.removeEventListener('pointercancel', onUp);
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
+    try { handle.releasePointerCapture(e.pointerId); } catch (_) {}
+    list.insertBefore(entry, placeholder);   // l'entrée reprend la place du fantôme
+    placeholder.remove();
     entry.classList.remove('dragging');
+    entry.removeAttribute('style');
     commitReorderFromDom(section, list);
   };
 
-  evTarget.addEventListener('pointermove', onMove);
-  evTarget.addEventListener('pointerup', onUp);
-  evTarget.addEventListener('pointercancel', onUp);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
 }
 
 function commitReorderFromDom(section, list) {
