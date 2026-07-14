@@ -48,7 +48,7 @@ Vanilla HTML/CSS/JS + [Supabase](https://supabase.com/) (Postgres, Auth, Storage
 | `scripts.js` | Core: auth, universes, characters, routing |
 | `chronicles.js`, `documents.js`, `campaigns.js`, `tags.js`, `transfert.js`, `export.js`, `unread-markers.js` | Feature modules |
 | `map.js`, `map-admin.js`, `map-config.js` | Map viewer and per-universe map configuration |
-| `admin-panel.js`, `universe-pause.js` | Instance administration and universe archiving |
+| `admin-panel.js`, `universe-pause.js`, `whatsnew.js` | Instance administration, universe archiving, and the news/changelog modal shown at login |
 | `editor.js`, `game-system.js` | Character sheet editor — **adapt these for your own game system** |
 | `i18n.js` | FR/EN translations |
 | `themes/` | Alternate visual themes |

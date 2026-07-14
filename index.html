@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="invites.css" />
 <link rel="stylesheet" href="universe-pause.css" />
 <link rel="stylesheet" href="legal.css" />
+<link rel="stylesheet" href="whatsnew.css" />
 <link rel="stylesheet" href="admin-panel.css" />
 <link rel="stylesheet" id="theme-stylesheet" href="" disabled>
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
@@ -375,6 +376,25 @@
           </table>
         </div>
         <div class="admin-pagination" id="admin-universes-pagination"></div>
+      </div>
+
+      <div class="admin-card admin-card-wide">
+        <div class="admin-card-title" data-i18n="admin_card_news">Nouveautés</div>
+
+        <div class="admin-news-form">
+          <input type="hidden" id="admin-news-editing-id">
+          <input type="text" id="admin-news-title" data-i18n="admin_news_title_ph" data-i18n-attr="placeholder" placeholder="Titre">
+          <textarea id="admin-news-content" data-i18n="admin_news_content_ph" data-i18n-attr="placeholder" placeholder="Contenu (markdown)"></textarea>
+          <div class="admin-news-form-row">
+            <input type="datetime-local" id="admin-news-published-at">
+          </div>
+          <div class="admin-news-form-actions">
+            <button class="btn-cancel" id="admin-news-cancel-btn" onclick="adminPanel.cancelNewsEdit()" style="display:none" data-i18n="admin_news_cancel_btn">Annuler</button>
+            <button class="btn-save" id="admin-news-save-btn" onclick="adminPanel.saveNews()" data-i18n="admin_news_save_btn">Publier</button>
+          </div>
+        </div>
+
+        <div class="admin-news-list" id="admin-news-list"></div>
       </div>
 
     </div>
@@ -1637,6 +1657,7 @@
 <script src="export.js"></script>
 <script src="universe-pause.js"></script>
 <script src="legal.js"></script>
+<script src="whatsnew.js"></script>
 <script src="admin-panel.js"></script>
 <script src="scripts.js"></script>
   <div id="transfer-modal">

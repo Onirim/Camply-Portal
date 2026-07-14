@@ -364,6 +364,7 @@ async function onSignedIn(user) {
   await loadUniversesFromDB();
   document.getElementById('loading-overlay').classList.remove('active');
   if (!navigateFromHash()) showUniverseScreen();
+  whatsnew.checkAndShow();
 }
 
 async function loadUniversesFromDB() {
