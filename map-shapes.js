@@ -25,52 +25,52 @@
 const MARKER_SHAPES = {
   pin: {
     width: 28, height: 40, anchor: 'tip',
-    center: [14, 14], dot: 5.5, iconSize: 16,
+    center: [14, 14], dot: 5.5, iconSize: 18.4,
     form: (color, opacity) => `
       <path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 26 14 26s14-16.667 14-26C28 6.268 21.732 0 14 0z"
         fill="${color}" opacity="${opacity}"/>`,
   },
   circle: {
     width: 40, height: 40, anchor: 'center',
-    center: [20, 20], dot: 7, iconSize: 22,
+    center: [20, 20], dot: 7, iconSize: 25.3,
     form: (color, opacity) => `
       <circle cx="20" cy="20" r="19" fill="${color}" opacity="${opacity}"/>`,
   },
   diamond: {
     width: 40, height: 44, anchor: 'center',
-    center: [20, 22], dot: 7, iconSize: 19,
+    center: [20, 22], dot: 7, iconSize: 21.9,
     form: (color, opacity) => `
       <path d="M20 0L40 22L20 44L0 22Z" fill="${color}" opacity="${opacity}"/>`,
   },
   shield: {
     width: 40, height: 44, anchor: 'tip',
-    center: [20, 18], dot: 7, iconSize: 20,
+    center: [20, 18], dot: 7, iconSize: 23,
     form: (color, opacity) => `
       <path d="M20 0C28 4 34 5 40 5c0 18-7 30-20 39C7 35 0 23 0 5c6 0 12-1 20-5z"
         fill="${color}" opacity="${opacity}"/>`,
   },
   banner: {
     width: 40, height: 44, anchor: 'center',
-    center: [20, 16], dot: 7, iconSize: 20,
+    center: [20, 16], dot: 7, iconSize: 23,
     form: (color, opacity) => `
       <path d="M0 0h40v44L20 33L0 44Z" fill="${color}" opacity="${opacity}"/>`,
   },
   hexagon: {
     width: 40, height: 44, anchor: 'center',
-    center: [20, 22], dot: 7, iconSize: 21,
+    center: [20, 22], dot: 7, iconSize: 24.2,
     form: (color, opacity) => `
       <path d="M20 0L38 11v22L20 44L2 33V11Z" fill="${color}" opacity="${opacity}"/>`,
   },
   star: {
     width: 40, height: 40, anchor: 'center',
-    center: [20, 20.5], dot: 5.5, iconSize: 12,
+    center: [20, 20.5], dot: 5.5, iconSize: 13.8,
     form: (color, opacity) => `
       <path d="M20 0L24.9 13.2L39 13.8L28 22.6L31.8 36.2L20 28.4L8.2 36.2L12 22.6L1 13.8L15.1 13.2Z"
         fill="${color}" opacity="${opacity}"/>`,
   },
   square: {
     width: 40, height: 40, anchor: 'center',
-    center: [20, 20], dot: 7, iconSize: 22,
+    center: [20, 20], dot: 7, iconSize: 25.3,
     form: (color, opacity) => `
       <rect x="1" y="1" width="38" height="38" rx="6" fill="${color}" opacity="${opacity}"/>`,
   },
@@ -80,10 +80,10 @@ const MARKER_SHAPE_KEYS    = Object.keys(MARKER_SHAPES);
 const MARKER_SHAPE_DEFAULT = 'pin';
 
 // ── Pictogrammes ──────────────────────────────────────────────
-// Silhouettes dessinées sur une grille 24×24, remplies en sombre
+// Silhouettes dessinées sur une grille 24×24, remplies en blanc
 // sur la couleur de la forme. `stroke` = épaisseur de trait pour
 // les rares icônes dessinées au trait plutôt qu'en aplat.
-const MARKER_ICON_COLOR = '#1c1c1c';
+const MARKER_ICON_COLOR = 'white';
 
 const MARKER_ICONS = {
   village:  { d: 'M4 20v-9l8-6 8 6v9h-5.5v-5.5h-5V20z' },
