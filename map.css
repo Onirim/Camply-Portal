@@ -226,7 +226,17 @@
   filter: drop-shadow(0 3px 8px rgba(0,0,0,0.8)) brightness(1.15);
   z-index: 20;
 }
-.map-marker:hover .map-marker-label {
+/* Formes sans pointe basse (cercle, losange, etc.) : c'est le centre
+   de la forme qui désigne la position, pas la pointe. */
+.map-marker--anchor-center {
+  transform: translate(-50%, -50%);
+}
+/* Le libellé niché au survol n'a plus lieu d'être en mode "tout
+   afficher" : la couche #map-labels-overlay affiche déjà ce nom en
+   permanence, avec sa propre position calculée. Les deux coexistant
+   se chevauchaient légèrement (le survol ajoute un décalage de 4px
+   que l'overlay n'a pas), d'où le doublon visible au survol. */
+.map-viewport:not(.labels-visible) .map-marker:hover .map-marker-label {
   opacity: 1;
   transform: translateX(-50%) translateY(-4px);
 }
@@ -262,10 +272,34 @@
 
 /* ══════════════════════════════════════════════════════════════
    LIBELLÉS PERMANENTS — affiche tous les noms de marqueurs
+   Rendus dans une couche à part (#map-labels-overlay), au-dessus
+   de TOUS les marqueurs : un .map-marker-label nourri par le CSS
+   :hover reste piégé dans le contexte d'empilement de son propre
+   marqueur, et pourrait donc être masqué par un marqueur voisin
+   plus récent dans le DOM. Voir _renderPermanentLabels() (map.js).
    ══════════════════════════════════════════════════════════════ */
-.map-viewport.labels-visible .map-marker-label {
-  opacity: 1;
-  transform: translateX(-50%) translateY(-4px);
+#map-labels-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+}
+.map-permanent-label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 3px 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -514,13 +548,16 @@
   flex-wrap: wrap;
 }
 .map-color-swatch {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   cursor: pointer;
   border: 2px solid transparent;
   transition: transform 0.1s, border-color 0.1s;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .map-color-swatch:hover { transform: scale(1.2); }
 .map-color-swatch.selected {
@@ -756,9 +793,10 @@
 .map-legend-item.off { opacity: 0.4; }
 
 .map-legend-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
+  width: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -847,15 +885,62 @@
 /* Lignes de libellé de couleur dans la modale */
 .map-admin-color-row {
   display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 .map-admin-color-row:last-child { margin-bottom: 0; }
 .map-admin-color-dot {
   width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
 }
 .map-admin-color-row input {
-  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  flex: 1; min-width: 140px;
+  background: var(--bg3); border: 1px solid var(--border);
   border-radius: 6px; color: var(--text); font-family: var(--font-body);
   font-size: 13px; padding: 7px 10px; outline: none; transition: border-color 0.15s;
+}
+/* Bouton de personnalisation du marqueur (aperçu miniature cliquable) */
+.map-admin-custom-btn {
+  width: 30px; height: 30px; padding: 0; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 5px;
+  cursor: pointer;
+  transition: border-color 0.1s;
+}
+.map-admin-custom-btn:hover { border-color: var(--accent); }
+
+/* Représente l'option « point blanc » (pas de pictogramme) */
+.map-admin-icon-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor; opacity: 0.7;
+}
+
+/* Popover de personnalisation : aperçu, formes, pictogrammes */
+#map-admin-marker-popover {
+  position: fixed; z-index: 320;
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
+.map-admin-picker-preview {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 48px; padding: 3px 0;
+  background: var(--bg3); border-radius: 6px; margin-bottom: 4px;
+}
+.map-admin-picker-label {
+  font-size: 11px; color: var(--text3); margin: 3px 0 2px;
+}
+.map-admin-picker-grid {
+  display: grid; grid-template-columns: repeat(6, 28px); gap: 3px;
+}
+.map-admin-picker-choice {
+  width: 28px; height: 28px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid transparent; border-radius: 5px;
+  cursor: pointer; color: var(--text2);
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+.map-admin-picker-choice:hover { background: var(--bg3); color: var(--text); }
+.map-admin-picker-choice.selected {
+  background: var(--bg3); border-color: var(--accent); color: var(--text);
 }
 .map-admin-color-row input:focus { border-color: var(--accent); }
 .map-admin-color-row input::placeholder { color: var(--text3); }

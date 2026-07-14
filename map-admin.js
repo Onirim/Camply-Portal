@@ -12,6 +12,8 @@ let mapAdminState      = {     // état du formulaire (modale ouverte)
   image_width: 0,
   image_height: 0,
   colorLabels: {}, // hex → libellé
+  colorShapes: {}, // hex → clé de MARKER_SHAPES
+  colorIcons:  {}, // hex → clé de MARKER_ICONS ('' = point blanc)
 };
 
 // ── Liste ─────────────────────────────────────────────────────
@@ -104,6 +106,8 @@ function openMapAdminForm(mapId) {
     image_width:  existing?.image_width  || 0,
     image_height: existing?.image_height || 0,
     colorLabels:  Object.fromEntries((existing?.marker_colors || []).map(mc => [mc.color, mc.label])),
+    colorShapes:  Object.fromEntries((existing?.marker_colors || []).map(mc => [mc.color, mc.shape || MARKER_SHAPE_DEFAULT])),
+    colorIcons:   Object.fromEntries((existing?.marker_colors || []).map(mc => [mc.color, mc.icon || ''])),
   };
 
   document.getElementById('map-admin-modal-title-text').textContent =
@@ -119,6 +123,7 @@ function openMapAdminForm(mapId) {
 
 function closeMapAdminForm() {
   if (mapAdminStaging) { discardStagedIllustration('map-images', mapAdminStaging); mapAdminStaging = null; }
+  closeMapAdminMarkerPicker();
   document.getElementById('map-admin-modal').classList.remove('open');
   mapAdminEditingId = null;
 }
@@ -145,14 +150,105 @@ function setMapAdminImagePreview() {
 function renderMapAdminColorRows() {
   const container = document.getElementById('map-admin-colors');
   if (!container) return;
-  container.innerHTML = MAP_CONFIG.markerColors.map(c => `
+  container.innerHTML = MAP_CONFIG.markerColors.map(c => {
+    const shape = mapAdminState.colorShapes[c] || MARKER_SHAPE_DEFAULT;
+    const icon  = mapAdminState.colorIcons[c]  || '';
+    return `
     <div class="map-admin-color-row">
       <span class="map-admin-color-dot" style="background:${c}"></span>
       <input type="text" maxlength="40"
         value="${esc(mapAdminState.colorLabels[c] || '')}"
         placeholder="${t('map_admin_color_ph')}"
         oninput="mapAdminState.colorLabels['${c}'] = this.value">
-    </div>`).join('');
+      <button type="button" class="map-admin-custom-btn" title="${t('map_admin_custom_btn')}"
+        onmousedown="event.stopPropagation()"
+        onclick="openMapAdminMarkerPicker('${c}', this)">
+        ${markerShapeSVG(shape, c, 16, { icon })}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// ── Popover de personnalisation du marqueur (forme + pictogramme) ──
+
+function _mapAdminMarkerPickerHTML(color) {
+  const shape = mapAdminState.colorShapes[color] || MARKER_SHAPE_DEFAULT;
+  const icon  = mapAdminState.colorIcons[color]  || '';
+  return `
+    <div class="map-admin-picker-preview">${markerShapeSVG(shape, color, 30, { icon })}</div>
+    <div class="map-admin-picker-label">${t('map_admin_picker_shape')}</div>
+    <div class="map-admin-picker-grid">
+      ${MARKER_SHAPE_KEYS.map(s => `
+      <button type="button" class="map-admin-picker-choice ${s === shape ? 'selected' : ''}"
+        title="${t('map_shape_' + s)}" onclick="setMapAdminShape('${color}','${s}')">
+        ${markerShapeSVG(s, color, 14)}
+      </button>`).join('')}
+    </div>
+    <div class="map-admin-picker-label">${t('map_admin_picker_icon')}</div>
+    <div class="map-admin-picker-grid">
+      <button type="button" class="map-admin-picker-choice ${icon === '' ? 'selected' : ''}"
+        title="${t('map_icon_none')}" onclick="setMapAdminIcon('${color}','')">
+        <span class="map-admin-icon-dot"></span>
+      </button>
+      ${MARKER_ICON_KEYS.map(k => `
+      <button type="button" class="map-admin-picker-choice ${icon === k ? 'selected' : ''}"
+        title="${t('map_icon_' + k)}" onclick="setMapAdminIcon('${color}','${k}')">
+        ${markerIconSVG(k, 16)}
+      </button>`).join('')}
+    </div>`;
+}
+
+function openMapAdminMarkerPicker(color, btn) {
+  const wasOpen = document.getElementById('map-admin-marker-popover')?.dataset.color === color;
+  closeMapAdminMarkerPicker();
+  if (wasOpen) return; // re-clic sur le même bouton = fermeture
+
+  const pop = document.createElement('div');
+  pop.id = 'map-admin-marker-popover';
+  pop.dataset.color = color;
+  pop.innerHTML = _mapAdminMarkerPickerHTML(color);
+  document.body.appendChild(pop);
+
+  // Position fixe sous le bouton, ramenée dans la fenêtre si besoin
+  const r = btn.getBoundingClientRect();
+  let left = Math.min(r.left, window.innerWidth - pop.offsetWidth - 8);
+  let top  = r.bottom + 4;
+  if (top + pop.offsetHeight > window.innerHeight - 8) top = r.top - pop.offsetHeight - 4;
+  pop.style.left = Math.max(8, left) + 'px';
+  pop.style.top  = Math.max(8, top)  + 'px';
+
+  // Détection du clic extérieur sur mousedown : l'événement précède le
+  // remplacement du contenu du popover par les onclick internes, donc
+  // la cible est encore attachée au DOM au moment du test.
+  document.addEventListener('mousedown', _mapAdminMarkerPickerOutside);
+}
+
+function _mapAdminMarkerPickerOutside(e) {
+  const pop = document.getElementById('map-admin-marker-popover');
+  if (pop && !pop.contains(e.target)) closeMapAdminMarkerPicker();
+}
+
+function closeMapAdminMarkerPicker() {
+  document.getElementById('map-admin-marker-popover')?.remove();
+  document.removeEventListener('mousedown', _mapAdminMarkerPickerOutside);
+}
+
+/** Rafraîchit le popover ouvert (après un choix) sans le fermer. */
+function _refreshMapAdminMarkerPicker(color) {
+  const pop = document.getElementById('map-admin-marker-popover');
+  if (pop && pop.dataset.color === color) pop.innerHTML = _mapAdminMarkerPickerHTML(color);
+}
+
+function setMapAdminShape(color, shape) {
+  mapAdminState.colorShapes[color] = shape;
+  _refreshMapAdminMarkerPicker(color);
+  renderMapAdminColorRows();
+}
+
+function setMapAdminIcon(color, icon) {
+  mapAdminState.colorIcons[color] = icon;
+  _refreshMapAdminMarkerPicker(color);
+  renderMapAdminColorRows();
 }
 
 // ── Upload image ─────────────────────────────────────────────
@@ -264,6 +360,8 @@ async function saveMapAdmin() {
   const marker_colors = MAP_CONFIG.markerColors.map(c => ({
     color: c,
     label: (mapAdminState.colorLabels[c] || '').trim(),
+    shape: mapAdminState.colorShapes[c] || MARKER_SHAPE_DEFAULT,
+    icon:  mapAdminState.colorIcons[c]  || '',
   }));
 
   const payload = {

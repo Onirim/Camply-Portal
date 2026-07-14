@@ -13,7 +13,7 @@ let mapAccessByKey    = {};
 let mapColorFilter = {};   // mapKey → Set des couleurs masquées
 
 // Configuration des cartes (chargée depuis public.maps, univers courant).
-// Chaque entrée : { key, name, image, imageWidth, imageHeight, markerColorLabels }
+// Chaque entrée : { key, name, image, imageWidth, imageHeight, markerColorLabels, markerColorShapes, markerColorIcons }
 let mapsConfig       = [];
 let mapsConfigLoaded = false;
 
@@ -34,6 +34,8 @@ async function _loadMapsConfig() {
     imageWidth:  row.image_width,
     imageHeight: row.image_height,
     markerColorLabels: Object.fromEntries((row.marker_colors || []).map(mc => [mc.color, mc.label])),
+    markerColorShapes: Object.fromEntries((row.marker_colors || []).map(mc => [mc.color, mc.shape || MARKER_SHAPE_DEFAULT])),
+    markerColorIcons:  Object.fromEntries((row.marker_colors || []).map(mc => [mc.color, mc.icon || ''])),
   }));
   mapsConfigLoaded = true;
 }
@@ -123,6 +125,24 @@ function _getCurrentColorLabels() {
   return cfg?.markerColorLabels || {};
 }
 
+function _getCurrentColorShapes() {
+  const cfg = _getCurrentMapConfig();
+  return cfg?.markerColorShapes || {};
+}
+
+function _getMarkerShapeForColor(color) {
+  return _getCurrentColorShapes()[color] || MARKER_SHAPE_DEFAULT;
+}
+
+function _getCurrentColorIcons() {
+  const cfg = _getCurrentMapConfig();
+  return cfg?.markerColorIcons || {};
+}
+
+function _getMarkerIconForColor(color) {
+  return _getCurrentColorIcons()[color] || '';
+}
+
 function _getHiddenColorsSet(mapKey = currentMapKey) {
   if (!mapColorFilter[mapKey]) mapColorFilter[mapKey] = new Set();
   return mapColorFilter[mapKey];
@@ -159,6 +179,8 @@ function _renderMapLegend() {
   if (!panel) return;
 
   const labels = _getCurrentColorLabels();
+  const shapes = _getCurrentColorShapes();
+  const icons  = _getCurrentColorIcons();
   const hidden = _getHiddenColorsSet();
   const colors = _getLegendColors();
 
@@ -183,7 +205,7 @@ function _renderMapLegend() {
     <div class="map-legend-list">
       ${colors.map(c => `
         <div class="map-legend-item ${hidden.has(c) ? 'off' : ''}" onclick="toggleMapColorFilter('${c}')">
-          <span class="map-legend-dot" style="background:${c}"></span>
+          <span class="map-legend-dot">${markerShapeSVG(shapes[c], c, 12, { icon: icons[c] })}</span>
           <span class="map-legend-label">${esc(labels[c])}</span>
           <span class="map-legend-check">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
@@ -202,6 +224,45 @@ function toggleMapLabels() {
   if (_mapViewport) _mapViewport.classList.toggle('labels-visible', mapLabelsVisible);
   const btn = document.getElementById('map-labels-btn');
   if (btn) btn.classList.toggle('active', mapLabelsVisible);
+  _renderPermanentLabels();
+}
+
+/**
+ * Libellés permanents (mode "tout afficher") : un `.map-marker` a sa
+ * propre position+z-index, donc son propre contexte d'empilement — le
+ * libellé qu'il contient reste piégé derrière un marqueur voisin plus
+ * récent dans le DOM, même à z-index égal (l'ordre du DOM tranche).
+ * On rend donc les libellés permanents dans une couche à part,
+ * au-dessus de TOUS les marqueurs, plutôt que nichés dans chacun.
+ * (Le libellé au survol, lui, reste géré par le CSS existant :
+ * un seul marqueur à la fois passe entièrement au premier plan.)
+ */
+function _renderPermanentLabels() {
+  const existing = document.getElementById('map-labels-overlay');
+  if (!mapLabelsVisible) { existing?.remove(); return; }
+  if (!_mapViewport) return;
+
+  const layer = existing || document.createElement('div');
+  if (!existing) {
+    layer.id = 'map-labels-overlay';
+    _mapViewport.appendChild(layer);
+  }
+
+  layer.innerHTML = '';
+  _mapViewport.querySelectorAll('.map-marker').forEach(markerEl => {
+    const svg   = markerEl.querySelector('svg.map-marker-pin');
+    const label = markerEl.querySelector('.map-marker-label');
+    if (!svg || !label) return;
+    const h = parseFloat(svg.getAttribute('height')) || 0;
+    const offset = markerEl.classList.contains('map-marker--anchor-center') ? h / 2 : h;
+
+    const chip = document.createElement('div');
+    chip.className = 'map-permanent-label';
+    chip.style.left = markerEl.style.left;
+    chip.style.top  = `calc(${markerEl.style.top} - ${offset}px - 2px)`;
+    chip.textContent = label.textContent;
+    layer.appendChild(chip);
+  });
 }
 
 function toggleMapLegendPanel() {
@@ -444,6 +505,7 @@ async function switchMap(key) {
   // Ré-affiche les marqueurs propres
   Object.values(mapMarkers).filter(m => _isMarkerOnCurrentMap(m)).forEach(m => _renderMarker(m, true));
   _updateMarkerCount();
+  _renderPermanentLabels();
 
   _renderVisibilityToggle();
   _renderMapAccessState();
@@ -705,6 +767,7 @@ async function _saveMarkerToDB(payload, ctx) {
     mapMarkers[data.id] = data;
     _renderMarker(data, true);
     _updateMarkerCount();
+    _renderPermanentLabels();
     showToast(t('map_toast_added'));
   } else {
     // Un MJ peut éditer un marqueur d'une couche suivie qui lui est
@@ -721,6 +784,7 @@ async function _saveMarkerToDB(payload, ctx) {
       mapMarkers[data.id] = data;
     }
     _refreshMarkerDOM(data);
+    _renderPermanentLabels();
     showToast(t('map_toast_saved'));
   }
 }
@@ -733,6 +797,7 @@ async function deleteMapMarker(id) {
   for (const entry of Object.values(mapFollowedLayers)) delete entry.markers[id];
   document.getElementById('marker-' + id)?.remove();
   _updateMarkerCount();
+  _renderPermanentLabels();
   _closePopup();
   showToast(t('map_toast_deleted'));
 }
@@ -829,6 +894,7 @@ function _renderAllMarkers() {
   // Marqueurs propres par-dessus (déjà filtrés par loadMapMarkersFromDB)
   Object.values(mapMarkers).filter(m => _isMarkerOnCurrentMap(m)).forEach(m => _renderMarker(m, true));
   _updateMarkerCount();
+  _renderPermanentLabels();
 }
 
 function _renderMarker(m, owned) {
@@ -836,24 +902,18 @@ function _renderMarker(m, owned) {
   if (!_isColorVisible(m.color)) return;
   const size = MAP_CONFIG.markerSize;
 
+  const shape = _getMarkerShapeForColor(m.color);
   const el = document.createElement('div');
-  el.className = 'map-marker';
+  el.className = 'map-marker'
+    + (getMarkerShapeDef(shape).anchor === 'center' ? ' map-marker--anchor-center' : '');
   el.id        = 'marker-' + m.id;
   el.dataset.rx = String(m.x);
   el.dataset.ry = String(m.y);
   _positionMarkerElement(el, m.x, m.y);
 
-  const opacity  = '0.92';
-
-  el.innerHTML = `
-    <svg class="map-marker-pin"
-      width="${size}" height="${Math.round(size * 1.4)}"
-      viewBox="0 0 28 40" xmlns="http://www.w3.org/2000/svg">
-      <path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 26 14 26s14-16.667 14-26C28 6.268 21.732 0 14 0z"
-        fill="${m.color}" opacity="${opacity}"/>
-      <circle cx="14" cy="14" r="5.5" fill="white" opacity="0.95"/>
-    </svg>
-    <div class="map-marker-label">${esc(m.name)}</div>`;
+  el.innerHTML = markerShapeSVG(shape, m.color, size,
+      { className: 'map-marker-pin', opacity: 0.92, icon: _getMarkerIconForColor(m.color) })
+    + `<div class="map-marker-label">${esc(m.name)}</div>`;
 
   el.addEventListener('click', e => {
     e.stopPropagation();
@@ -867,8 +927,13 @@ function _renderMarker(m, owned) {
 function _refreshMarkerDOM(m) {
   const el = document.getElementById('marker-' + m.id);
   if (!el) { _renderMarker(m, true); return; }
-  const path = el.querySelector('path');
-  if (path) path.setAttribute('fill', m.color);
+  // La couleur peut avoir changé, et avec elle la forme associée :
+  // on régénère le SVG plutôt que de retoucher le fill.
+  const shape = _getMarkerShapeForColor(m.color);
+  el.classList.toggle('map-marker--anchor-center', getMarkerShapeDef(shape).anchor === 'center');
+  const svg = el.querySelector('svg.map-marker-pin');
+  if (svg) svg.outerHTML = markerShapeSVG(shape, m.color, MAP_CONFIG.markerSize,
+    { className: 'map-marker-pin', opacity: 0.92, icon: _getMarkerIconForColor(m.color) });
   const label = el.querySelector('.map-marker-label');
   if (label) label.textContent = m.name;
   el.dataset.rx = String(m.x);
@@ -892,6 +957,7 @@ function _repositionRenderedMarkers() {
     const ry = parseFloat(el.dataset.ry);
     if (Number.isFinite(rx) && Number.isFinite(ry)) _positionMarkerElement(el, rx, ry);
   });
+  _renderPermanentLabels();
 }
 
 function _updateMarkerCount() {
@@ -1048,9 +1114,11 @@ function openMapMarkerModal(mode, rx, ry, markerId) {
     swatchesEl.innerHTML = `<div class="map-modal-no-colors">${t('map_modal_no_colors')}</div>`;
     if (saveBtn) saveBtn.disabled = true;
   } else {
+    const shapes = _getCurrentColorShapes();
+    const icons  = _getCurrentColorIcons();
     swatchesEl.innerHTML = allowedColors.map(c => `
       <div class="map-color-swatch ${c === mapModalColor ? 'selected' : ''}"
-        style="background:${c}" title="${esc(labels[c])}" onclick="selectMapModalColor('${c}',this)"></div>`
+        title="${esc(labels[c])}" onclick="selectMapModalColor('${c}',this)">${markerShapeSVG(shapes[c], c, 16, { icon: icons[c] })}</div>`
     ).join('');
     if (saveBtn) saveBtn.disabled = false;
   }
