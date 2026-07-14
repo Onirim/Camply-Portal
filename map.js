@@ -13,7 +13,7 @@ let mapAccessByKey    = {};
 let mapColorFilter = {};   // mapKey → Set des couleurs masquées
 
 // Configuration des cartes (chargée depuis public.maps, univers courant).
-// Chaque entrée : { key, name, image, imageWidth, imageHeight, markerColorLabels, markerColorShapes }
+// Chaque entrée : { key, name, image, imageWidth, imageHeight, markerColorLabels, markerColorShapes, markerColorIcons }
 let mapsConfig       = [];
 let mapsConfigLoaded = false;
 
@@ -35,6 +35,7 @@ async function _loadMapsConfig() {
     imageHeight: row.image_height,
     markerColorLabels: Object.fromEntries((row.marker_colors || []).map(mc => [mc.color, mc.label])),
     markerColorShapes: Object.fromEntries((row.marker_colors || []).map(mc => [mc.color, mc.shape || MARKER_SHAPE_DEFAULT])),
+    markerColorIcons:  Object.fromEntries((row.marker_colors || []).map(mc => [mc.color, mc.icon || ''])),
   }));
   mapsConfigLoaded = true;
 }
@@ -133,6 +134,15 @@ function _getMarkerShapeForColor(color) {
   return _getCurrentColorShapes()[color] || MARKER_SHAPE_DEFAULT;
 }
 
+function _getCurrentColorIcons() {
+  const cfg = _getCurrentMapConfig();
+  return cfg?.markerColorIcons || {};
+}
+
+function _getMarkerIconForColor(color) {
+  return _getCurrentColorIcons()[color] || '';
+}
+
 function _getHiddenColorsSet(mapKey = currentMapKey) {
   if (!mapColorFilter[mapKey]) mapColorFilter[mapKey] = new Set();
   return mapColorFilter[mapKey];
@@ -170,6 +180,7 @@ function _renderMapLegend() {
 
   const labels = _getCurrentColorLabels();
   const shapes = _getCurrentColorShapes();
+  const icons  = _getCurrentColorIcons();
   const hidden = _getHiddenColorsSet();
   const colors = _getLegendColors();
 
@@ -194,7 +205,7 @@ function _renderMapLegend() {
     <div class="map-legend-list">
       ${colors.map(c => `
         <div class="map-legend-item ${hidden.has(c) ? 'off' : ''}" onclick="toggleMapColorFilter('${c}')">
-          <span class="map-legend-dot">${markerShapeSVG(shapes[c], c, 12)}</span>
+          <span class="map-legend-dot">${markerShapeSVG(shapes[c], c, 12, { icon: icons[c] })}</span>
           <span class="map-legend-label">${esc(labels[c])}</span>
           <span class="map-legend-check">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
@@ -856,7 +867,8 @@ function _renderMarker(m, owned) {
   el.dataset.ry = String(m.y);
   _positionMarkerElement(el, m.x, m.y);
 
-  el.innerHTML = markerShapeSVG(shape, m.color, size, { className: 'map-marker-pin', opacity: 0.92 })
+  el.innerHTML = markerShapeSVG(shape, m.color, size,
+      { className: 'map-marker-pin', opacity: 0.92, icon: _getMarkerIconForColor(m.color) })
     + `<div class="map-marker-label">${esc(m.name)}</div>`;
 
   el.addEventListener('click', e => {
@@ -876,7 +888,8 @@ function _refreshMarkerDOM(m) {
   const shape = _getMarkerShapeForColor(m.color);
   el.classList.toggle('map-marker--anchor-center', getMarkerShapeDef(shape).anchor === 'center');
   const svg = el.querySelector('svg.map-marker-pin');
-  if (svg) svg.outerHTML = markerShapeSVG(shape, m.color, MAP_CONFIG.markerSize, { className: 'map-marker-pin', opacity: 0.92 });
+  if (svg) svg.outerHTML = markerShapeSVG(shape, m.color, MAP_CONFIG.markerSize,
+    { className: 'map-marker-pin', opacity: 0.92, icon: _getMarkerIconForColor(m.color) });
   const label = el.querySelector('.map-marker-label');
   if (label) label.textContent = m.name;
   el.dataset.rx = String(m.x);
@@ -1057,9 +1070,10 @@ function openMapMarkerModal(mode, rx, ry, markerId) {
     if (saveBtn) saveBtn.disabled = true;
   } else {
     const shapes = _getCurrentColorShapes();
+    const icons  = _getCurrentColorIcons();
     swatchesEl.innerHTML = allowedColors.map(c => `
       <div class="map-color-swatch ${c === mapModalColor ? 'selected' : ''}"
-        title="${esc(labels[c])}" onclick="selectMapModalColor('${c}',this)">${markerShapeSVG(shapes[c], c, 16)}</div>`
+        title="${esc(labels[c])}" onclick="selectMapModalColor('${c}',this)">${markerShapeSVG(shapes[c], c, 16, { icon: icons[c] })}</div>`
     ).join('');
     if (saveBtn) saveBtn.disabled = false;
   }
