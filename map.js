@@ -224,6 +224,45 @@ function toggleMapLabels() {
   if (_mapViewport) _mapViewport.classList.toggle('labels-visible', mapLabelsVisible);
   const btn = document.getElementById('map-labels-btn');
   if (btn) btn.classList.toggle('active', mapLabelsVisible);
+  _renderPermanentLabels();
+}
+
+/**
+ * Libellés permanents (mode "tout afficher") : un `.map-marker` a sa
+ * propre position+z-index, donc son propre contexte d'empilement — le
+ * libellé qu'il contient reste piégé derrière un marqueur voisin plus
+ * récent dans le DOM, même à z-index égal (l'ordre du DOM tranche).
+ * On rend donc les libellés permanents dans une couche à part,
+ * au-dessus de TOUS les marqueurs, plutôt que nichés dans chacun.
+ * (Le libellé au survol, lui, reste géré par le CSS existant :
+ * un seul marqueur à la fois passe entièrement au premier plan.)
+ */
+function _renderPermanentLabels() {
+  const existing = document.getElementById('map-labels-overlay');
+  if (!mapLabelsVisible) { existing?.remove(); return; }
+  if (!_mapViewport) return;
+
+  const layer = existing || document.createElement('div');
+  if (!existing) {
+    layer.id = 'map-labels-overlay';
+    _mapViewport.appendChild(layer);
+  }
+
+  layer.innerHTML = '';
+  _mapViewport.querySelectorAll('.map-marker').forEach(markerEl => {
+    const svg   = markerEl.querySelector('svg.map-marker-pin');
+    const label = markerEl.querySelector('.map-marker-label');
+    if (!svg || !label) return;
+    const h = parseFloat(svg.getAttribute('height')) || 0;
+    const offset = markerEl.classList.contains('map-marker--anchor-center') ? h / 2 : h;
+
+    const chip = document.createElement('div');
+    chip.className = 'map-permanent-label';
+    chip.style.left = markerEl.style.left;
+    chip.style.top  = `calc(${markerEl.style.top} - ${offset}px - 2px)`;
+    chip.textContent = label.textContent;
+    layer.appendChild(chip);
+  });
 }
 
 function toggleMapLegendPanel() {
@@ -466,6 +505,7 @@ async function switchMap(key) {
   // Ré-affiche les marqueurs propres
   Object.values(mapMarkers).filter(m => _isMarkerOnCurrentMap(m)).forEach(m => _renderMarker(m, true));
   _updateMarkerCount();
+  _renderPermanentLabels();
 
   _renderVisibilityToggle();
   _renderMapAccessState();
@@ -727,6 +767,7 @@ async function _saveMarkerToDB(payload, ctx) {
     mapMarkers[data.id] = data;
     _renderMarker(data, true);
     _updateMarkerCount();
+    _renderPermanentLabels();
     showToast(t('map_toast_added'));
   } else {
     // Un MJ peut éditer un marqueur d'une couche suivie qui lui est
@@ -743,6 +784,7 @@ async function _saveMarkerToDB(payload, ctx) {
       mapMarkers[data.id] = data;
     }
     _refreshMarkerDOM(data);
+    _renderPermanentLabels();
     showToast(t('map_toast_saved'));
   }
 }
@@ -755,6 +797,7 @@ async function deleteMapMarker(id) {
   for (const entry of Object.values(mapFollowedLayers)) delete entry.markers[id];
   document.getElementById('marker-' + id)?.remove();
   _updateMarkerCount();
+  _renderPermanentLabels();
   _closePopup();
   showToast(t('map_toast_deleted'));
 }
@@ -851,6 +894,7 @@ function _renderAllMarkers() {
   // Marqueurs propres par-dessus (déjà filtrés par loadMapMarkersFromDB)
   Object.values(mapMarkers).filter(m => _isMarkerOnCurrentMap(m)).forEach(m => _renderMarker(m, true));
   _updateMarkerCount();
+  _renderPermanentLabels();
 }
 
 function _renderMarker(m, owned) {
@@ -913,6 +957,7 @@ function _repositionRenderedMarkers() {
     const ry = parseFloat(el.dataset.ry);
     if (Number.isFinite(rx) && Number.isFinite(ry)) _positionMarkerElement(el, rx, ry);
   });
+  _renderPermanentLabels();
 }
 
 function _updateMarkerCount() {

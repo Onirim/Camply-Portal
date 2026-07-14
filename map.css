@@ -267,10 +267,34 @@
 
 /* ══════════════════════════════════════════════════════════════
    LIBELLÉS PERMANENTS — affiche tous les noms de marqueurs
+   Rendus dans une couche à part (#map-labels-overlay), au-dessus
+   de TOUS les marqueurs : un .map-marker-label nourri par le CSS
+   :hover reste piégé dans le contexte d'empilement de son propre
+   marqueur, et pourrait donc être masqué par un marqueur voisin
+   plus récent dans le DOM. Voir _renderPermanentLabels() (map.js).
    ══════════════════════════════════════════════════════════════ */
-.map-viewport.labels-visible .map-marker-label {
-  opacity: 1;
-  transform: translateX(-50%) translateY(-4px);
+#map-labels-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+}
+.map-permanent-label {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 3px 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ══════════════════════════════════════════════════════════════
