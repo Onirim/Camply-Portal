@@ -868,30 +868,15 @@
   border-radius: 6px; color: var(--text); font-family: var(--font-body);
   font-size: 13px; padding: 7px 10px; outline: none; transition: border-color 0.15s;
 }
-.map-admin-shape-picker {
-  display: flex; gap: 3px; flex-shrink: 0;
-}
-.map-admin-shape-btn {
-  width: 24px; height: 24px; padding: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: transparent; border: 1px solid transparent; border-radius: 5px;
-  cursor: pointer; opacity: 0.45;
-  transition: opacity 0.1s, border-color 0.1s, background 0.1s;
-}
-.map-admin-shape-btn:hover { opacity: 1; background: var(--bg3); }
-.map-admin-shape-btn.selected {
-  opacity: 1; background: var(--bg3); border-color: var(--accent);
-}
-
-/* Bouton d'ouverture du sélecteur de pictogramme */
-.map-admin-icon-btn {
-  width: 24px; height: 24px; padding: 0; flex-shrink: 0;
+/* Bouton de personnalisation du marqueur (aperçu miniature cliquable) */
+.map-admin-custom-btn {
+  width: 30px; height: 30px; padding: 0; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   background: var(--bg3); border: 1px solid var(--border); border-radius: 5px;
-  cursor: pointer; color: var(--text2);
-  transition: border-color 0.1s, color 0.1s;
+  cursor: pointer;
+  transition: border-color 0.1s;
 }
-.map-admin-icon-btn:hover { border-color: var(--accent); color: var(--text); }
+.map-admin-custom-btn:hover { border-color: var(--accent); }
 
 /* Représente l'option « point blanc » (pas de pictogramme) */
 .map-admin-icon-dot {
@@ -899,29 +884,34 @@
   background: currentColor; opacity: 0.7;
 }
 
-/* Popover-grille de choix du pictogramme */
-#map-admin-icon-popover {
+/* Popover de personnalisation : aperçu, formes, pictogrammes */
+#map-admin-marker-popover {
   position: fixed; z-index: 320;
-  display: grid; grid-template-columns: repeat(6, 28px); gap: 3px;
+  display: flex; flex-direction: column; gap: 2px;
   background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px;
-  padding: 7px; box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  padding: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.45);
 }
-.map-admin-icon-choice {
+.map-admin-picker-preview {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 48px; padding: 3px 0;
+  background: var(--bg3); border-radius: 6px; margin-bottom: 4px;
+}
+.map-admin-picker-label {
+  font-size: 11px; color: var(--text3); margin: 3px 0 2px;
+}
+.map-admin-picker-grid {
+  display: grid; grid-template-columns: repeat(6, 28px); gap: 3px;
+}
+.map-admin-picker-choice {
   width: 28px; height: 28px; padding: 0;
   display: flex; align-items: center; justify-content: center;
   background: transparent; border: 1px solid transparent; border-radius: 5px;
   cursor: pointer; color: var(--text2);
   transition: background 0.1s, border-color 0.1s, color 0.1s;
 }
-.map-admin-icon-choice:hover { background: var(--bg3); color: var(--text); }
-.map-admin-icon-choice.selected {
+.map-admin-picker-choice:hover { background: var(--bg3); color: var(--text); }
+.map-admin-picker-choice.selected {
   background: var(--bg3); border-color: var(--accent); color: var(--text);
-}
-
-/* Aperçu du marqueur final (forme + couleur + pictogramme) */
-.map-admin-marker-preview {
-  width: 26px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
 }
 .map-admin-color-row input:focus { border-color: var(--accent); }
 .map-admin-color-row input::placeholder { color: var(--text3); }

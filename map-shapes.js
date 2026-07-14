@@ -191,7 +191,9 @@ const MARKER_SHAPES_I18N = {
     map_icon_cave:      'Grotte',
     map_icon_flame:     'Flamme',
     map_icon_treasure:  'Trésor',
-    map_admin_icon_btn: 'Pictogramme',
+    map_admin_custom_btn:   'Personnaliser le marqueur',
+    map_admin_picker_shape: 'Forme',
+    map_admin_picker_icon:  'Pictogramme',
   },
   en: {
     map_shape_pin:      'Pin',
@@ -219,7 +221,9 @@ const MARKER_SHAPES_I18N = {
     map_icon_cave:      'Cave',
     map_icon_flame:     'Flame',
     map_icon_treasure:  'Treasure',
-    map_admin_icon_btn: 'Icon',
+    map_admin_custom_btn:   'Customize marker',
+    map_admin_picker_shape: 'Shape',
+    map_admin_picker_icon:  'Icon',
   },
 };
 Object.keys(MARKER_SHAPES_I18N).forEach(lang => {

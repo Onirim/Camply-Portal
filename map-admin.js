@@ -123,7 +123,7 @@ function openMapAdminForm(mapId) {
 
 function closeMapAdminForm() {
   if (mapAdminStaging) { discardStagedIllustration('map-images', mapAdminStaging); mapAdminStaging = null; }
-  closeMapAdminIconPicker();
+  closeMapAdminMarkerPicker();
   document.getElementById('map-admin-modal').classList.remove('open');
   mapAdminEditingId = null;
 }
@@ -160,47 +160,53 @@ function renderMapAdminColorRows() {
         value="${esc(mapAdminState.colorLabels[c] || '')}"
         placeholder="${t('map_admin_color_ph')}"
         oninput="mapAdminState.colorLabels['${c}'] = this.value">
-      <div class="map-admin-shape-picker">
-        ${MARKER_SHAPE_KEYS.map(s => `
-        <button type="button" class="map-admin-shape-btn ${s === shape ? 'selected' : ''}"
-          title="${t('map_shape_' + s)}"
-          onclick="setMapAdminShape('${c}','${s}')">${markerShapeSVG(s, c, 14)}</button>`).join('')}
-      </div>
-      <button type="button" class="map-admin-icon-btn" title="${t('map_admin_icon_btn')}"
-        onclick="event.stopPropagation(); openMapAdminIconPicker('${c}', this)">
-        ${icon ? markerIconSVG(icon, 15) : '<span class="map-admin-icon-dot"></span>'}
+      <button type="button" class="map-admin-custom-btn" title="${t('map_admin_custom_btn')}"
+        onmousedown="event.stopPropagation()"
+        onclick="openMapAdminMarkerPicker('${c}', this)">
+        ${markerShapeSVG(shape, c, 16, { icon })}
       </button>
-      <span class="map-admin-marker-preview">${markerShapeSVG(shape, c, 20, { icon })}</span>
     </div>`;
   }).join('');
 }
 
-function setMapAdminShape(color, shape) {
-  mapAdminState.colorShapes[color] = shape;
-  renderMapAdminColorRows();
+// ── Popover de personnalisation du marqueur (forme + pictogramme) ──
+
+function _mapAdminMarkerPickerHTML(color) {
+  const shape = mapAdminState.colorShapes[color] || MARKER_SHAPE_DEFAULT;
+  const icon  = mapAdminState.colorIcons[color]  || '';
+  return `
+    <div class="map-admin-picker-preview">${markerShapeSVG(shape, color, 30, { icon })}</div>
+    <div class="map-admin-picker-label">${t('map_admin_picker_shape')}</div>
+    <div class="map-admin-picker-grid">
+      ${MARKER_SHAPE_KEYS.map(s => `
+      <button type="button" class="map-admin-picker-choice ${s === shape ? 'selected' : ''}"
+        title="${t('map_shape_' + s)}" onclick="setMapAdminShape('${color}','${s}')">
+        ${markerShapeSVG(s, color, 14)}
+      </button>`).join('')}
+    </div>
+    <div class="map-admin-picker-label">${t('map_admin_picker_icon')}</div>
+    <div class="map-admin-picker-grid">
+      <button type="button" class="map-admin-picker-choice ${icon === '' ? 'selected' : ''}"
+        title="${t('map_icon_none')}" onclick="setMapAdminIcon('${color}','')">
+        <span class="map-admin-icon-dot"></span>
+      </button>
+      ${MARKER_ICON_KEYS.map(k => `
+      <button type="button" class="map-admin-picker-choice ${icon === k ? 'selected' : ''}"
+        title="${t('map_icon_' + k)}" onclick="setMapAdminIcon('${color}','${k}')">
+        ${markerIconSVG(k, 16)}
+      </button>`).join('')}
+    </div>`;
 }
 
-// ── Popover de choix du pictogramme ──────────────────────────
-
-function openMapAdminIconPicker(color, btn) {
-  const wasOpen = document.getElementById('map-admin-icon-popover')?.dataset.color === color;
-  closeMapAdminIconPicker();
+function openMapAdminMarkerPicker(color, btn) {
+  const wasOpen = document.getElementById('map-admin-marker-popover')?.dataset.color === color;
+  closeMapAdminMarkerPicker();
   if (wasOpen) return; // re-clic sur le même bouton = fermeture
 
-  const current = mapAdminState.colorIcons[color] || '';
   const pop = document.createElement('div');
-  pop.id = 'map-admin-icon-popover';
+  pop.id = 'map-admin-marker-popover';
   pop.dataset.color = color;
-  pop.innerHTML = `
-    <button type="button" class="map-admin-icon-choice ${current === '' ? 'selected' : ''}"
-      title="${t('map_icon_none')}" onclick="setMapAdminIcon('${color}','')">
-      <span class="map-admin-icon-dot"></span>
-    </button>
-    ${MARKER_ICON_KEYS.map(k => `
-    <button type="button" class="map-admin-icon-choice ${current === k ? 'selected' : ''}"
-      title="${t('map_icon_' + k)}" onclick="setMapAdminIcon('${color}','${k}')">
-      ${markerIconSVG(k, 16)}
-    </button>`).join('')}`;
+  pop.innerHTML = _mapAdminMarkerPickerHTML(color);
   document.body.appendChild(pop);
 
   // Position fixe sous le bouton, ramenée dans la fenêtre si besoin
@@ -211,22 +217,37 @@ function openMapAdminIconPicker(color, btn) {
   pop.style.left = Math.max(8, left) + 'px';
   pop.style.top  = Math.max(8, top)  + 'px';
 
-  setTimeout(() => document.addEventListener('click', _mapAdminIconPickerOutside), 0);
+  // Détection du clic extérieur sur mousedown : l'événement précède le
+  // remplacement du contenu du popover par les onclick internes, donc
+  // la cible est encore attachée au DOM au moment du test.
+  document.addEventListener('mousedown', _mapAdminMarkerPickerOutside);
 }
 
-function _mapAdminIconPickerOutside(e) {
-  const pop = document.getElementById('map-admin-icon-popover');
-  if (pop && !pop.contains(e.target)) closeMapAdminIconPicker();
+function _mapAdminMarkerPickerOutside(e) {
+  const pop = document.getElementById('map-admin-marker-popover');
+  if (pop && !pop.contains(e.target)) closeMapAdminMarkerPicker();
 }
 
-function closeMapAdminIconPicker() {
-  document.getElementById('map-admin-icon-popover')?.remove();
-  document.removeEventListener('click', _mapAdminIconPickerOutside);
+function closeMapAdminMarkerPicker() {
+  document.getElementById('map-admin-marker-popover')?.remove();
+  document.removeEventListener('mousedown', _mapAdminMarkerPickerOutside);
+}
+
+/** Rafraîchit le popover ouvert (après un choix) sans le fermer. */
+function _refreshMapAdminMarkerPicker(color) {
+  const pop = document.getElementById('map-admin-marker-popover');
+  if (pop && pop.dataset.color === color) pop.innerHTML = _mapAdminMarkerPickerHTML(color);
+}
+
+function setMapAdminShape(color, shape) {
+  mapAdminState.colorShapes[color] = shape;
+  _refreshMapAdminMarkerPicker(color);
+  renderMapAdminColorRows();
 }
 
 function setMapAdminIcon(color, icon) {
   mapAdminState.colorIcons[color] = icon;
-  closeMapAdminIconPicker();
+  _refreshMapAdminMarkerPicker(color);
   renderMapAdminColorRows();
 }
 
