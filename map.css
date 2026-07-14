@@ -231,7 +231,12 @@
 .map-marker--anchor-center {
   transform: translate(-50%, -50%);
 }
-.map-marker:hover .map-marker-label {
+/* Le libellé niché au survol n'a plus lieu d'être en mode "tout
+   afficher" : la couche #map-labels-overlay affiche déjà ce nom en
+   permanence, avec sa propre position calculée. Les deux coexistant
+   se chevauchaient légèrement (le survol ajoute un décalage de 4px
+   que l'overlay n'a pas), d'où le doublon visible au survol. */
+.map-viewport:not(.labels-visible) .map-marker:hover .map-marker-label {
   opacity: 1;
   transform: translateX(-50%) translateY(-4px);
 }
