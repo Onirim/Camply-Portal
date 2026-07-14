@@ -13,7 +13,7 @@ let mapAccessByKey    = {};
 let mapColorFilter = {};   // mapKey → Set des couleurs masquées
 
 // Configuration des cartes (chargée depuis public.maps, univers courant).
-// Chaque entrée : { key, name, image, imageWidth, imageHeight, markerColorLabels }
+// Chaque entrée : { key, name, image, imageWidth, imageHeight, markerColorLabels, markerColorShapes }
 let mapsConfig       = [];
 let mapsConfigLoaded = false;
 
@@ -34,6 +34,7 @@ async function _loadMapsConfig() {
     imageWidth:  row.image_width,
     imageHeight: row.image_height,
     markerColorLabels: Object.fromEntries((row.marker_colors || []).map(mc => [mc.color, mc.label])),
+    markerColorShapes: Object.fromEntries((row.marker_colors || []).map(mc => [mc.color, mc.shape || MARKER_SHAPE_DEFAULT])),
   }));
   mapsConfigLoaded = true;
 }
@@ -123,6 +124,15 @@ function _getCurrentColorLabels() {
   return cfg?.markerColorLabels || {};
 }
 
+function _getCurrentColorShapes() {
+  const cfg = _getCurrentMapConfig();
+  return cfg?.markerColorShapes || {};
+}
+
+function _getMarkerShapeForColor(color) {
+  return _getCurrentColorShapes()[color] || MARKER_SHAPE_DEFAULT;
+}
+
 function _getHiddenColorsSet(mapKey = currentMapKey) {
   if (!mapColorFilter[mapKey]) mapColorFilter[mapKey] = new Set();
   return mapColorFilter[mapKey];
@@ -159,6 +169,7 @@ function _renderMapLegend() {
   if (!panel) return;
 
   const labels = _getCurrentColorLabels();
+  const shapes = _getCurrentColorShapes();
   const hidden = _getHiddenColorsSet();
   const colors = _getLegendColors();
 
@@ -183,7 +194,7 @@ function _renderMapLegend() {
     <div class="map-legend-list">
       ${colors.map(c => `
         <div class="map-legend-item ${hidden.has(c) ? 'off' : ''}" onclick="toggleMapColorFilter('${c}')">
-          <span class="map-legend-dot" style="background:${c}"></span>
+          <span class="map-legend-dot">${markerShapeSVG(shapes[c], c, 12)}</span>
           <span class="map-legend-label">${esc(labels[c])}</span>
           <span class="map-legend-check">
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
@@ -836,24 +847,17 @@ function _renderMarker(m, owned) {
   if (!_isColorVisible(m.color)) return;
   const size = MAP_CONFIG.markerSize;
 
+  const shape = _getMarkerShapeForColor(m.color);
   const el = document.createElement('div');
-  el.className = 'map-marker';
+  el.className = 'map-marker'
+    + (getMarkerShapeDef(shape).anchor === 'center' ? ' map-marker--anchor-center' : '');
   el.id        = 'marker-' + m.id;
   el.dataset.rx = String(m.x);
   el.dataset.ry = String(m.y);
   _positionMarkerElement(el, m.x, m.y);
 
-  const opacity  = '0.92';
-
-  el.innerHTML = `
-    <svg class="map-marker-pin"
-      width="${size}" height="${Math.round(size * 1.4)}"
-      viewBox="0 0 28 40" xmlns="http://www.w3.org/2000/svg">
-      <path d="M14 0C6.268 0 0 6.268 0 14c0 9.333 14 26 14 26s14-16.667 14-26C28 6.268 21.732 0 14 0z"
-        fill="${m.color}" opacity="${opacity}"/>
-      <circle cx="14" cy="14" r="5.5" fill="white" opacity="0.95"/>
-    </svg>
-    <div class="map-marker-label">${esc(m.name)}</div>`;
+  el.innerHTML = markerShapeSVG(shape, m.color, size, { className: 'map-marker-pin', opacity: 0.92 })
+    + `<div class="map-marker-label">${esc(m.name)}</div>`;
 
   el.addEventListener('click', e => {
     e.stopPropagation();
@@ -867,8 +871,12 @@ function _renderMarker(m, owned) {
 function _refreshMarkerDOM(m) {
   const el = document.getElementById('marker-' + m.id);
   if (!el) { _renderMarker(m, true); return; }
-  const path = el.querySelector('path');
-  if (path) path.setAttribute('fill', m.color);
+  // La couleur peut avoir changé, et avec elle la forme associée :
+  // on régénère le SVG plutôt que de retoucher le fill.
+  const shape = _getMarkerShapeForColor(m.color);
+  el.classList.toggle('map-marker--anchor-center', getMarkerShapeDef(shape).anchor === 'center');
+  const svg = el.querySelector('svg.map-marker-pin');
+  if (svg) svg.outerHTML = markerShapeSVG(shape, m.color, MAP_CONFIG.markerSize, { className: 'map-marker-pin', opacity: 0.92 });
   const label = el.querySelector('.map-marker-label');
   if (label) label.textContent = m.name;
   el.dataset.rx = String(m.x);
@@ -1048,9 +1056,10 @@ function openMapMarkerModal(mode, rx, ry, markerId) {
     swatchesEl.innerHTML = `<div class="map-modal-no-colors">${t('map_modal_no_colors')}</div>`;
     if (saveBtn) saveBtn.disabled = true;
   } else {
+    const shapes = _getCurrentColorShapes();
     swatchesEl.innerHTML = allowedColors.map(c => `
       <div class="map-color-swatch ${c === mapModalColor ? 'selected' : ''}"
-        style="background:${c}" title="${esc(labels[c])}" onclick="selectMapModalColor('${c}',this)"></div>`
+        title="${esc(labels[c])}" onclick="selectMapModalColor('${c}',this)">${markerShapeSVG(shapes[c], c, 16)}</div>`
     ).join('');
     if (saveBtn) saveBtn.disabled = false;
   }

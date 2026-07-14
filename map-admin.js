@@ -12,6 +12,7 @@ let mapAdminState      = {     // état du formulaire (modale ouverte)
   image_width: 0,
   image_height: 0,
   colorLabels: {}, // hex → libellé
+  colorShapes: {}, // hex → clé de MARKER_SHAPES
 };
 
 // ── Liste ─────────────────────────────────────────────────────
@@ -104,6 +105,7 @@ function openMapAdminForm(mapId) {
     image_width:  existing?.image_width  || 0,
     image_height: existing?.image_height || 0,
     colorLabels:  Object.fromEntries((existing?.marker_colors || []).map(mc => [mc.color, mc.label])),
+    colorShapes:  Object.fromEntries((existing?.marker_colors || []).map(mc => [mc.color, mc.shape || MARKER_SHAPE_DEFAULT])),
   };
 
   document.getElementById('map-admin-modal-title-text').textContent =
@@ -145,14 +147,29 @@ function setMapAdminImagePreview() {
 function renderMapAdminColorRows() {
   const container = document.getElementById('map-admin-colors');
   if (!container) return;
-  container.innerHTML = MAP_CONFIG.markerColors.map(c => `
+  container.innerHTML = MAP_CONFIG.markerColors.map(c => {
+    const selected = mapAdminState.colorShapes[c] || MARKER_SHAPE_DEFAULT;
+    return `
     <div class="map-admin-color-row">
       <span class="map-admin-color-dot" style="background:${c}"></span>
       <input type="text" maxlength="40"
         value="${esc(mapAdminState.colorLabels[c] || '')}"
         placeholder="${t('map_admin_color_ph')}"
         oninput="mapAdminState.colorLabels['${c}'] = this.value">
-    </div>`).join('');
+      <div class="map-admin-shape-picker">
+        ${MARKER_SHAPE_KEYS.map(s => `
+        <button type="button" class="map-admin-shape-btn ${s === selected ? 'selected' : ''}"
+          title="${t('map_shape_' + s)}"
+          onclick="setMapAdminShape('${c}','${s}',this)">${markerShapeSVG(s, c, 14)}</button>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setMapAdminShape(color, shape, btn) {
+  mapAdminState.colorShapes[color] = shape;
+  btn.parentElement.querySelectorAll('.map-admin-shape-btn')
+    .forEach(b => b.classList.toggle('selected', b === btn));
 }
 
 // ── Upload image ─────────────────────────────────────────────
@@ -264,6 +281,7 @@ async function saveMapAdmin() {
   const marker_colors = MAP_CONFIG.markerColors.map(c => ({
     color: c,
     label: (mapAdminState.colorLabels[c] || '').trim(),
+    shape: mapAdminState.colorShapes[c] || MARKER_SHAPE_DEFAULT,
   }));
 
   const payload = {

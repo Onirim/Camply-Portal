@@ -226,6 +226,11 @@
   filter: drop-shadow(0 3px 8px rgba(0,0,0,0.8)) brightness(1.15);
   z-index: 20;
 }
+/* Formes sans pointe basse (cercle, losange, etc.) : c'est le centre
+   de la forme qui désigne la position, pas la pointe. */
+.map-marker--anchor-center {
+  transform: translate(-50%, -50%);
+}
 .map-marker:hover .map-marker-label {
   opacity: 1;
   transform: translateX(-50%) translateY(-4px);
@@ -514,13 +519,16 @@
   flex-wrap: wrap;
 }
 .map-color-swatch {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   cursor: pointer;
   border: 2px solid transparent;
   transition: transform 0.1s, border-color 0.1s;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .map-color-swatch:hover { transform: scale(1.2); }
 .map-color-swatch.selected {
@@ -756,9 +764,10 @@
 .map-legend-item.off { opacity: 0.4; }
 
 .map-legend-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
+  width: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -847,15 +856,31 @@
 /* Lignes de libellé de couleur dans la modale */
 .map-admin-color-row {
   display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 .map-admin-color-row:last-child { margin-bottom: 0; }
 .map-admin-color-dot {
   width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
 }
 .map-admin-color-row input {
-  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  flex: 1; min-width: 140px;
+  background: var(--bg3); border: 1px solid var(--border);
   border-radius: 6px; color: var(--text); font-family: var(--font-body);
   font-size: 13px; padding: 7px 10px; outline: none; transition: border-color 0.15s;
+}
+.map-admin-shape-picker {
+  display: flex; gap: 3px; flex-shrink: 0;
+}
+.map-admin-shape-btn {
+  width: 24px; height: 24px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid transparent; border-radius: 5px;
+  cursor: pointer; opacity: 0.45;
+  transition: opacity 0.1s, border-color 0.1s, background 0.1s;
+}
+.map-admin-shape-btn:hover { opacity: 1; background: var(--bg3); }
+.map-admin-shape-btn.selected {
+  opacity: 1; background: var(--bg3); border-color: var(--accent);
 }
 .map-admin-color-row input:focus { border-color: var(--accent); }
 .map-admin-color-row input::placeholder { color: var(--text3); }
