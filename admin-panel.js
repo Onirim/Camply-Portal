@@ -59,6 +59,19 @@ Object.assign(TRANSLATIONS.fr, {
   toast_admin_universe_resumed:  'Univers réactivé.',
   toast_admin_universe_deleted:  'Univers supprimé.',
   toast_admin_action_error:  'Erreur : ${message}',
+  admin_card_news:           'Nouveautés',
+  admin_news_title_ph:       'Titre',
+  admin_news_content_ph:     'Contenu (markdown)',
+  admin_news_save_btn:       'Publier',
+  admin_news_update_btn:     'Enregistrer',
+  admin_news_cancel_btn:     'Annuler',
+  admin_news_edit_btn:       'Modifier',
+  admin_news_delete_btn:     'Supprimer',
+  admin_news_confirm_delete: 'Supprimer la nouveauté "${title}" ?',
+  admin_news_empty:          'Aucune nouveauté publiée.',
+  admin_news_missing_fields: 'Titre et contenu obligatoires.',
+  toast_admin_news_saved:    'Nouveauté enregistrée.',
+  toast_admin_news_deleted:  'Nouveauté supprimée.',
 });
 
 Object.assign(TRANSLATIONS.en, {
@@ -109,6 +122,19 @@ Object.assign(TRANSLATIONS.en, {
   toast_admin_universe_resumed:  'Universe resumed.',
   toast_admin_universe_deleted:  'Universe deleted.',
   toast_admin_action_error:  'Error: ${message}',
+  admin_card_news:           "What's new",
+  admin_news_title_ph:       'Title',
+  admin_news_content_ph:     'Content (markdown)',
+  admin_news_save_btn:       'Publish',
+  admin_news_update_btn:     'Save',
+  admin_news_cancel_btn:     'Cancel',
+  admin_news_edit_btn:       'Edit',
+  admin_news_delete_btn:     'Delete',
+  admin_news_confirm_delete: 'Delete the news item "${title}"?',
+  admin_news_empty:          'No news published yet.',
+  admin_news_missing_fields: 'Title and content are required.',
+  toast_admin_news_saved:    'News item saved.',
+  toast_admin_news_deleted:  'News item deleted.',
 });
 
 const adminPanel = {
@@ -124,6 +150,8 @@ const adminPanel = {
   _universesSearch: '',
   _universesPage: 1,
   _universesTotalPages: 1,
+  _news: [],
+  _newsEditingId: null,
 
   formatBytes(bytes) {
     if (!bytes) return '0 MB';
@@ -164,10 +192,11 @@ const adminPanel = {
     contentEl.style.display = 'none';
     document.getElementById('admin-purge-result').textContent = '';
 
-    const [statsRes, usersRes, universesRes] = await Promise.all([
+    const [statsRes, usersRes, universesRes, newsRes] = await Promise.all([
       sb.rpc('admin_get_stats'),
       sb.rpc('admin_list_users'),
       sb.rpc('admin_list_universes'),
+      sb.rpc('admin_list_news'),
     ]);
 
     if (statsRes.error) {
@@ -183,6 +212,9 @@ const adminPanel = {
 
     if (universesRes.error) console.error('admin_list_universes:', universesRes.error);
     else { this._universes = universesRes.data || []; this._renderUniverses(); }
+
+    if (newsRes.error) console.error('admin_list_news:', newsRes.error);
+    else { this._news = newsRes.data || []; this._renderNews(); }
 
     loadingEl.style.display = 'none';
     contentEl.style.display = 'grid';
@@ -462,6 +494,86 @@ const adminPanel = {
     resultEl.textContent = ti('admin_purge_done', { count: deletedCount, size: (totalBytes / (1024 * 1024)).toFixed(1) });
     showToast(t('toast_admin_purge_done'));
     btn.disabled = false;
+    await this.loadStats();
+  },
+
+  // ── Nouveautés ────────────────────────────────────────────────
+  // Rédigées en markdown, rendues côté client dans la modale
+  // whatsnew.js à la connexion (cf. sql/45_whatsnew.sql).
+
+  _toLocalDatetimeInputValue(dateStr) {
+    const d = new Date(dateStr);
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  },
+
+  _renderNews() {
+    const listEl = document.getElementById('admin-news-list');
+    const locale = currentLang === 'en' ? 'en-US' : 'fr-FR';
+    listEl.innerHTML = this._news.length ? this._news.map(n => `
+      <div class="admin-news-item">
+        <div>
+          <div class="admin-news-item-title">${esc(n.title)}</div>
+          <div class="admin-news-item-date">${new Date(n.published_at).toLocaleString(locale)}</div>
+        </div>
+        <div class="admin-news-item-actions">
+          <button class="btn-cancel admin-row-btn" onclick="adminPanel.editNews('${n.id}')" data-i18n="admin_news_edit_btn">Modifier</button>
+          <button class="btn-danger-outline admin-row-btn" onclick="adminPanel.deleteNews('${n.id}')" data-i18n="admin_news_delete_btn">Supprimer</button>
+        </div>
+      </div>`).join('') : `<div class="admin-empty-row" data-i18n="admin_news_empty">Aucune nouveauté publiée.</div>`;
+  },
+
+  editNews(id) {
+    const item = this._news.find(n => n.id === id);
+    if (!item) return;
+    this._newsEditingId = id;
+    document.getElementById('admin-news-editing-id').value = id;
+    document.getElementById('admin-news-title').value = item.title;
+    document.getElementById('admin-news-content').value = item.content_markdown;
+    document.getElementById('admin-news-published-at').value = this._toLocalDatetimeInputValue(item.published_at);
+    document.getElementById('admin-news-cancel-btn').style.display = '';
+    document.getElementById('admin-news-save-btn').textContent = t('admin_news_update_btn');
+    document.getElementById('admin-news-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  },
+
+  cancelNewsEdit() {
+    this._newsEditingId = null;
+    document.getElementById('admin-news-editing-id').value = '';
+    document.getElementById('admin-news-title').value = '';
+    document.getElementById('admin-news-content').value = '';
+    document.getElementById('admin-news-published-at').value = '';
+    document.getElementById('admin-news-cancel-btn').style.display = 'none';
+    document.getElementById('admin-news-save-btn').textContent = t('admin_news_save_btn');
+  },
+
+  async saveNews() {
+    const title = document.getElementById('admin-news-title').value.trim();
+    const content = document.getElementById('admin-news-content').value.trim();
+    const publishedInput = document.getElementById('admin-news-published-at').value;
+    if (!title || !content) { showToast(t('admin_news_missing_fields')); return; }
+
+    const publishedAt = publishedInput ? new Date(publishedInput).toISOString() : new Date().toISOString();
+    const editingId = this._newsEditingId;
+
+    const { error } = editingId
+      ? await sb.rpc('admin_update_news', { p_id: editingId, p_title: title, p_content_markdown: content, p_published_at: publishedAt })
+      : await sb.rpc('admin_create_news', { p_title: title, p_content_markdown: content, p_published_at: publishedAt });
+
+    if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }
+    showToast(t('toast_admin_news_saved'));
+    this.cancelNewsEdit();
+    await this.loadStats();
+  },
+
+  async deleteNews(id) {
+    const item = this._news.find(n => n.id === id);
+    if (!item) return;
+    if (!confirm(ti('admin_news_confirm_delete', { title: item.title }))) return;
+
+    const { error } = await sb.rpc('admin_delete_news', { p_id: id });
+    if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }
+    showToast(t('toast_admin_news_deleted'));
+    if (this._newsEditingId === id) this.cancelNewsEdit();
     await this.loadStats();
   },
 };

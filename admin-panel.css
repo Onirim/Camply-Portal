@@ -83,3 +83,32 @@
   .admin-page { padding: 24px 16px 48px; }
   .admin-hero h1 { font-size: 18px; }
 }
+
+/* ── Nouveautés ──────────────────────────────────────────────── */
+
+.admin-news-form {
+  display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px;
+  padding-bottom: 16px; border-bottom: 1px solid var(--border);
+}
+.admin-news-form input[type="text"],
+.admin-news-form input[type="datetime-local"],
+.admin-news-form textarea {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-family: var(--font-body); font-size: 13px;
+  padding: 8px 10px; outline: none; transition: border-color 0.15s;
+}
+.admin-news-form input:focus,
+.admin-news-form textarea:focus { border-color: var(--accent); }
+.admin-news-form textarea { min-height: 140px; resize: vertical; line-height: 1.5; font-family: var(--font-mono); }
+.admin-news-form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.admin-news-form-row > * { flex: 1; min-width: 180px; }
+.admin-news-form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+.admin-news-list { display: flex; flex-direction: column; gap: 10px; }
+.admin-news-item {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+  padding: 12px 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.admin-news-item-title { color: var(--text); font-weight: 500; }
+.admin-news-item-date { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.admin-news-item-actions { display: flex; gap: 6px; flex-shrink: 0; }

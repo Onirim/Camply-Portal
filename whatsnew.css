@@ -1,0 +1,77 @@
+/* ══════════════════════════════════════════════════════════════
+   Nouveautés (cf. whatsnew.js) — même chrome que legal.css
+   ══════════════════════════════════════════════════════════════ */
+
+#whatsnew-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+#whatsnew-modal-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: slideUp 0.18s ease;
+}
+
+@media (max-width: 520px) {
+  #whatsnew-modal-panel { max-height: 100vh; border-radius: 0; }
+}
+
+.whatsnew-body {
+  padding: 20px 24px 24px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text2);
+}
+
+.whatsnew-entry + .whatsnew-entry {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.whatsnew-entry-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.whatsnew-entry-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.whatsnew-entry-date {
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+
+.whatsnew-entry-body p { margin: 0 0 10px; }
+.whatsnew-entry-body p:last-child { margin-bottom: 0; }
+.whatsnew-entry-body ul,
+.whatsnew-entry-body ol { margin: 0 0 10px; padding-left: 18px; }
+.whatsnew-entry-body li { margin-bottom: 4px; }
+.whatsnew-entry-body a { color: var(--accent); }
+.whatsnew-entry-body strong { color: var(--text); }
+.whatsnew-entry-body code {
+  background: var(--bg3);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 12px;
+}
