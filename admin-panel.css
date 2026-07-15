@@ -100,6 +100,11 @@
 .admin-news-form input:focus,
 .admin-news-form textarea:focus { border-color: var(--accent); }
 .admin-news-form textarea { min-height: 140px; resize: vertical; line-height: 1.5; font-family: var(--font-mono); }
+.admin-news-lang-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text3); margin-top: 4px;
+}
+.admin-news-lang-label:first-of-type { margin-top: 0; }
 .admin-news-form-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .admin-news-form-row > * { flex: 1; min-width: 180px; }
 .admin-news-form-actions { display: flex; gap: 8px; justify-content: flex-end; }

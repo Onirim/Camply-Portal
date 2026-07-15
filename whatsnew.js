@@ -51,14 +51,20 @@ const whatsnew = {
   _render() {
     const body = document.getElementById('whatsnew-modal-body');
     const locale = currentLang === 'en' ? 'en-US' : 'fr-FR';
-    body.innerHTML = this._entries.map(n => `
+    const en = currentLang === 'en';
+    body.innerHTML = this._entries.map(n => {
+      // Version anglaise si disponible, sinon repli sur le français.
+      const title = (en && n.title_en) ? n.title_en : n.title;
+      const content = (en && n.content_markdown_en) ? n.content_markdown_en : n.content_markdown;
+      return `
       <div class="whatsnew-entry">
         <div class="whatsnew-entry-header">
-          <h3>${esc(n.title)}</h3>
+          <h3>${esc(title)}</h3>
           <span class="whatsnew-entry-date">${new Date(n.published_at).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         </div>
-        <div class="whatsnew-entry-body">${renderMarkdown(n.content_markdown)}</div>
-      </div>`).join('');
+        <div class="whatsnew-entry-body">${renderMarkdown(content)}</div>
+      </div>`;
+    }).join('');
   },
 
   _ensureModal() {

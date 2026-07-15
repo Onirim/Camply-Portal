@@ -60,8 +60,12 @@ Object.assign(TRANSLATIONS.fr, {
   toast_admin_universe_deleted:  'Univers supprimé.',
   toast_admin_action_error:  'Erreur : ${message}',
   admin_card_news:           'Nouveautés',
+  admin_news_lang_fr:        'Français',
+  admin_news_lang_en:        'English',
   admin_news_title_ph:       'Titre',
   admin_news_content_ph:     'Contenu (markdown)',
+  admin_news_title_en_ph:    'Titre (anglais)',
+  admin_news_content_en_ph:  'Contenu (markdown, anglais)',
   admin_news_save_btn:       'Publier',
   admin_news_update_btn:     'Enregistrer',
   admin_news_cancel_btn:     'Annuler',
@@ -123,8 +127,12 @@ Object.assign(TRANSLATIONS.en, {
   toast_admin_universe_deleted:  'Universe deleted.',
   toast_admin_action_error:  'Error: ${message}',
   admin_card_news:           "What's new",
-  admin_news_title_ph:       'Title',
-  admin_news_content_ph:     'Content (markdown)',
+  admin_news_lang_fr:        'Français',
+  admin_news_lang_en:        'English',
+  admin_news_title_ph:       'Title (French)',
+  admin_news_content_ph:     'Content (markdown, French)',
+  admin_news_title_en_ph:    'Title (English)',
+  admin_news_content_en_ph:  'Content (markdown, English)',
   admin_news_save_btn:       'Publish',
   admin_news_update_btn:     'Save',
   admin_news_cancel_btn:     'Cancel',
@@ -530,6 +538,8 @@ const adminPanel = {
     document.getElementById('admin-news-editing-id').value = id;
     document.getElementById('admin-news-title').value = item.title;
     document.getElementById('admin-news-content').value = item.content_markdown;
+    document.getElementById('admin-news-title-en').value = item.title_en || '';
+    document.getElementById('admin-news-content-en').value = item.content_markdown_en || '';
     document.getElementById('admin-news-published-at').value = this._toLocalDatetimeInputValue(item.published_at);
     document.getElementById('admin-news-cancel-btn').style.display = '';
     document.getElementById('admin-news-save-btn').textContent = t('admin_news_update_btn');
@@ -541,6 +551,8 @@ const adminPanel = {
     document.getElementById('admin-news-editing-id').value = '';
     document.getElementById('admin-news-title').value = '';
     document.getElementById('admin-news-content').value = '';
+    document.getElementById('admin-news-title-en').value = '';
+    document.getElementById('admin-news-content-en').value = '';
     document.getElementById('admin-news-published-at').value = '';
     document.getElementById('admin-news-cancel-btn').style.display = 'none';
     document.getElementById('admin-news-save-btn').textContent = t('admin_news_save_btn');
@@ -549,6 +561,8 @@ const adminPanel = {
   async saveNews() {
     const title = document.getElementById('admin-news-title').value.trim();
     const content = document.getElementById('admin-news-content').value.trim();
+    const titleEn = document.getElementById('admin-news-title-en').value.trim();
+    const contentEn = document.getElementById('admin-news-content-en').value.trim();
     const publishedInput = document.getElementById('admin-news-published-at').value;
     if (!title || !content) { showToast(t('admin_news_missing_fields')); return; }
 
@@ -556,8 +570,8 @@ const adminPanel = {
     const editingId = this._newsEditingId;
 
     const { error } = editingId
-      ? await sb.rpc('admin_update_news', { p_id: editingId, p_title: title, p_content_markdown: content, p_published_at: publishedAt })
-      : await sb.rpc('admin_create_news', { p_title: title, p_content_markdown: content, p_published_at: publishedAt });
+      ? await sb.rpc('admin_update_news', { p_id: editingId, p_title: title, p_content_markdown: content, p_title_en: titleEn, p_content_markdown_en: contentEn, p_published_at: publishedAt })
+      : await sb.rpc('admin_create_news', { p_title: title, p_content_markdown: content, p_title_en: titleEn, p_content_markdown_en: contentEn, p_published_at: publishedAt });
 
     if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }
     showToast(t('toast_admin_news_saved'));
