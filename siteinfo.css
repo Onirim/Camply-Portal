@@ -1,0 +1,122 @@
+/* ══════════════════════════════════════════════════════════════
+   Page d'information (cf. siteinfo.js) — même chrome que whatsnew.css
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Bouton « ? » sur l'écran de choix d'univers ─────────────── */
+
+.universe-hero-actions {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.siteinfo-btn {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.siteinfo-btn:hover {
+  border-color: var(--border2);
+  color: var(--text);
+  background: var(--bg3);
+}
+
+/* ── Modale ──────────────────────────────────────────────────── */
+
+#siteinfo-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center; justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease;
+}
+
+#siteinfo-modal-panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: slideUp 0.18s ease;
+}
+
+@media (max-width: 520px) {
+  #siteinfo-modal-panel { max-height: 100vh; border-radius: 0; }
+}
+
+/* ── Onglets ─────────────────────────────────────────────────── */
+
+.siteinfo-tabs {
+  display: flex; gap: 4px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.siteinfo-tab {
+  background: none; border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text3);
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  padding: 10px 12px; margin-bottom: -1px;
+  cursor: pointer; white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.siteinfo-tab:hover  { color: var(--text); }
+.siteinfo-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Contenu markdown ────────────────────────────────────────── */
+
+.siteinfo-body {
+  padding: 20px 24px 24px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text2);
+}
+
+.siteinfo-body h1,
+.siteinfo-body h2 { font-size: 15px; font-weight: 600; color: var(--text); margin: 16px 0 8px; }
+.siteinfo-body h3 { font-size: 13px; font-weight: 600; color: var(--text); margin: 14px 0 6px; }
+.siteinfo-body h1:first-child,
+.siteinfo-body h2:first-child,
+.siteinfo-body h3:first-child { margin-top: 0; }
+.siteinfo-body p { margin: 0 0 10px; }
+.siteinfo-body p:last-child { margin-bottom: 0; }
+.siteinfo-body ul,
+.siteinfo-body ol { margin: 0 0 10px; padding-left: 18px; }
+.siteinfo-body li { margin-bottom: 4px; }
+.siteinfo-body a { color: var(--accent); }
+.siteinfo-body strong { color: var(--text); }
+.siteinfo-body code {
+  background: var(--bg3);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 12px;
+}
+
+/* ── Carte d'édition (panneau d'administration) ──────────────── */
+
+.admin-siteinfo-form {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.admin-siteinfo-form select,
+.admin-siteinfo-form input[type="text"],
+.admin-siteinfo-form textarea {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-family: var(--font-body); font-size: 13px;
+  padding: 8px 10px; outline: none; transition: border-color 0.15s;
+}
+.admin-siteinfo-form select:focus,
+.admin-siteinfo-form input:focus,
+.admin-siteinfo-form textarea:focus { border-color: var(--accent); }
+.admin-siteinfo-form textarea {
+  min-height: 140px; resize: vertical; line-height: 1.5; font-family: var(--font-mono);
+}
+.admin-siteinfo-form-actions { display: flex; justify-content: flex-end; }

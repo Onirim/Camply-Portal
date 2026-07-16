@@ -224,6 +224,8 @@ const adminPanel = {
     if (newsRes.error) console.error('admin_list_news:', newsRes.error);
     else { this._news = newsRes.data || []; this._renderNews(); }
 
+    await siteinfo.adminLoad();
+
     loadingEl.style.display = 'none';
     contentEl.style.display = 'grid';
   },

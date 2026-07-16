@@ -28,6 +28,7 @@
 <link rel="stylesheet" href="universe-pause.css" />
 <link rel="stylesheet" href="legal.css" />
 <link rel="stylesheet" href="whatsnew.css" />
+<link rel="stylesheet" href="siteinfo.css" />
 <link rel="stylesheet" href="admin-panel.css" />
 <link rel="stylesheet" id="theme-stylesheet" href="" disabled>
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
@@ -185,7 +186,10 @@
           <p class="universe-hero-sub" data-i18n="universe_hero_sub">Choisissez l'univers dans lequel vous souhaitez plonger</p>
           <p class="universe-quota" id="universe-quota"></p>
         </div>
-        <button class="btn-primary" onclick="openUniverseCreateForm()" data-i18n="universe_create_btn">+ Créer un univers</button>
+        <div class="universe-hero-actions">
+          <button class="siteinfo-btn" onclick="siteinfo.open()" data-i18n="siteinfo_btn_title" data-i18n-attr="title" title="À propos de Camply">?</button>
+          <button class="btn-primary" onclick="openUniverseCreateForm()" data-i18n="universe_create_btn">+ Créer un univers</button>
+        </div>
       </div>
 
       <div id="universe-error" class="auth-error"></div>
@@ -402,6 +406,26 @@
         </div>
 
         <div class="admin-news-list" id="admin-news-list"></div>
+      </div>
+
+      <div class="admin-card admin-card-wide">
+        <div class="admin-card-title" data-i18n="admin_card_siteinfo">Page d'information</div>
+
+        <div class="admin-siteinfo-form">
+          <select id="admin-siteinfo-section" onchange="siteinfo.adminSelectSection(this.value)"></select>
+
+          <div class="admin-news-lang-label" data-i18n="admin_news_lang_fr">Français</div>
+          <input type="text" id="admin-siteinfo-title" data-i18n="admin_news_title_ph" data-i18n-attr="placeholder" placeholder="Titre">
+          <textarea id="admin-siteinfo-content" data-i18n="admin_news_content_ph" data-i18n-attr="placeholder" placeholder="Contenu (markdown)"></textarea>
+
+          <div class="admin-news-lang-label" data-i18n="admin_news_lang_en">English</div>
+          <input type="text" id="admin-siteinfo-title-en" data-i18n="admin_news_title_en_ph" data-i18n-attr="placeholder" placeholder="Title">
+          <textarea id="admin-siteinfo-content-en" data-i18n="admin_news_content_en_ph" data-i18n-attr="placeholder" placeholder="Content (markdown)"></textarea>
+
+          <div class="admin-siteinfo-form-actions">
+            <button class="btn-save" onclick="siteinfo.adminSave()" data-i18n="admin_siteinfo_save_btn">Enregistrer</button>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -1665,6 +1689,7 @@
 <script src="universe-pause.js"></script>
 <script src="legal.js"></script>
 <script src="whatsnew.js"></script>
+<script src="siteinfo.js"></script>
 <script src="admin-panel.js"></script>
 <script src="scripts.js"></script>
   <div id="transfer-modal">
