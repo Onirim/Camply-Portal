@@ -80,7 +80,8 @@ function blockLabel(key) {
 // personnalisé, s'il existe, remplace les deux.
 function levelRenderPrefix() {
   const cfg = getBlockConfig('level');
-  return cfg.label || t('card_level');
+  const prefix = cfg.label || t('card_level');
+  return prefix.trimEnd() + ' ';
 }
 
 
