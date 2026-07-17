@@ -332,10 +332,17 @@ function _renderMapAccessState() {
 async function initMap() {
   await _loadMapsConfig();
   const maps = mapsConfig || [];
-  if (!maps.length) return;
 
   _mapViewport = document.getElementById('map-viewport');
   _mapCanvas   = document.getElementById('map-canvas');
+
+  // Aucune carte configurée dans l'univers : on affiche le message
+  // d'information plutôt qu'un viewport vide (écran noir).
+  if (!maps.length) {
+    _recomputeMapAccess();
+    _renderMapAccessState();
+    return;
+  }
 
   if (mapLoaded) return; // déjà initialisé, les événements sont en place
 
