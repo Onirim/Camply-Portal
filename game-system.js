@@ -97,8 +97,9 @@ function renderCharCardBody(c) {
   const lvlTag = c.level !== undefined && c.level !== 0 && c.level !== null && blockVisible('level')
     ? `<span class="card-rank">${levelRenderPrefix()}${c.level}</span>` : '';
 
-  // Extrait de la description (tronqué)
-  const rawDescription = String(c.description || '').replace(/\s+/g, ' ').trim();
+  // Extrait de la description (tronqué) — repli sur l'historique si vide
+  const rawDescription = String(c.description || '').replace(/\s+/g, ' ').trim()
+    || String(c.background || '').replace(/\s+/g, ' ').trim();
   const maxDescriptionLength = 180;
   const descriptionExcerpt = rawDescription
     ? rawDescription.slice(0, maxDescriptionLength).trimEnd() + (rawDescription.length > maxDescriptionLength ? '…' : '')
