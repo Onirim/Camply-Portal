@@ -43,7 +43,7 @@ const MARKER_SHAPES = {
       <path d="M20 0L40 22L20 44L0 22Z" fill="${color}" opacity="${opacity}"/>`,
   },
   shield: {
-    width: 40, height: 44, anchor: 'tip',
+    width: 40, height: 44, anchor: 'center',
     center: [20, 18], dot: 7, iconSize: 23,
     form: (color, opacity) => `
       <path d="M20 0C28 4 34 5 40 5c0 18-7 30-20 39C7 35 0 23 0 5c6 0 12-1 20-5z"
