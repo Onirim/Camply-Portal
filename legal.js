@@ -59,7 +59,7 @@ const legalInfo = {
             confiance dans l'économie numérique, l'identité complète de l'éditeur est tenue
             à la disposition de l'hébergeur et des autorités compétentes.
           </p>
-          <p>Contact : <a href="mailto:onirim.fox@proton.me">onirim.fox@proton.me</a></p>
+          <p>Contact : <a href="mailto:camply-portal@proton.me">camply-portal@proton.me</a></p>
 
           <h3>Hébergement</h3>
           <ul>
@@ -95,7 +95,7 @@ const legalInfo = {
             fins publicitaires. Elles sont conservées tant que le compte ou l'univers concerné
             existe. Vous pouvez demander l'accès, la rectification ou la suppression de vos
             données à tout moment en écrivant à
-            <a href="mailto:onirim.fox@proton.me">onirim.fox@proton.me</a>.
+            <a href="mailto:camply-portal@proton.me">camply-portal@proton.me</a>.
           </p>
 
           <div class="legal-note">
