@@ -344,7 +344,9 @@ async function init() {
     onSignedOut();
   }
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && !isAppReady) await onSignedIn(session.user);
+    if (event === 'SIGNED_IN' && session?.user?.id !== currentUser?.id) {
+      await onSignedIn(session.user);
+    }
     else if (event === 'SIGNED_OUT') { isAppReady = false; onSignedOut(); }
   });
 }
