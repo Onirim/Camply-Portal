@@ -259,22 +259,17 @@ function mapAdminIllusZoneClick() {
 
 /**
  * Compression dédiée aux cartes : contrairement à compressImage() (portraits,
- * 1200px max / q0.75), les cartes sont vues zoomées : on ne réduit qu'au-delà
- * de 4096px et on encode en JPEG qualité 90%. Retourne aussi les dimensions
- * finales pour remplir automatiquement image_width/image_height.
+ * 1200px max / q0.75), les cartes sont vues zoomées : on conserve la résolution
+ * d'origine (aucun redimensionnement) et on encode en JPEG qualité 90%. Retourne
+ * aussi les dimensions pour remplir automatiquement image_width/image_height.
  */
 function compressMapImage(file) {
   return new Promise((resolve) => {
-    const MAX    = 4096;
     const reader = new FileReader();
     reader.onload = e => {
       const img  = new Image();
       img.onload = () => {
-        let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          if (w >= h) { h = Math.round(h * MAX / w); w = MAX; }
-          else        { w = Math.round(w * MAX / h); h = MAX; }
-        }
+        const w = img.width, h = img.height;
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
