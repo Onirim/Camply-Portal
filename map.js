@@ -681,7 +681,7 @@ function _bindMapEvents() {
 
   let _touch = null;
   let _longPressTimer = null;
-  const LONG_PRESS_MS = 550;
+  const LONG_PRESS_MS = 700;
   const LONG_PRESS_MOVE_TOLERANCE = 10;
 
   function _clearLongPress() {
@@ -690,34 +690,49 @@ function _bindMapEvents() {
   }
 
   vp.addEventListener('touchstart', e => {
-    if (e.touches.length === 1) {
-      const { clientX: x, clientY: y } = e.touches[0];
-      _touch = { x, y, ox: mapTransform.x, oy: mapTransform.y };
+    if (e.touches.length !== 1) {
+      // Un deuxième doigt se pose : c'est un pinch, jamais un appui long
+      _touch = null;
       _clearLongPress();
-      if (_canAccessMap()) {
-        _longPressTimer = setTimeout(() => {
-          _longPressTimer = null;
-          _touch = null; // annule le pan en cours : c'était un appui long
-          if (navigator.vibrate) navigator.vibrate(15);
-          const popup = document.getElementById('map-popup');
-          if (popup) _closePopup();
-          const pos = _v2m(x, y);
-          openMapMarkerModal('add', pos.x, pos.y);
-        }, LONG_PRESS_MS);
-      }
+      return;
+    }
+    const { clientX: x, clientY: y } = e.touches[0];
+    _touch = { x, y, lastX: x, lastY: y, ox: mapTransform.x, oy: mapTransform.y };
+    _clearLongPress();
+    if (_canAccessMap()) {
+      _longPressTimer = setTimeout(() => {
+        _longPressTimer = null;
+        // Filet de sécurité si un touchmove n'a pas été délivré :
+        // le doigt doit être resté quasi immobile pendant tout le délai
+        if (!_touch ||
+            Math.abs(_touch.lastX - _touch.x) > LONG_PRESS_MOVE_TOLERANCE ||
+            Math.abs(_touch.lastY - _touch.y) > LONG_PRESS_MOVE_TOLERANCE) return;
+        _touch = null; // annule le pan en cours : c'était un appui long
+        if (navigator.vibrate) navigator.vibrate(15);
+        const popup = document.getElementById('map-popup');
+        if (popup) _closePopup();
+        const pos = _v2m(x, y);
+        openMapMarkerModal('add', pos.x, pos.y);
+      }, LONG_PRESS_MS);
     }
   }, { passive: true });
   vp.addEventListener('touchmove', e => {
     if (!_canAccessMap()) return;
-    if (e.touches.length === 1 && _touch) {
+    if (e.touches.length !== 1) {
+      _clearLongPress();
+      return;
+    }
+    if (_touch) {
+      _touch.lastX = e.touches[0].clientX;
+      _touch.lastY = e.touches[0].clientY;
       if (_longPressTimer &&
-          (Math.abs(e.touches[0].clientX - _touch.x) > LONG_PRESS_MOVE_TOLERANCE ||
-           Math.abs(e.touches[0].clientY - _touch.y) > LONG_PRESS_MOVE_TOLERANCE)) {
+          (Math.abs(_touch.lastX - _touch.x) > LONG_PRESS_MOVE_TOLERANCE ||
+           Math.abs(_touch.lastY - _touch.y) > LONG_PRESS_MOVE_TOLERANCE)) {
         _clearLongPress();
       }
       e.preventDefault();
-      mapTransform.x = _touch.ox + e.touches[0].clientX - _touch.x;
-      mapTransform.y = _touch.oy + e.touches[0].clientY - _touch.y;
+      mapTransform.x = _touch.ox + _touch.lastX - _touch.x;
+      mapTransform.y = _touch.oy + _touch.lastY - _touch.y;
       _clampTransform(); _applyTransform();
     }
   }, { passive: false });

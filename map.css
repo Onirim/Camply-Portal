@@ -164,11 +164,14 @@
   background: linear-gradient(0deg, rgba(6,10,20,.88), rgba(6,10,20,.88));
 }
 
-/* Conteneur transformable (pan + zoom) */
+/* Conteneur transformable (pan + zoom).
+   Surtout pas de will-change: transform ici : il fige la rasterisation
+   à l'échelle native de l'image, et au zoom minimum sur mobile toutes
+   les tuiles GPU deviennent visibles d'un coup — saturation mémoire et
+   carte affichée par fragments clignotants. */
 .map-canvas {
   position: absolute;
   transform-origin: 0 0;
-  will-change: transform;
 }
 
 /* Image de la carte */
