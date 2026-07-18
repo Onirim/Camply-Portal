@@ -303,10 +303,6 @@ a:hover { color: #6cc4a2; }
   color: var(--text3);
 }
 .char-card .card-rank {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
   background: rgba(79,174,140,0.1);
   color: var(--accent);
   border: 1px solid rgba(79,174,140,0.28);
@@ -573,10 +569,6 @@ a:hover { color: #6cc4a2; }
   color: var(--text3);
 }
 .preview-rank-badge {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
   background: rgba(79,174,140,0.1);
   color: var(--accent);
   border: 1px solid rgba(79,174,140,0.3);

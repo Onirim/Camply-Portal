@@ -305,11 +305,8 @@ body::before {
 }
 .char-card .card-sub { color: var(--text3); font-size: 12px; margin-bottom: 16px; font-style: italic; }
 .char-card .card-rank {
-  display: inline-block;
-  font-family: var(--font-mono); font-size: 11px;
   background: rgba(192,132,232,0.08); color: var(--accent);
   border: 1px solid rgba(192,132,232,0.2);
-  padding: 2px 9px; border-radius: 2px;
 }
 .char-card .card-attrs { display: flex; gap: 14px; }
 
@@ -709,7 +706,7 @@ body::before {
 
 .preview-name { font-family: var(--font-display); font-size: 36px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1; color: var(--text); text-shadow: var(--glow-accent); }
 .preview-sub { color: var(--text3); font-size: 13px; margin-top: 6px; font-style: italic; }
-.preview-rank-badge { display: inline-block; margin-top: 10px; font-family: var(--font-mono); font-size: 11px; background: rgba(192,132,232,0.08); color: var(--accent); border: 1px solid rgba(192,132,232,0.2); padding: 3px 10px; border-radius: 2px; }
+.preview-rank-badge { background: rgba(192,132,232,0.08); color: var(--accent); border: 1px solid rgba(192,132,232,0.2); }
 
 .preview-section-title { font-family: 'Cinzel', serif; font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 26px 0 14px; display: flex; align-items: center; gap: 10px; text-shadow: var(--glow-accent); }
 .preview-section-title::before { content: ''; width: 16px; height: 1px; background: linear-gradient(90deg, transparent, var(--border2)); }

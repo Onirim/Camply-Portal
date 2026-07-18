@@ -3,16 +3,22 @@
    À ajouter à styles.css (ou importer en <link> séparé)
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Tags Race / Classe sur les cartes ── */
+/* ── Tags Race / Classe / Niveau sur les cartes et la fiche ──
+   Structure partagée : les thèmes ne redéfinissent que les couleurs
+   (background / color / border) du badge niveau. */
 .card-race-tag,
-.card-class-tag {
+.card-class-tag,
+.char-card .card-rank,
+.preview-rank-badge {
   display: inline-block;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
+  text-transform: none;
   padding: 2px 8px;
   border-radius: 4px;
+  margin: 0;
 }
 
 .card-race-tag {

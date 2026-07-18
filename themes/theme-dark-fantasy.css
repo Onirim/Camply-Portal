@@ -270,14 +270,9 @@ a:hover { color: var(--accent2); }
   color: var(--text3);
 }
 .char-card .card-rank {
-  font-family: 'Cinzel', serif;
-  font-size: 10px;
   background: rgba(201, 134, 10, 0.1);
   color: var(--accent);
   border: 1px solid rgba(201, 134, 10, 0.25);
-  border-radius: 2px;
-  padding: 2px 8px;
-  letter-spacing: 0.08em;
 }
 
 /* Valeurs des attributs */
@@ -566,14 +561,9 @@ a:hover { color: var(--accent2); }
   margin-top: 6px;
 }
 .preview-rank-badge {
-  font-family: 'Cinzel', serif;
-  font-size: 10px;
   background: rgba(201, 134, 10, 0.1);
   color: var(--accent);
   border: 1px solid rgba(201, 134, 10, 0.3);
-  border-radius: 2px;
-  padding: 3px 10px;
-  letter-spacing: 0.1em;
 }
 
 /* Séparateur header */

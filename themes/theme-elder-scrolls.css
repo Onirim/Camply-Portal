@@ -416,17 +416,9 @@ a:hover { color: var(--gold-bright); }
   margin-bottom: 14px;
 }
 .char-card .card-rank {
-  display: inline-block;
-  font-family: 'Alegreya', Georgia, serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   background: rgba(200,150,30,0.1);
   color: var(--accent);
   border: 1px solid rgba(200,150,30,0.25);
-  border-radius: 0;
-  padding: 2px 9px;
 }
 
 .card-attr .val {
@@ -731,18 +723,9 @@ a:hover { color: var(--gold-bright); }
   margin-top: 6px;
 }
 .preview-rank-badge {
-  font-family: 'Alegreya', Georgia, serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   background: rgba(200,150,30,0.1);
   color: var(--accent);
   border: 1px solid rgba(200,150,30,0.3);
-  border-radius: 0;
-  padding: 3px 10px;
-  display: inline-block;
-  margin-top: 10px;
 }
 
 /* Séparateur avec ornement TES — symbole Dragon */

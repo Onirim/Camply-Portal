@@ -133,9 +133,9 @@ function renderCharSheet(data) {
 
   // ── En-tête ───────────────────────────────────────────────
   const raceTag = data.race && blockVisible('race')
-    ? `<span class="card-race-tag" style="margin-top:8px">${esc(data.race)}</span>` : '';
+    ? `<span class="card-race-tag">${esc(data.race)}</span>` : '';
   const classTag = data.class && blockVisible('class')
-    ? `<span class="card-class-tag" style="margin-top:8px">${esc(data.class)}</span>` : '';
+    ? `<span class="card-class-tag">${esc(data.class)}</span>` : '';
 
   // Niveau masqué si 0, null, ou si bloc désactivé
   const lvlBadge = data.level !== undefined && data.level !== 0 && data.level !== null && blockVisible('level')

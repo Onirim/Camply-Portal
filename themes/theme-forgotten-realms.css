@@ -405,17 +405,9 @@ a:hover { color: #e0b050; }
   margin-bottom: 14px;
 }
 .char-card .card-rank {
-  display: inline-block;
-  font-family: 'Cinzel', Georgia, serif;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   background: rgba(200,144,48,0.1);
   color: var(--accent);
   border: 1px solid rgba(200,144,48,0.28);
-  border-radius: 0;
-  padding: 2px 8px;
 }
 
 .card-attr .val {
@@ -735,18 +727,9 @@ a:hover { color: #e0b050; }
   margin-top: 6px;
 }
 .preview-rank-badge {
-  font-family: 'Cinzel', Georgia, serif;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   background: rgba(200,144,48,0.1);
   color: var(--accent);
   border: 1px solid rgba(200,144,48,0.3);
-  border-radius: 0;
-  padding: 3px 10px;
-  display: inline-block;
-  margin-top: 10px;
 }
 
 /* Séparateur avec ornement runique */

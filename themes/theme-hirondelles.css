@@ -296,14 +296,9 @@ a:hover { color: #5bbdaa; }
   color: var(--warm-sand);   /* couleur chaude pour les sous-titres */
 }
 .char-card .card-rank {
-  font-family: var(--font-mono);
-  font-size: 10px;
   background: rgba(200,146,42,0.12);   /* ambre */
   color: var(--warm-amber);
   border: 1px solid rgba(200,146,42,0.28);
-  border-radius: 2px;
-  padding: 2px 7px;
-  letter-spacing: 0.06em;
 }
 
 .card-attr .val {
@@ -617,15 +612,9 @@ a:hover { color: #5bbdaa; }
   margin-top: 6px;
 }
 .preview-rank-badge {
-  font-family: var(--font-mono);
-  font-size: 10px;
   background: rgba(200,146,42,0.12);
   color: var(--warm-amber);
   border: 1px solid rgba(200,146,42,0.3);
-  border-radius: 2px;
-  padding: 3px 10px;
-  letter-spacing: 0.1em;
-  margin-bottom: 14px;
 }
 
 .preview-header {
