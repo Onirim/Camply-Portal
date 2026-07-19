@@ -53,6 +53,16 @@ function resetMapState() {
   mapLoaded         = false;
   _closePopup();
   document.querySelector('.map-selector-wrap')?.remove();
+  // Les marqueurs et leurs libellés vivent dans #map-viewport, un nœud
+  // statique de la page : sans suppression explicite ils survivent au
+  // changement d'univers (visible si le nouvel univers n'a aucune carte,
+  // car initMap() sort alors avant _renderAllMarkers()).
+  _mapViewport?.querySelectorAll('.map-marker').forEach(el => el.remove());
+  document.getElementById('map-labels-overlay')?.remove();
+  const legendPanel = document.getElementById('map-legend-panel');
+  if (legendPanel) { legendPanel.classList.remove('open'); legendPanel.innerHTML = ''; }
+  const legendBtn = document.getElementById('map-legend-btn');
+  if (legendBtn) { legendBtn.classList.remove('active'); legendBtn.style.display = 'none'; }
   if (_mapCanvas) {
     _mapCanvas.querySelector('img.map-image')?.remove();
     _mapCanvas.querySelector('.map-image-error')?.remove();
