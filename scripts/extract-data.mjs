@@ -30,12 +30,26 @@ function extractChunk(startLine) {
 const disableGuards = 'SET session_replication_role = replica;';
 const restoreGuards = 'SET session_replication_role = DEFAULT;';
 
-const publicChunks = blocks.filter((b) => b.schema === 'public').map((b) => extractChunk(b.line));
+// TRUNCATE avant chaque COPY : 00_fresh_install.sql sème des lignes en dur dans
+// certaines tables (public.site_info, public.admin_users, …). Sans ce vidage, le
+// COPY du dump réinjecterait les mêmes clés primaires -> "duplicate key" et, sous
+// ON_ERROR_STOP=1, l'étape de restore avorte. On vide donc chaque table cible
+// juste avant de la recharger, ce qui rend le restore idempotent face à tout
+// seed présent ou futur. RESTART IDENTITY réinitialise les séquences éventuelles.
+const truncate = (name) => `TRUNCATE TABLE public."${name}" RESTART IDENTITY CASCADE;`;
+
+// On vide TOUTES les tables publiques en tête de fichier (avant tout COPY), afin
+// qu'un TRUNCATE ... CASCADE tardif ne puisse jamais purger une table déjà
+// rechargée plus haut. Les tables sans données (donc absentes du dump) sont de
+// toute façon vides sur une base neuve : les ignorer est sans effet.
+const publicBlocks = blocks.filter((b) => b.schema === 'public');
+const publicTruncates = publicBlocks.map((b) => truncate(b.name));
+const publicChunks = publicBlocks.map((b) => extractChunk(b.line));
 const authUsersBlock = blocks.find((b) => b.schema === 'auth' && b.name === 'users');
 
 await fs.writeFile(
   publicDataOut,
-  [disableGuards, ...publicChunks, restoreGuards].join('\n\n') + '\n'
+  [disableGuards, ...publicTruncates, ...publicChunks, restoreGuards].join('\n\n') + '\n'
 );
 
 await fs.writeFile(

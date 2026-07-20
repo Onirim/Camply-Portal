@@ -42,15 +42,6 @@ jobs:
           zip_file=$(ls camply_backup_*.zip)
           unzip -o "$zip_file" -d extracted
 
-      - name: Appliquer le schéma (00_fresh_install.sql)
-        env:
-          DB_URL: ${{ secrets.RESTORE_TARGET_DB_URL }}
-        # 00_fresh_install.sql concatène déjà 00_schema.sql -> 38_*.sql (vérifié via
-        # ses marqueurs "-- BEGIN sql/X.sql"), donc rejouer les migrations séparément
-        # serait redondant. Seule exception : sql/34_split_race_class.sql, un simple
-        # UPDATE ponctuel de données existantes, non pertinent pour une base neuve.
-        run: docker run --rm -v "$PWD":/work -w /work postgres:17 psql "$DB_URL" -v ON_ERROR_STOP=1 -f sql/00_fresh_install.sql
-
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -59,10 +50,28 @@ jobs:
       - name: Extraire les données (public + auth.users) du dump
         run: node scripts/extract-data.mjs backup_download/extracted/backup_output/db_backup.sql restore_public_data.sql restore_auth_users.sql
 
+      # auth.users est restauré AVANT le schéma : 00_fresh_install.sql sème en dur
+      # une ligne public.admin_users (user_id = compte éditeur) dont la FK pointe
+      # vers auth.users. Si le schéma s'appliquait sur une base vide, ce seed
+      # échouerait (FK vers un utilisateur inexistant) et stopperait tout le
+      # restore. En repeuplant auth.users d'abord, le seed retrouve sa cible.
+      # Le trigger handle_new_user n'existe pas encore à ce stade, donc ce COPY
+      # ne crée aucun profil parasite.
       - name: Restaurer les données auth.users
         env:
           DB_URL: ${{ secrets.RESTORE_TARGET_DB_URL }}
         run: docker run --rm -v "$PWD":/work -w /work postgres:17 psql "$DB_URL" -v ON_ERROR_STOP=1 -f restore_auth_users.sql
+
+      - name: Appliquer le schéma (00_fresh_install.sql)
+        env:
+          DB_URL: ${{ secrets.RESTORE_TARGET_DB_URL }}
+        # 00_fresh_install.sql concatène déjà 00_schema.sql -> 46_*.sql (vérifié via
+        # ses marqueurs "-- BEGIN sql/X.sql"), donc rejouer les migrations séparément
+        # serait redondant. À maintenir à jour à chaque nouvelle migration.
+        # NB : ce fichier sème aussi quelques lignes en dur (public.site_info,
+        # public.admin_users, …) ; extract-data.mjs préfixe donc chaque table d'un
+        # TRUNCATE pour que la restauration des données ne les percute pas.
+        run: docker run --rm -v "$PWD":/work -w /work postgres:17 psql "$DB_URL" -v ON_ERROR_STOP=1 -f sql/00_fresh_install.sql
 
       - name: Restaurer les données du schéma public
         env:
