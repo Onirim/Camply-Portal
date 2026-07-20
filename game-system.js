@@ -248,20 +248,20 @@ const GAME_I18N = {
     editor_char_trigram_ph:           'TRI',
     editor_char_score_label:          'Score',
     editor_char_score_hint:           'Shift+clic : ±10',
-    editor_add_characteristic:        '+ Ajouter une caractéristique',
+    editor_add_characteristic:        '+ Ajouter un élément',
 
     // Éditeur — compétences
     editor_section_skills:    'Compétences',
     editor_skill_name_ph:     'Nom de la compétence',
     editor_skill_score_hint:  'Shift+clic : ±10',
-    editor_add_skill:         '+ Ajouter une compétence',
+    editor_add_skill:         '+ Ajouter un élément',
 
     // Éditeur — traits
     editor_section_traits:    'Traits',
     editor_trait_name_ph:     'Nom du trait',
     editor_trait_detail_ph:   'Description ou détail (optionnel)',
     editor_trait_score_hint:  'Valeur (optionnel)',
-    editor_add_trait:         '+ Ajouter un trait',
+    editor_add_trait:         '+ Ajouter un élément',
 
     // Éditeur — background
     editor_section_description: 'Description',
@@ -304,18 +304,18 @@ const GAME_I18N = {
     editor_char_trigram_ph:           'TRI',
     editor_char_score_label:          'Score',
     editor_char_score_hint:           'Shift+click: ±10',
-    editor_add_characteristic:        '+ Add a characteristic',
+    editor_add_characteristic:        '+ Add an item',
 
     editor_section_skills:    'Skills',
     editor_skill_name_ph:     'Skill name',
     editor_skill_score_hint:  'Shift+click: ±10',
-    editor_add_skill:         '+ Add a skill',
+    editor_add_skill:         '+ Add an item',
 
     editor_section_traits:    'Traits',
     editor_trait_name_ph:     'Trait name',
     editor_trait_detail_ph:   'Description or detail (optional)',
     editor_trait_score_hint:  'Value (optional)',
-    editor_add_trait:         '+ Add a trait',
+    editor_add_trait:         '+ Add an item',
 
     editor_section_description: 'Description',
     editor_description_ph:      'Character description, appearance, attitude…',
