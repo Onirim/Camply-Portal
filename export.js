@@ -664,14 +664,14 @@ async function exportMarkdownData(mdMode = 'multi') {
 }
 
 let _exportFormat = 'zip';
-let _exportMdMode = 'multi';
+let _exportMdMode = 'single';
 
 function openExportModal() {
   toggleUserMenu(false);
   _exportFormat = 'zip';
-  _exportMdMode = 'multi';
+  _exportMdMode = 'single';
   _setExportFormat('zip');
-  _setExportMdMode('multi');
+  _setExportMdMode('single');
   const modal = document.getElementById('export-modal');
   if (modal) modal.style.display = 'flex';
 }
