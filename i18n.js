@@ -39,6 +39,23 @@ const TRANSLATIONS = {
     topbar_share:   'Partager',
     nav_map: 'Cartes',
 
+    // ── Recherche full-text ───────────────────────────────────
+    search_title:              'Rechercher',
+    search_placeholder:        "Rechercher dans l'univers…",
+    search_group_characters:   'Personnages',
+    search_group_chronicles:   'Chroniques',
+    search_group_entries:      'Entrées de chronique',
+    search_group_documents:    'Documents',
+    search_group_markers:      'Marqueurs de carte',
+    search_hint_type:          'Tapez au moins 2 caractères…',
+    search_loading:            'Recherche…',
+    search_error:              'Erreur lors de la recherche.',
+    search_no_results:         'Aucun résultat.',
+    search_untitled:           'Sans titre',
+    search_hint_nav:           'naviguer',
+    search_hint_open:          'ouvrir',
+    search_hint_close:         'fermer',
+
     // ── Configuration univers ─────────────────────────────────
     config_title:            'Configuration',
     config_subtitle:         "Paramètres de l'univers courant",
@@ -440,6 +457,23 @@ const TRANSLATIONS = {
     nav_config:     'Settings',
     topbar_share:   'Share',
     nav_map: 'Maps',
+
+    // ── Full-text search ──────────────────────────────────────
+    search_title:              'Search',
+    search_placeholder:        'Search the universe…',
+    search_group_characters:   'Characters',
+    search_group_chronicles:   'Chronicles',
+    search_group_entries:      'Chronicle entries',
+    search_group_documents:    'Documents',
+    search_group_markers:      'Map markers',
+    search_hint_type:          'Type at least 2 characters…',
+    search_loading:            'Searching…',
+    search_error:              'Search error.',
+    search_no_results:         'No results.',
+    search_untitled:           'Untitled',
+    search_hint_nav:           'navigate',
+    search_hint_open:          'open',
+    search_hint_close:         'close',
 
     // ── Universe configuration ────────────────────────────────
     config_title:            'Configuration',
