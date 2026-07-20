@@ -410,6 +410,12 @@ async function loadUniversesFromDB() {
     role: roleByUniverse[u.id] || (u.owner_id === currentUser.id ? 'owner' : 'player'),
   }));
 
+  // Date d'activité affichée sur les cards : dernier contenu créé/modifié
+  // (personnage, chronique, document, carte, campagne), et non la dernière
+  // modification des paramètres de l'univers lui-même.
+  const contentDates = await loadUniverseContentDates(universeIds);
+  userUniverses.forEach(u => { u._contentDate = contentDates[u.id] || null; });
+
   // Univers possédés que personne n'a visités depuis 2 mois :
   // archivage serveur puis marquage local (cf. universe-pause.js).
   const pausedIds = await universePause.autoPauseStale();
@@ -421,6 +427,26 @@ async function loadUniversesFromDB() {
   renderUniverseList();
   renderUniverseQuota();
   return userUniverses;
+}
+
+// Dernière date de création/modification de contenu par univers.
+// On agrège les tables de contenu porteuses d'un updated_at ; les entrées
+// de chronique remontent sur chronicles.updated_at via trigger DB.
+async function loadUniverseContentDates(universeIds) {
+  const map = {};
+  if (!universeIds.length) return map;
+  const tables = ['characters', 'chronicles', 'documents', 'map_layers', 'campaigns'];
+  const results = await Promise.all(
+    tables.map(tbl => sb.from(tbl).select('universe_id, updated_at').in('universe_id', universeIds))
+  );
+  results.forEach(({ data, error }) => {
+    if (error) return;
+    (data || []).forEach(r => {
+      if (!r.updated_at) return;
+      if (!map[r.universe_id] || r.updated_at > map[r.universe_id]) map[r.universe_id] = r.updated_at;
+    });
+  });
+  return map;
 }
 
 function renderUniverseQuota() {
@@ -520,8 +546,9 @@ function renderUniverseList() {
   });
   list.innerHTML = sortedUniverses.map(u => {
     const roleKey = u.role === 'owner' ? 'role_owner' : (u.role === 'gm' ? 'role_gm' : 'role_player');
-    const updated = u.updated_at
-      ? new Date(u.updated_at).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short' })
+    const activityDate = u._contentDate || u.created_at;
+    const updated = activityDate
+      ? new Date(activityDate).toLocaleDateString(dateLocale, { day: '2-digit', month: 'short' })
       : '';
     return `
     <div class="universe-card${universePause.isPaused(u) ? ' paused' : ''}" onclick="enterUniverse('${u.id}')">
