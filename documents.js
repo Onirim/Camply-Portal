@@ -63,7 +63,7 @@ async function loadDocTagsFromDB() {
 // ══════════════════════════════════════════════════════════════
 
 async function saveDocumentToDB() {
-  if (!docState.title.trim()) { alert(t('alert_doc_no_title')); return; }
+  if (!docState.title.trim()) { showToast(t('alert_doc_no_title')); return; }
   const isUUID = editingDocId &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingDocId);
 

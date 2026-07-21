@@ -199,7 +199,7 @@ async function loadCharsFromDB() {
 }
 
 async function saveCharToDB() {
-  if (!state.name.trim()) { alert(t('alert_char_no_name')); return; }
+  if (!state.name.trim()) { showToast(t('alert_char_no_name')); return; }
   setSaveIndicator('saving', t('save_saving'));
   const isEditingFollowedChar = !!(editingId && followedChars[editingId] && isUniverseGM());
   const isValidUUID = editingId &&
