@@ -30,6 +30,7 @@
 <link rel="stylesheet" href="whatsnew.css" />
 <link rel="stylesheet" href="siteinfo.css" />
 <link rel="stylesheet" href="admin-panel.css" />
+<link rel="stylesheet" href="universe-search.css" />
 <link rel="stylesheet" id="theme-stylesheet" href="" disabled>
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script>
@@ -449,6 +450,12 @@
 
     <div class="topbar-right">
       <span class="save-indicator" id="save-indicator"></span>
+      <button class="icon-btn" id="search-btn" onclick="openUniverseSearch()"
+        data-i18n="search_title" data-i18n-attr="title" title="Rechercher (Ctrl+K)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/>
+        </svg>
+      </button>
       <select id="lang-select" class="lang-select" onchange="setLang(this.value)">
         <option value="fr">FR</option>
         <option value="en">EN</option>
@@ -1605,6 +1612,29 @@
   </div><!-- /main -->
 </div><!-- /app -->
 
+<!-- Recherche full-text d'univers -->
+<div id="universe-search-modal" onclick="if(event.target===this)closeUniverseSearch()">
+  <div id="universe-search-panel">
+    <div class="us-input-row">
+      <span class="us-input-icon">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/>
+        </svg>
+      </span>
+      <input id="universe-search-input" type="text" autocomplete="off" spellcheck="false"
+        oninput="onUniverseSearchInput(this.value)"
+        data-i18n="search_placeholder" data-i18n-attr="placeholder" placeholder="Rechercher dans l'univers…">
+      <button class="us-close" onclick="closeUniverseSearch()" aria-label="Fermer">✕</button>
+    </div>
+    <div id="universe-search-results"></div>
+    <div class="us-hint">
+      <span><kbd>↑</kbd><kbd>↓</kbd> <span data-i18n="search_hint_nav">naviguer</span></span>
+      <span><kbd>↵</kbd> <span data-i18n="search_hint_open">ouvrir</span></span>
+      <span><kbd>Échap</kbd> <span data-i18n="search_hint_close">fermer</span></span>
+    </div>
+  </div>
+</div>
+
 <!-- Lightbox -->
 <div id="lightbox" onclick="closeLightbox()">
   <button id="lightbox-close" onclick="closeLightbox()">✕</button>
@@ -1691,6 +1721,7 @@
 <script src="whatsnew.js"></script>
 <script src="siteinfo.js"></script>
 <script src="admin-panel.js"></script>
+<script src="universe-search.js"></script>
 <script src="scripts.js"></script>
   <div id="transfer-modal">
   <div id="transfer-modal-panel"></div>

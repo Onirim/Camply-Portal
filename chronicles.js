@@ -119,7 +119,7 @@ async function loadEntriesForChronicle(chrId) {
 // ══════════════════════════════════════════════════════════════
 
 async function saveChronicleToDB() {
-  if (!chrState.title.trim()) { alert(t('alert_chr_no_title')); return; }
+  if (!chrState.title.trim()) { showToast(t('alert_chr_no_title')); return; }
   const isUUID = editingChrId &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(editingChrId);
 
@@ -191,7 +191,7 @@ async function deleteChronicleFromDB(id) {
 // ══════════════════════════════════════════════════════════════
 
 async function saveEntryToDB() {
-  if (!entryState.title.trim()) { alert(t('alert_entry_no_title')); return; }
+  if (!entryState.title.trim()) { showToast(t('alert_entry_no_title')); return; }
   const payload = {
     chronicle_id: activeChrId,
     title:        entryState.title.trim(),

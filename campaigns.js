@@ -161,7 +161,7 @@ async function loadCampaignVisibleObjects(campaignId) {
 
 async function saveCampaignToDB() {
   if (!isUniverseGM()) return;
-  if (!campaignState.title.trim()) { alert(t('alert_campaign_no_title')); return; }
+  if (!campaignState.title.trim()) { showToast(t('alert_campaign_no_title')); return; }
 
   const payload = {
     user_id:     currentUser.id,
