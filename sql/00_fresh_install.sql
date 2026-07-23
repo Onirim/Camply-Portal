@@ -7922,3 +7922,54 @@ COMMIT;
 -- ==================================================
 -- END sql/47_universe_search.sql
 -- ==================================================
+
+-- ==================================================
+-- BEGIN sql/48_universe_members_list.sql
+-- ==================================================
+-- ══════════════════════════════════════════════════════════════
+-- CAMPLY — Liste des membres d'un univers en un seul aller-retour
+--
+-- `get_universe_members` joint universe_members et profiles côté base afin
+-- que l'onglet Configuration n'ait plus besoin de deux requêtes enchaînées
+-- (membres, puis pseudos) avant son premier rendu.
+--
+-- Sécurité : SECURITY INVOKER → la RLS s'applique normalement
+-- (universe_members_select_same_universe pour l'appartenance,
+-- profiles_select_public pour le pseudo). Un garde `is_universe_member`
+-- coupe court si l'appelant n'appartient pas à l'univers.
+-- ══════════════════════════════════════════════════════════════
+
+BEGIN;
+
+DROP FUNCTION IF EXISTS public.get_universe_members(uuid);
+
+CREATE OR REPLACE FUNCTION public.get_universe_members(p_universe_id uuid)
+RETURNS TABLE (
+  user_id   uuid,
+  role      text,
+  joined_at timestamptz,
+  username  text
+)
+LANGUAGE sql
+SECURITY INVOKER
+STABLE
+SET search_path = public
+AS $$
+  SELECT m.user_id,
+         m.role,
+         m.joined_at,
+         COALESCE(p.username, '?') AS username
+  FROM public.universe_members m
+  LEFT JOIN public.profiles p ON p.id = m.user_id
+  WHERE m.universe_id = p_universe_id
+    AND public.is_universe_member(p_universe_id, auth.uid())
+  ORDER BY m.joined_at ASC;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_universe_members(uuid) TO authenticated;
+
+COMMIT;
+
+-- ==================================================
+-- END sql/48_universe_members_list.sql
+-- ==================================================

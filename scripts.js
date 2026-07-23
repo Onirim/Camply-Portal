@@ -882,13 +882,62 @@ function openUniverseConfigView() {
 // MEMBRES DE L'UNIVERS (configuration)
 // ══════════════════════════════════════════════════════════════
 
+// Jeton de la dernière demande de chargement : une réponse tardive relative à
+// un univers qu'on a déjà quitté ne doit pas écraser la liste affichée.
+let _membersLoadToken = 0;
+
+function renderUniverseMembersLoading() {
+  const container = document.getElementById('config-members-list');
+  if (container) {
+    container.innerHTML = `<div class="config-members-status">
+      <span class="spinner"></span><span>${t('config_members_loading')}</span>
+    </div>`;
+  }
+  const select = document.getElementById('config-transfer-select');
+  if (select) {
+    select.innerHTML = `<option value="">${t('loading')}</option>`;
+    select.disabled = true;
+  }
+}
+
 async function loadUniverseMembersForConfig() {
   if (!currentUniverse) return;
+  const universeId = currentUniverse.id;
+  const token = ++_membersLoadToken;
+  renderUniverseMembersLoading();
+
+  // Un seul aller-retour : la RPC joint universe_members et profiles côté base.
+  let { data, error } = await sb.rpc('get_universe_members', { p_universe_id: universeId });
+  if (error) {
+    // Repli sur les deux requêtes historiques tant que la migration
+    // sql/48_universe_members_list.sql n'est pas appliquée.
+    ({ data, error } = await _loadUniverseMembersFallback(universeId));
+  }
+
+  // Réponse périmée (autre univers ouvert entre-temps) : on l'ignore.
+  if (token !== _membersLoadToken || universeId !== currentUniverse?.id) return;
+
+  if (error) {
+    console.error('Erreur chargement membres:', error);
+    const container = document.getElementById('config-members-list');
+    if (container) {
+      container.innerHTML = `<div class="config-members-status error">${t('config_members_error')}</div>`;
+    }
+    populateTransferSelect([]);
+    return;
+  }
+
+  const members = data || [];
+  renderUniverseMembersList(members);
+  populateTransferSelect(members);
+}
+
+async function _loadUniverseMembersFallback(universeId) {
   const { data, error } = await sb.from('universe_members')
     .select('user_id, role, joined_at')
-    .eq('universe_id', currentUniverse.id)
+    .eq('universe_id', universeId)
     .order('joined_at', { ascending: true });
-  if (error) { console.error('Erreur chargement membres:', error); return; }
+  if (error) return { data: null, error };
 
   const userIds = (data || []).map(r => r.user_id);
   let ownerMap = {};
@@ -897,9 +946,7 @@ async function loadUniverseMembersForConfig() {
     (profiles || []).forEach(p => { ownerMap[p.id] = p.username; });
   }
 
-  const members = (data || []).map(r => ({ ...r, username: ownerMap[r.user_id] || '?' }));
-  renderUniverseMembersList(members);
-  populateTransferSelect(members);
+  return { data: (data || []).map(r => ({ ...r, username: ownerMap[r.user_id] || '?' })), error: null };
 }
 
 function populateTransferSelect(members) {
