@@ -267,6 +267,7 @@ a:hover { color: #5bbdaa; }
   content: '';
   position: absolute; top: 0; right: 0;
   width: 14px; height: 14px;
+  pointer-events: none;
   border-top: 1px solid var(--border2);
   border-right: 1px solid var(--border2);
   opacity: 0.4;

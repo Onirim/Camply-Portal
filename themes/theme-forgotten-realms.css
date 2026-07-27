@@ -370,6 +370,7 @@ a:hover { color: #e0b050; }
   position: absolute;
   top: 0; right: 0;
   width: 16px; height: 16px;
+  pointer-events: none;
   border-top: 1px solid var(--border2);
   border-right: 1px solid var(--border2);
   opacity: 0.5;
