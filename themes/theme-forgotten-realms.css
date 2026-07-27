@@ -33,7 +33,7 @@
   /* Textes — parchemin de Candlekeep */
   --text:  #e4d8b8;   /* vélin ancien */
   --text2: #9a8c68;   /* parchemin à l'ombre */
-  --text3: #5a5038;   /* encre fanée */
+  --text3: #8e7d54;   /* encre fanée */
 
   /* Accent — or des enluminures TSR */
   --accent:  #c89030;
@@ -1408,7 +1408,7 @@ a:hover { color: #e0b050; }
    ══════════════════════════════════════════════════════════════ */
 .card-desc {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text3);
   font-style: italic;
   line-height: 1.5;
