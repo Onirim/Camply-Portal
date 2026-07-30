@@ -150,7 +150,7 @@ function setMapAdminImagePreview() {
 function renderMapAdminColorRows() {
   const container = document.getElementById('map-admin-colors');
   if (!container) return;
-  container.innerHTML = MAP_CONFIG.markerColors.map(c => {
+  container.innerHTML = MAP_CONFIG.markerColors.map((c, index) => {
     const shape = mapAdminState.colorShapes[c] || MARKER_SHAPE_DEFAULT;
     const icon  = mapAdminState.colorIcons[c]  || '';
     return `
@@ -158,7 +158,7 @@ function renderMapAdminColorRows() {
       <span class="map-admin-color-dot" style="background:${c}"></span>
       <input type="text" maxlength="40"
         value="${esc(mapAdminState.colorLabels[c] || '')}"
-        placeholder="${t('map_admin_color_ph')}"
+        placeholder="${t('map_admin_color_ph_' + index)}"
         oninput="mapAdminState.colorLabels['${c}'] = this.value">
       <button type="button" class="map-admin-custom-btn" title="${t('map_admin_custom_btn')}"
         onmousedown="event.stopPropagation()"
