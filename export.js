@@ -11,6 +11,37 @@ function _safeName(value, fallback = 'objet') {
   return v || fallback;
 }
 
+function _campaignExportScopeSets() {
+  return {
+    character: new Set(),
+    chronicle: new Set(),
+    document: new Set(),
+    map: new Set(),
+  };
+}
+
+function _exportContextTitle(model) {
+  const universeName = currentUniverse?.name || 'Univers';
+  const campaign = model?.exportContext?.campaign;
+  return campaign ? `${universeName} — ${campaign.title || 'Campagne'}` : universeName;
+}
+
+function _exportFileStem(model, markdown = false) {
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const campaign = model?.exportContext?.campaign;
+  const campaignPart = campaign ? `_${_safeName(campaign.title, 'campagne')}` : '';
+  return `camply_export${markdown ? '_markdown' : ''}${campaignPart}_${dateStr}`;
+}
+
+function _exportScopeReadmeLines(model) {
+  const campaign = model?.exportContext?.campaign;
+  if (!campaign) return ['- Périmètre : tous les objets visibles de l’univers.'];
+  return [
+    `- Périmètre : campagne « ${campaign.title || 'Sans titre'} » uniquement.`,
+    ...(campaign.description ? [`- Description de la campagne : ${campaign.description}`] : []),
+  ];
+}
+
 function _downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -170,25 +201,46 @@ async function _collectChronicleEntries(chronicleIds) {
   return data || [];
 }
 
-async function _collectOwnMapMarkers() {
-  const { data, error } = await sb.from('map_markers')
+async function _collectOwnMapMarkers(mapKeys = null) {
+  if (mapKeys && !mapKeys.length) return [];
+  let query = sb.from('map_markers')
     .select('id, x, y, name, description, color, map_key')
     .eq('user_id', currentUser.id)
     .eq('universe_id', currentUniverse.id);
+  if (mapKeys) query = query.in('map_key', mapKeys);
+  const { data, error } = await query;
   if (error) throw new Error(error.message || 'Erreur de chargement des marqueurs de carte');
   return data || [];
 }
 
-async function _gatherExportModel() {
+async function _loadCampaignExportScope(campaignId) {
+  const { data, error } = await sb.rpc('get_campaign_export_scope', {
+    p_universe_id: currentUniverse.id,
+    p_campaign_id: campaignId,
+  });
+  if (error) throw new Error(error.message || 'Erreur de chargement du périmètre de campagne');
+
+  const scope = _campaignExportScopeSets();
+  (data || []).forEach(row => {
+    if (scope[row.object_type] && row.object_id) scope[row.object_type].add(row.object_id);
+  });
+  return scope;
+}
+
+async function _gatherExportModel(exportContext = { scope: 'universe', campaign: null }) {
+  const campaignScope = exportContext.scope === 'campaign'
+    ? await _loadCampaignExportScope(exportContext.campaign.id)
+    : null;
+
   const allChars = [
     ...Object.values(chars || {}).map(c => ({ ...c, _source: 'owned' })),
     ...Object.values(followedChars || {}).map(c => ({ ...c, _source: 'followed' })),
-  ];
+  ].filter(c => !campaignScope || campaignScope.character.has(c._db_id));
 
   const allChronicles = [
     ...Object.values(chronicles || {}).map(c => ({ ...c, _source: 'owned' })),
     ...Object.values(followedChronicles || {}).map(c => ({ ...c, _source: 'followed' })),
-  ];
+  ].filter(c => !campaignScope || campaignScope.chronicle.has(c.id));
   const chrIds = allChronicles.map(c => c.id).filter(Boolean);
   const allEntries = await _collectChronicleEntries(chrIds);
   const entriesByChronicle = {};
@@ -200,21 +252,27 @@ async function _gatherExportModel() {
   const allDocs = [
     ...Object.values(documents || {}).map(d => ({ ...d, _source: 'owned' })),
     ...Object.values(followedDocuments || {}).map(d => ({ ...d, _source: 'followed' })),
-  ];
+  ].filter(d => !campaignScope || campaignScope.document.has(d.id));
 
-  const ownMarkers = await _collectOwnMapMarkers();
-  const ownLayers = Object.values(mapOwnLayers || {}).map(layer => ({
+  const visibleOwnLayers = Object.values(mapOwnLayers || {})
+    .filter(layer => !campaignScope || campaignScope.map.has(layer.id));
+  const ownMapKeys = [...new Set(visibleOwnLayers.map(layer => layer.map_key).filter(Boolean))];
+  const ownMarkers = await _collectOwnMapMarkers(ownMapKeys);
+  const ownLayers = visibleOwnLayers.map(layer => ({
     layer,
     markers: ownMarkers.filter(m => _normalizeMapKey(m.map_key) === _normalizeMapKey(layer.map_key)),
     source: 'owned'
   }));
-  const followedLayers = Object.values(mapFollowedLayers || {}).map(({ layer, markers }) => ({
-    layer,
-    markers: Object.values(markers || {}).filter(m => _normalizeMapKey(m.map_key) === _normalizeMapKey(layer.map_key)),
-    source: 'followed'
-  }));
+  const followedLayers = Object.values(mapFollowedLayers || {})
+    .filter(({ layer }) => !campaignScope || campaignScope.map.has(layer.id))
+    .map(({ layer, markers }) => ({
+      layer,
+      markers: Object.values(markers || {}).filter(m => _normalizeMapKey(m.map_key) === _normalizeMapKey(layer.map_key)),
+      source: 'followed'
+    }));
 
   return {
+    exportContext,
     allChars,
     allChronicles,
     entriesByChronicle,
@@ -225,7 +283,7 @@ async function _gatherExportModel() {
 
 async function _buildFullZip(model) {
   const zip = new JSZip();
-  const root = zip.folder(`camply_export_${new Date().toISOString().slice(0, 10)}`);
+  const root = zip.folder(_exportFileStem(model));
 
   const personnages = root.folder('personnages');
   const chroniquesDir = root.folder('chroniques');
@@ -309,11 +367,12 @@ async function _buildFullZip(model) {
   }
 
   root.file('README.md', [
-    '# Export Camply',
+    `# Export Camply — ${_exportContextTitle(model)}`,
     '',
     `Date: ${new Date().toISOString()}`,
     '',
-    '- Contient les objets visibles : propriétaires + abonnements.',
+    ..._exportScopeReadmeLines(model),
+    '- Contient uniquement les objets visibles : propriétaires + abonnements.',
     '- Dossiers de catégories : personnages, chroniques, documents, cartes.',
     ''
   ].join('\n'));
@@ -323,8 +382,7 @@ async function _buildFullZip(model) {
 
 function _buildMarkdownZip(model) {
   const zip = new JSZip();
-  const dateStr = new Date().toISOString().slice(0, 10);
-  const root = zip.folder(`camply_export_markdown_${dateStr}`);
+  const root = zip.folder(_exportFileStem(model, true));
 
   const personnages = root.folder('personnages');
   const chroniquesDir = root.folder('chroniques');
@@ -334,9 +392,11 @@ function _buildMarkdownZip(model) {
   const tagIndex = _buildTagIndex(model);
 
   const index = [
-    `# Export Camply — ${currentUniverse?.name || 'Univers'}`,
+    `# Export Camply — ${_exportContextTitle(model)}`,
     '',
     `Date: ${new Date().toISOString()}`,
+    '',
+    ..._exportScopeReadmeLines(model),
     '',
     '> Export Markdown généré pour être utilisé avec une IA (préparation de scénarios).',
     ''
@@ -503,8 +563,13 @@ function _buildMarkdownSingleFile(model) {
   const tagIndex = _buildTagIndex(model);
   const out = [];
 
-  out.push(`# Export Camply — ${currentUniverse?.name || 'Univers'}`, '', `Date: ${new Date().toISOString()}`, '');
-  if (currentUniverse?.description) out.push(currentUniverse.description, '');
+  out.push(`# Export Camply — ${_exportContextTitle(model)}`, '', `Date: ${new Date().toISOString()}`, '');
+  if (model.exportContext?.campaign?.description) {
+    out.push(model.exportContext.campaign.description, '');
+  } else if (currentUniverse?.description) {
+    out.push(currentUniverse.description, '');
+  }
+  out.push(..._exportScopeReadmeLines(model), '');
   out.push('> Export Markdown généré pour être utilisé avec une IA (préparation de scénarios).', '');
 
   out.push('## Sommaire', '');
@@ -610,7 +675,7 @@ function _buildMarkdownSingleFile(model) {
   return out.join('\n');
 }
 
-async function exportVisibleData() {
+async function exportVisibleData(exportContext = { scope: 'universe', campaign: null }) {
   if (!window.JSZip) {
     showToast(t('export_error_zip_lib'));
     return;
@@ -622,10 +687,10 @@ async function exportVisibleData() {
       await ensureMapLayersCacheLoaded();
     }
 
-    const model = await _gatherExportModel();
+    const model = await _gatherExportModel(exportContext);
     const zip = await _buildFullZip(model);
     const blob = await zip.generateAsync({ type: 'blob' });
-    _downloadBlob(blob, `camply_export_${new Date().toISOString().slice(0, 10)}.zip`);
+    _downloadBlob(blob, `${_exportFileStem(model)}.zip`);
     showToast(t('export_done'));
   } catch (err) {
     console.error(err);
@@ -633,7 +698,7 @@ async function exportVisibleData() {
   }
 }
 
-async function exportMarkdownData(mdMode = 'multi') {
+async function exportMarkdownData(mdMode = 'multi', exportContext = { scope: 'universe', campaign: null }) {
   if (mdMode === 'multi' && !window.JSZip) {
     showToast(t('export_error_zip_lib'));
     return;
@@ -645,16 +710,15 @@ async function exportMarkdownData(mdMode = 'multi') {
       await ensureMapLayersCacheLoaded();
     }
 
-    const model = await _gatherExportModel();
-    const dateStr = new Date().toISOString().slice(0, 10);
+    const model = await _gatherExportModel(exportContext);
 
     if (mdMode === 'single') {
       const md = _buildMarkdownSingleFile(model);
-      _downloadBlob(new Blob([md], { type: 'text/markdown' }), `camply_export_${dateStr}.md`);
+      _downloadBlob(new Blob([md], { type: 'text/markdown' }), `${_exportFileStem(model)}.md`);
     } else {
       const zip = _buildMarkdownZip(model);
       const blob = await zip.generateAsync({ type: 'blob' });
-      _downloadBlob(blob, `camply_export_markdown_${dateStr}.zip`);
+      _downloadBlob(blob, `${_exportFileStem(model, true)}.zip`);
     }
     showToast(t('export_done'));
   } catch (err) {
@@ -665,15 +729,91 @@ async function exportMarkdownData(mdMode = 'multi') {
 
 let _exportFormat = 'zip';
 let _exportMdMode = 'single';
+let _exportScope = 'universe';
+let _exportCampaignId = '';
+let _exportCampaigns = {};
+let _exportCampaignLoadFailed = false;
 
-function openExportModal() {
+function _appendExportCampaignOption(select, value, label) {
+  const option = document.createElement('option');
+  option.value = value;
+  option.textContent = label;
+  select.appendChild(option);
+}
+
+function _renderExportCampaignOptions(isLoading = false) {
+  const select = document.getElementById('export-campaign-select');
+  const empty = document.getElementById('export-campaign-empty');
+  if (!select || !empty) return;
+
+  select.innerHTML = '';
+  if (isLoading) {
+    _appendExportCampaignOption(select, '', t('export_campaign_loading'));
+    select.disabled = true;
+    empty.style.display = 'none';
+    _updateExportConfirmState();
+    return;
+  }
+
+  if (_exportCampaignLoadFailed) {
+    _appendExportCampaignOption(select, '', t('export_campaign_load_error'));
+    select.disabled = true;
+    empty.textContent = t('export_campaign_load_error');
+    empty.style.display = 'block';
+    _updateExportConfirmState();
+    return;
+  }
+
+  const availableCampaigns = Object.values(_exportCampaigns)
+    .sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  _appendExportCampaignOption(select, '', t('export_campaign_placeholder'));
+  availableCampaigns.forEach(campaign => {
+    _appendExportCampaignOption(select, campaign.id, campaign.title || '?');
+  });
+
+  if (_exportCampaignId && availableCampaigns.some(campaign => campaign.id === _exportCampaignId)) {
+    select.value = _exportCampaignId;
+  } else {
+    _exportCampaignId = '';
+    select.value = '';
+  }
+  select.disabled = !availableCampaigns.length;
+  empty.textContent = t('export_campaign_empty');
+  empty.style.display = availableCampaigns.length ? 'none' : 'block';
+  _updateExportConfirmState();
+}
+
+async function _loadExportCampaigns() {
+  const { data, error } = await sb.from('campaigns')
+    .select('id, title, description')
+    .eq('universe_id', currentUniverse.id)
+    .order('title', { ascending: true });
+  if (error) throw new Error(error.message || 'Erreur de chargement des campagnes');
+  _exportCampaigns = Object.fromEntries((data || []).map(campaign => [campaign.id, campaign]));
+}
+
+async function openExportModal() {
   toggleUserMenu(false);
   _exportFormat = 'zip';
   _exportMdMode = 'single';
+  _exportScope = 'universe';
+  _exportCampaignId = '';
+  _exportCampaigns = {};
+  _exportCampaignLoadFailed = false;
+  _setExportScope('universe');
   _setExportFormat('zip');
   _setExportMdMode('single');
+  _renderExportCampaignOptions(true);
   const modal = document.getElementById('export-modal');
   if (modal) modal.style.display = 'flex';
+
+  try {
+    await _loadExportCampaigns();
+  } catch (error) {
+    console.error(error);
+    _exportCampaignLoadFailed = true;
+  }
+  _renderExportCampaignOptions(false);
 }
 
 function closeExportModal() {
@@ -690,6 +830,27 @@ function _setExportFormat(format) {
   if (mdSection) mdSection.style.display = format === 'markdown' ? 'block' : 'none';
 }
 
+function _setExportScope(scope) {
+  _exportScope = scope === 'campaign' ? 'campaign' : 'universe';
+  document.querySelectorAll('#export-scope-grid .export-option-card').forEach(el => {
+    el.classList.toggle('active', el.dataset.scope === _exportScope);
+  });
+  const campaignSection = document.getElementById('export-campaign-section');
+  if (campaignSection) campaignSection.style.display = _exportScope === 'campaign' ? 'block' : 'none';
+  _updateExportConfirmState();
+}
+
+function _setExportCampaign(campaignId) {
+  _exportCampaignId = campaignId || '';
+  _updateExportConfirmState();
+}
+
+function _updateExportConfirmState() {
+  const button = document.getElementById('export-confirm-btn');
+  if (!button) return;
+  button.disabled = _exportScope === 'campaign' && !_exportCampaignId;
+}
+
 function _setExportMdMode(mode) {
   _exportMdMode = mode;
   document.querySelectorAll('#export-md-mode-grid .export-option-card').forEach(el => {
@@ -698,10 +859,28 @@ function _setExportMdMode(mode) {
 }
 
 async function confirmExportChoice() {
+  let exportContext = { scope: 'universe', campaign: null };
+  if (_exportScope === 'campaign') {
+    const campaign = _exportCampaigns[_exportCampaignId];
+    if (!campaign) {
+      showToast(t('export_campaign_required'));
+      _updateExportConfirmState();
+      return;
+    }
+    exportContext = {
+      scope: 'campaign',
+      campaign: {
+        id: campaign.id,
+        title: campaign.title || '',
+        description: campaign.description || '',
+      },
+    };
+  }
+
   closeExportModal();
   if (_exportFormat === 'markdown') {
-    await exportMarkdownData(_exportMdMode);
+    await exportMarkdownData(_exportMdMode, exportContext);
   } else {
-    await exportVisibleData();
+    await exportVisibleData(exportContext);
   }
 }

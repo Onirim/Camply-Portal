@@ -1809,9 +1809,32 @@
       </div>
 
       <p class="transfer-desc" data-i18n="export_modal_desc">
-        Choisissez le format d'export le mieux adapté à votre usage.
+        Choisissez le contenu à exporter, puis le format le mieux adapté à votre usage.
       </p>
 
+      <div class="transfer-section-label" data-i18n="export_scope_label">Contenu à exporter</div>
+      <div class="export-option-grid" id="export-scope-grid">
+        <button class="export-option-card" data-scope="universe" onclick="_setExportScope('universe')">
+          <span class="export-option-label" data-i18n="export_scope_universe_label">Tout l'univers visible</span>
+          <span class="export-option-desc" data-i18n="export_scope_universe_desc">Tous les éléments de cet univers auxquels vous avez accès.</span>
+        </button>
+        <button class="export-option-card" data-scope="campaign" onclick="_setExportScope('campaign')">
+          <span class="export-option-label" data-i18n="export_scope_campaign_label">Une campagne spécifique</span>
+          <span class="export-option-desc" data-i18n="export_scope_campaign_desc">Uniquement les éléments visibles attachés à la campagne choisie.</span>
+        </button>
+      </div>
+
+      <div id="export-campaign-section" style="display:none">
+        <label class="transfer-section-label" for="export-campaign-select" data-i18n="export_campaign_label">Campagne</label>
+        <select id="export-campaign-select" class="export-campaign-select" onchange="_setExportCampaign(this.value)">
+          <option value="" data-i18n="export_campaign_loading">Chargement des campagnes…</option>
+        </select>
+        <div id="export-campaign-empty" class="export-campaign-empty" data-i18n="export_campaign_empty" style="display:none">
+          Aucune campagne accessible dans cet univers.
+        </div>
+      </div>
+
+      <div class="transfer-section-label" data-i18n="export_format_label">Format d'export</div>
       <div class="export-option-grid" id="export-format-grid">
         <button class="export-option-card" data-format="zip" onclick="_setExportFormat('zip')">
           <svg class="export-option-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" width="20" height="20">
@@ -1846,7 +1869,7 @@
 
       <div class="transfer-actions">
         <button class="btn-cancel" onclick="closeExportModal()" data-i18n="btn_cancel">Annuler</button>
-        <button class="transfer-confirm-btn" onclick="confirmExportChoice()">
+        <button id="export-confirm-btn" class="transfer-confirm-btn" onclick="confirmExportChoice()">
           <span data-i18n="export_confirm_btn">Exporter</span>
         </button>
       </div>
