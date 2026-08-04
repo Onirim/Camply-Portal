@@ -4,6 +4,7 @@
   { "id": "forgotten-realms",    "file": "theme-forgotten-realms.css",    "label": "The Forgotten Realms" },
   { "id": "hirondelles",         "file": "theme-hirondelles.css",         "label": "Les Hirondelles" },
   { "id": "mystic-falls",        "file": "theme_mystic_falls.css",        "label": "Mystic Falls" },
+  { "id": "red-shift",           "file": "theme-red-shift.css",           "label": "RED//SHIFT - Cyberpunk" },
   { "id": "reve-de-dragon",      "file": "theme-reve-de-dragon.css",      "label": "Rêve de Dragon" },
   { "id": "superhero",           "file": "theme_superhero.css",           "label": "Energy Heroes" },
   { "id": "tales-from-the-loop", "file": "theme_tales_from_the_loop.css", "label": "Tales From the Loop" }
