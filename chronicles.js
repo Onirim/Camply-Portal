@@ -397,7 +397,7 @@ function entryRowHTML(e, isOwn, chrId, canEdit = isOwn) {
   const date = e.created_at
     ? new Date(e.created_at).toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'fr-FR', { day:'numeric', month:'long', year:'numeric' })
     : '';
-  const preview = (e.content || '').replace(/#+\s*/g,'').replace(/\*+/g,'').replace(/\n/g,' ').slice(0, 160);
+  const preview = markdownPreview(e.content, 160);
 
   const unreadDot = unreadMarkers.entryDotHTML(unreadMarkers.isEntryUnread(chrId, e.id, isOwn));
   return `<div class="entry-row" onclick="openEntryReader('${e.id}')">${unreadDot}
@@ -414,7 +414,7 @@ function entryRowHTML(e, isOwn, chrId, canEdit = isOwn) {
         </button>` : ''}
       </div>` : ''}
     </div>
-    ${preview ? `<div class="entry-row-preview">${esc(preview)}…</div>` : ''}
+    ${preview ? `<div class="entry-row-preview">${esc(preview)}</div>` : ''}
   </div>`;
 }
 
