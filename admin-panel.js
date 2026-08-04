@@ -38,6 +38,7 @@ Object.assign(TRANSLATIONS.fr, {
   admin_no_results:           'Aucun résultat.',
   admin_pagination_info:      'Page ${page}/${pages} · ${count} résultat(s)',
   admin_th_user:             'Utilisateur',
+  admin_th_user_status:      'Statut (30 j)',
   admin_th_universes_owned:  'Univers possédés',
   admin_th_objects:          'Objets',
   admin_th_universe_limit:   'Limite d\'univers',
@@ -50,7 +51,10 @@ Object.assign(TRANSLATIONS.fr, {
   admin_resume_btn:          'Réactiver',
   admin_delete_btn:          'Supprimer',
   admin_status_active:       'Actif',
+  admin_status_inactive:     'Inactif',
   admin_status_paused:       'En pause',
+  admin_limit_decrease:      'Diminuer la limite d’univers',
+  admin_limit_increase:      'Augmenter la limite d’univers',
   admin_confirm_delete_universe: 'Suppression définitive de l\'univers "${name}" et de tout son contenu.\nTapez son nom pour confirmer :',
   admin_confirm_pause:       'Mettre l\'univers "${name}" en pause ?',
   admin_confirm_resume:      'Réactiver l\'univers "${name}" ?',
@@ -105,6 +109,7 @@ Object.assign(TRANSLATIONS.en, {
   admin_no_results:           'No results.',
   admin_pagination_info:      'Page ${page}/${pages} · ${count} result(s)',
   admin_th_user:             'User',
+  admin_th_user_status:      'Status (30d)',
   admin_th_universes_owned:  'Owned universes',
   admin_th_objects:          'Objects',
   admin_th_universe_limit:   'Universe limit',
@@ -117,7 +122,10 @@ Object.assign(TRANSLATIONS.en, {
   admin_resume_btn:          'Resume',
   admin_delete_btn:          'Delete',
   admin_status_active:       'Active',
+  admin_status_inactive:     'Inactive',
   admin_status_paused:       'Paused',
+  admin_limit_decrease:      'Decrease universe limit',
+  admin_limit_increase:      'Increase universe limit',
   admin_confirm_delete_universe: 'This will permanently delete the universe "${name}" and all its content.\nType its name to confirm:',
   admin_confirm_pause:       'Pause the universe "${name}"?',
   admin_confirm_resume:      'Resume the universe "${name}"?',
@@ -324,18 +332,49 @@ const adminPanel = {
           <div class="admin-cell-title">${esc(u.username || '—')}</div>
           <div class="admin-cell-sub">${esc(u.email || '')}</div>
         </td>
+        <td>
+          <span class="admin-status-badge ${u.is_active ? 'active' : 'inactive'}">
+            ${u.is_active ? t('admin_status_active') : t('admin_status_inactive')}
+          </span>
+        </td>
         <td>${u.owned_universes}</td>
         <td>${u.objects_count}</td>
         <td>
-          <input type="number" min="0" class="admin-input-mini" id="admin-limit-input-${esc(u.user_id)}" value="${u.max_universes}">
+          <div class="admin-limit-stepper">
+            <button type="button" class="admin-stepper-btn" id="admin-limit-minus-${esc(u.user_id)}"
+                    onclick="adminPanel.adjustUserLimit('${u.user_id}', -1)"
+                    aria-label="${esc(t('admin_limit_decrease'))}" title="${esc(t('admin_limit_decrease'))}"
+                    ${u.max_universes <= 0 ? 'disabled' : ''}>−</button>
+            <input type="number" min="0" class="admin-input-mini" id="admin-limit-input-${esc(u.user_id)}"
+                   value="${u.max_universes}" inputmode="numeric"
+                   oninput="adminPanel.syncUserLimitControls('${u.user_id}')">
+            <button type="button" class="admin-stepper-btn"
+                    onclick="adminPanel.adjustUserLimit('${u.user_id}', 1)"
+                    aria-label="${esc(t('admin_limit_increase'))}" title="${esc(t('admin_limit_increase'))}">+</button>
+          </div>
         </td>
         <td>
           <button class="btn-cancel admin-row-btn" onclick="adminPanel.saveUserLimit('${u.user_id}')" data-i18n="admin_save_btn">Enregistrer</button>
         </td>
-      </tr>`).join('') : `<tr><td colspan="5" class="admin-empty-row" data-i18n="admin_no_results">Aucun résultat.</td></tr>`;
+      </tr>`).join('') : `<tr><td colspan="6" class="admin-empty-row" data-i18n="admin_no_results">Aucun résultat.</td></tr>`;
 
     this._renderPagination('admin-users-pagination', page, totalPages, filtered.length,
       'adminPanel.usersPrevPage()', 'adminPanel.usersNextPage()');
+  },
+
+  adjustUserLimit(userId, delta) {
+    const input = document.getElementById(`admin-limit-input-${userId}`);
+    if (!input) return;
+    const current = parseInt(input.value, 10);
+    input.value = Math.max(0, (Number.isFinite(current) ? current : 0) + delta);
+    this.syncUserLimitControls(userId);
+  },
+
+  syncUserLimitControls(userId) {
+    const input = document.getElementById(`admin-limit-input-${userId}`);
+    const minusBtn = document.getElementById(`admin-limit-minus-${userId}`);
+    const value = parseInt(input?.value, 10);
+    if (minusBtn) minusBtn.disabled = !Number.isFinite(value) || value <= 0;
   },
 
   async saveUserLimit(userId) {
