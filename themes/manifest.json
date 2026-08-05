@@ -1,8 +1,6 @@
 [
-  { "id": "dark-fantasy",        "file": "theme-dark-fantasy.css",        "label": "Dark Grimoire" },
   { "id": "elder-scrolls",       "file": "theme-elder-scrolls.css",       "label": "The Elder Scrolls" },
   { "id": "forgotten-realms",    "file": "theme-forgotten-realms.css",    "label": "The Forgotten Realms" },
-  { "id": "hirondelles",         "file": "theme-hirondelles.css",         "label": "Les Hirondelles" },
   { "id": "mystic-falls",        "file": "theme_mystic_falls.css",        "label": "Mystic Falls" },
   { "id": "world-of-darkness",   "file": "theme-world-of-darkness.css",   "label": "World of Darkness" },
   { "id": "red-shift",           "file": "theme-red-shift.css",           "label": "RED//SHIFT - Cyberpunk" },
