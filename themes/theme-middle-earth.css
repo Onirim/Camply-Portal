@@ -170,7 +170,7 @@ a:hover { color: #eed28d; }
   box-shadow: 0 0 16px var(--gold-glow);
   transform: translateY(-1px);
 }
-.btn-cancel, .btn-danger-outline, .btn-follow, .btn-follow-chr, .btn-follow-doc,
+.btn-cancel, .btn-danger-outline, .btn-follow, .btn-follow-chr, .btn-follow-doc, .config-action-btn,
 .btn-follow-campaign, .campaign-select-all-btn, .add-btn, .map-panel-btn,
 .map-reset-btn, .map-visibility-btn {
   border-radius: 3px;

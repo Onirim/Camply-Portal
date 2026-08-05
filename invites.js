@@ -36,15 +36,15 @@ function renderUniverseInviteBlock() {
     const url = buildInviteUrl(universeInviteState.token);
     const dateStr = new Date(universeInviteState.expires_at).toLocaleDateString();
     el.innerHTML = `
-      <div class="chr-follow-wrap" style="margin-bottom:8px">
-        <input type="text" id="config-invite-link-input" readonly value="${esc(url)}" onclick="this.select()">
-        <button class="btn-follow-chr" onclick="copyInviteLink()">${t('config_invite_copy_btn')}</button>
+      <div class="config-action-row" style="margin-bottom:8px">
+        <input class="config-action-input" type="text" id="config-invite-link-input" readonly value="${esc(url)}" onclick="this.select()">
+        <button class="config-action-btn" onclick="copyInviteLink()">${t('config_invite_copy_btn')}</button>
       </div>
       <p class="config-block-hint">${ti('config_invite_expires_hint', { date: dateStr })}</p>
-      <button class="btn-follow-chr" style="margin-top:8px" onclick="generateUniverseInviteLink()">${t('config_invite_regenerate_btn')}</button>
+      <button class="config-action-btn" style="margin-top:8px" onclick="generateUniverseInviteLink()">${t('config_invite_regenerate_btn')}</button>
     `;
   } else {
-    el.innerHTML = `<button class="btn-follow-chr" onclick="generateUniverseInviteLink()">${t('config_invite_generate_btn')}</button>`;
+    el.innerHTML = `<button class="config-action-btn" onclick="generateUniverseInviteLink()">${t('config_invite_generate_btn')}</button>`;
   }
 }
 

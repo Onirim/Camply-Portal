@@ -121,7 +121,7 @@ a:hover { color: #91ffff; }
 .invite-copy-btn:hover, .admin-save-btn:hover {
   background: #ff4960; border-color: #ff9aa6; box-shadow: 0 0 18px var(--red-glow); transform: translateY(-1px);
 }
-.btn-cancel, .btn-danger-outline, .btn-follow, .btn-follow-chr, .btn-follow-doc,
+.btn-cancel, .btn-danger-outline, .btn-follow, .btn-follow-chr, .btn-follow-doc, .config-action-btn,
 .btn-follow-campaign, .campaign-select-all-btn, .add-btn, .map-panel-btn, .map-reset-btn,
 .map-visibility-btn {
   border-radius: 1px; font-family: var(--font-display); font-weight: 700; letter-spacing: .055em; text-transform: uppercase;
@@ -171,7 +171,12 @@ a:hover { color: #91ffff; }
 .map-admin-row, .admin-news-item, .generic-entry, .skill-entry, .power-entry,
 .compl-entry, .romantic-entry { border-radius: 1px; }
 .entry-row:hover, .campaign-item-row:hover, .campaign-selectable-item:hover,
-.reorder-entry:hover, .us-item:hover, .map-admin-row:hover { border-color: var(--def); background-color: rgba(54,223,224,.035); }
+.reorder-entry:hover, .us-item:hover { border-color: var(--def); background-color: rgba(54,223,224,.035); }
+.map-admin-row:hover {
+  border-color: var(--accent);
+  background-color: rgba(255,61,85,.045);
+  box-shadow: inset 3px 0 0 rgba(255,61,85,.65);
+}
 .campaign-selectable-item.selected, .us-item.selected, .export-option-card.active {
   border-color: var(--accent); background: rgba(255,61,85,.09); box-shadow: inset 3px 0 0 var(--accent);
 }
