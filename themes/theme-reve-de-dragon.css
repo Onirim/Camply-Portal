@@ -14,36 +14,36 @@
    ══════════════════════════════════════════════════════════════ */
 :root {
   /* Fonds — nuit profonde, bleu d'encre onirique */
-  --bg:  #080b14;
-  --bg2: #0e1422;
-  --bg3: #141c30;
-  --bg4: #1b2740;
+  --bg:  #080c16;
+  --bg2: #101827;
+  --bg3: #18243a;
+  --bg4: #21304b;
 
   /* Bordures — brume nocturne */
-  --border:  #26314d;
-  --border2: #3a4a72;
+  --border:  #344564;
+  --border2: #536c94;
 
   /* Textes — parchemin enluminé */
-  --text:  #ece4d0;   /* ivoire chaud des pages peintes */
-  --text2: #a89e84;   /* parchemin atténué */
-  --text3: #5f6580;   /* brume bleu-gris discrète */
+  --text:  #f5eedf;   /* ivoire chaud des pages peintes */
+  --text2: #d0c5ae;   /* parchemin atténué */
+  --text3: #aab4ca;   /* brume bleu-gris, lisible sur écran */
 
   /* Accent — émeraude du dragon */
-  --accent:  #4fae8c;
-  --accent2: #3a8069;
+  --accent:  #70d3ad;
+  --accent2: #55b28f;
 
   /* Couleurs fonctionnelles — tons des couvertures */
-  --offc: #cf5f42;   /* rouge tenture / souffle du dragon */
-  --offd: #d9a24e;   /* or des bougies et enluminures */
-  --def:  #4d7ec4;   /* bleu nocturne du chevalier */
-  --mov:  #5aab6a;   /* vert feuillage de la forêt onirique */
-  --sup:  #9b7ec9;   /* violet mystique — ailes de fée */
+  --offc: #ed8064;   /* rouge tenture / souffle du dragon */
+  --offd: #efbd68;   /* or des bougies et enluminures */
+  --def:  #78a8e8;   /* bleu nocturne du chevalier */
+  --mov:  #78c987;   /* vert feuillage de la forêt onirique */
+  --sup:  #bc9ae5;   /* violet mystique — ailes de fée */
 
   /* Alias jeu */
-  --energy-color:   #cf5f42;
-  --recovery-color: #d9a24e;
-  --vigor-color:    #5aab6a;
-  --rank-color:     #4fae8c;
+  --energy-color:   var(--offc);
+  --recovery-color: var(--offd);
+  --vigor-color:    var(--mov);
+  --rank-color:     var(--accent);
 
   /* Typographies — manuscrit peint, graisses renforcées pour
      rester lisible à l'écran (les tracés fins des couvertures
@@ -64,9 +64,9 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 15px;
-  line-height: 1.65;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.7;
   overflow: hidden;
 }
 
@@ -92,13 +92,13 @@ body::before {
     radial-gradient(1.5px 1.5px at 60% 76%, rgba(217,162,78,0.5) 0%, transparent 100%),
     radial-gradient(1px 1px at 96% 86%, rgba(236,228,208,0.3) 0%, transparent 100%),
     /* lueur de la lune — coin supérieur droit */
-    radial-gradient(ellipse 480px 380px at 90% 4%, rgba(217,162,78,0.14), transparent 30%),
+    radial-gradient(ellipse 540px 420px at 90% 4%, rgba(239,189,104,0.16), transparent 34%),
     /* brume émeraude du dragon endormi — coin inférieur gauche */
-    radial-gradient(ellipse 640px 440px at 4% 102%, rgba(79,174,140,0.12), transparent 65%),
+    radial-gradient(ellipse 680px 480px at 4% 102%, rgba(112,211,173,0.14), transparent 65%),
     /* brume mauve de la fée — centre du rêve */
-    radial-gradient(ellipse 780px 520px at 55% 42%, rgba(155,126,201,0.07), transparent 70%),
+    radial-gradient(ellipse 780px 520px at 55% 42%, rgba(188,154,229,0.08), transparent 70%),
     /* horizon nocturne */
-    linear-gradient(175deg, #05070d 0%, #090e19 40%, #0a1120 70%, #070a12 100%);
+    linear-gradient(175deg, #070a12 0%, #0a1020 40%, #0d1729 70%, #080d18 100%);
 }
 
 /* Le contenu passe devant la brume onirique */
@@ -1061,8 +1061,327 @@ a:hover { color: #6cc4a2; }
 
 
 /* ══════════════════════════════════════════════════════════════
+   LISIBILITÉ & FINITIONS — Encre claire, verre fumé et dorures
+   ══════════════════════════════════════════════════════════════ */
+::selection {
+  background: rgba(112, 211, 173, 0.32);
+  color: var(--text);
+}
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--offd);
+  outline-offset: 3px;
+}
+
+#topbar {
+  background:
+    linear-gradient(90deg, rgba(112,211,173,0.045), transparent 35%, rgba(239,189,104,0.035)),
+    rgba(16, 24, 39, 0.94);
+  border-bottom-color: rgba(83,108,148,0.72);
+}
+
+@supports (backdrop-filter: blur(12px)) {
+  #topbar {
+    background-color: rgba(16, 24, 39, 0.82);
+    backdrop-filter: blur(14px) saturate(120%);
+  }
+}
+
+#topbar nav button {
+  min-height: 36px;
+  padding-inline: 13px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+#topbar nav button:hover,
+#topbar nav button.active {
+  background: rgba(112,211,173,0.07);
+}
+
+#topbar .share-btn,
+.user-btn,
+.icon-btn,
+.btn-cancel,
+.btn-save,
+.btn-primary {
+  border-radius: 7px;
+}
+
+.list-header h1,
+.preview-name,
+.chr-reader-title,
+.doc-reader-title,
+.campaign-detail-title,
+.rulebook-body h1 {
+  text-wrap: balance;
+}
+
+.list-header .count,
+.preview-sub,
+.chr-detail-desc,
+.chr-reader-meta,
+.doc-reader-meta,
+.campaign-card-desc,
+.chr-card-desc,
+.doc-card-preview,
+.entry-row-preview,
+.card-desc,
+.char-card .card-sub,
+.shared-banner,
+.auth-tagline,
+.transfer-desc,
+.empty-state p,
+#chr-empty-state p {
+  color: var(--text3);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field label,
+.pts-bar .pts-label,
+.apt-pts-bar .lbl,
+.preview-attr .lbl,
+.card-attr .lbl,
+.filter-label,
+.rulebook-toc-title,
+.rulebook-body th,
+.doc-reader-body th,
+.transfer-section-label,
+.loading-text,
+.illus-slider-wrap label {
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+
+.char-card,
+.chr-card,
+.doc-card,
+.campaign-card,
+.universe-card,
+.entry-row,
+.preview-attr,
+.preview-power,
+.apt-preview-row,
+.trait-chip,
+.campaign-selectable-item {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.025), transparent 44%),
+    rgba(16,24,39,0.96);
+  border-color: rgba(83,108,148,0.58);
+  border-radius: 10px;
+  box-shadow:
+    0 14px 34px rgba(2,5,12,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.025);
+}
+
+.char-card:hover,
+.chr-card:hover,
+.doc-card:hover,
+.campaign-card:hover,
+.universe-card:hover,
+.entry-row:hover,
+.preview-power:hover,
+.campaign-selectable-item:hover {
+  border-color: var(--border2);
+  box-shadow:
+    0 18px 40px rgba(2,5,12,0.4),
+    0 0 0 1px rgba(112,211,173,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.char-card::before,
+.chr-card::before,
+.doc-card::before,
+.campaign-card::before {
+  border-radius: 10px 10px 0 0;
+}
+
+.char-card .card-name,
+.chr-card-title,
+.doc-card-title,
+.campaign-card-title {
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.card-attr .val,
+.preview-attr .val,
+.pts-bar .pts-value,
+.apt-pts-bar .val,
+.rank-num {
+  text-shadow: 0 0 16px currentColor;
+}
+
+.field input,
+.field select,
+.field textarea,
+.power-entry-header input,
+.power-entry-footer select,
+.power-desc-textarea,
+.trait-row input.trait-name,
+.compl-entry-header input,
+.compl-entry textarea,
+.background-field textarea,
+.doc-content-field textarea,
+.rulebook-toc-search input,
+.transfer-code-input,
+.transfer-username-wrap,
+.tags-input-wrap {
+  border-color: rgba(83,108,148,0.62);
+  border-radius: 7px;
+  box-shadow: inset 0 1px 5px rgba(2,5,12,0.22);
+}
+
+.field input,
+.field select {
+  min-height: 42px;
+}
+
+.field input,
+.field select,
+.field textarea,
+.background-field textarea,
+.transfer-username-input {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.field input::placeholder,
+.field textarea::placeholder,
+.background-field textarea::placeholder,
+.transfer-username-input::placeholder,
+.tags-input-wrap input::placeholder {
+  color: var(--text3);
+  opacity: 0.78;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.background-field textarea:focus,
+.tags-input-wrap:focus-within,
+.transfer-username-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 3px rgba(112,211,173,0.14),
+    inset 0 1px 5px rgba(2,5,12,0.18);
+}
+
+.form-section-title,
+.preview-section-title,
+.campaign-section-title {
+  color: var(--accent);
+  font-size: 12px;
+  letter-spacing: 0.13em;
+}
+
+.btn-primary,
+.btn-save,
+.transfer-confirm-btn {
+  background: linear-gradient(135deg, #4aa985 0%, var(--accent) 100%);
+  color: #07130f;
+  font-weight: 700;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.2) inset,
+    0 7px 20px rgba(52,150,115,0.22);
+}
+
+.btn-primary:hover,
+.btn-save:hover,
+.transfer-confirm-btn:not(:disabled):hover {
+  background: linear-gradient(135deg, var(--accent) 0%, #91e4c2 100%);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.24) inset,
+    0 9px 26px rgba(52,150,115,0.34);
+}
+
+.chr-reader-body,
+.doc-reader-body,
+.rulebook-body,
+.background-preview {
+  color: var(--text2);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.82;
+  text-rendering: optimizeLegibility;
+}
+
+.chr-reader-body p,
+.doc-reader-body p,
+.rulebook-body p {
+  max-width: 76ch;
+}
+
+.chr-reader-body h1,
+.doc-reader-body h1,
+.rulebook-body h1 {
+  border-bottom-color: rgba(83,108,148,0.65);
+  line-height: 1.2;
+}
+
+.chr-reader-body h3,
+.doc-reader-body h3,
+.rulebook-body h3,
+.chr-reader-body em,
+.doc-reader-body em,
+.rulebook-body em {
+  color: var(--accent);
+}
+
+.chr-reader-body blockquote,
+.doc-reader-body blockquote,
+.rulebook-body blockquote {
+  background: linear-gradient(90deg, rgba(112,211,173,0.09), rgba(112,211,173,0.025));
+  border-left-width: 3px;
+  border-radius: 0 8px 8px 0;
+  color: var(--text2);
+}
+
+.rulebook-toc-link {
+  color: var(--text3);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.rulebook-toc-link:hover,
+.rulebook-toc-link.active {
+  color: var(--text);
+}
+
+a:not(.logo) {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
    RESPONSIVE — rétablit le scroll de la page sur smartphone
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   html, body { overflow: auto; height: auto; }
+
+  #topbar nav button {
+    min-height: 34px;
+    font-size: 12px;
+  }
+
+  .chr-reader-body,
+  .doc-reader-body,
+  .rulebook-body,
+  .background-preview {
+    font-size: 16px;
+    line-height: 1.75;
+  }
 }
