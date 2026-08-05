@@ -827,8 +827,11 @@ async function populateConfigThemeSelect(selectedId) {
   const select = document.getElementById('config-f-theme');
   if (!select) return;
   const themes = await loadThemeManifest();
+  const sortedThemes = [...themes].sort((a, b) =>
+    a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' })
+  );
   select.innerHTML = `<option value="">${t('config_theme_default')}</option>` +
-    themes.map(theme => `<option value="${esc(theme.id)}">${esc(theme.label)}</option>`).join('');
+    sortedThemes.map(theme => `<option value="${esc(theme.id)}">${esc(theme.label)}</option>`).join('');
   select.value = selectedId || '';
 }
 
