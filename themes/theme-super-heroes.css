@@ -1,0 +1,486 @@
+@import url('./theme_superhero.css');
+
+/*
+ * SUPER HEROES
+ * A higher-energy evolution of Energy Heroes. The original theme remains
+ * untouched; this stylesheet inherits it and adds a bolder visual identity.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #080b12;
+  --bg2: #101623;
+  --bg3: #172033;
+  --bg4: #202b42;
+  --border: #263550;
+  --border2: #3b5577;
+
+  --text: #f4f7ff;
+  --text2: #aab6ca;
+  --text3: #7f8ba0;
+
+  --accent: #ffd447;
+  --accent2: #21c9f3;
+  --hero-energy: #21c9f3;
+  --hero-energy-bright: #77e8ff;
+  --hero-gold: #ffd447;
+  --hero-gold-bright: #fff0a3;
+  --hero-ink: #060911;
+
+  --offc: #ff536a;
+  --offd: #ff913f;
+  --def: #45a7ff;
+  --mov: #43df97;
+  --sup: #b879ff;
+  --energy-color: #ff536a;
+  --recovery-color: #ff913f;
+  --vigor-color: #43df97;
+  --rank-color: #ffd447;
+}
+
+html,
+body {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 84% -12%, rgba(33, 201, 243, 0.14), transparent 31rem),
+    radial-gradient(circle at -8% 105%, rgba(255, 212, 71, 0.08), transparent 34rem),
+    repeating-linear-gradient(118deg, transparent 0 42px, rgba(119, 232, 255, 0.018) 43px 44px);
+  background-attachment: fixed;
+}
+
+/* Top bar: mission-control framing with a bright energy rail. */
+#topbar {
+  position: relative;
+  background:
+    linear-gradient(105deg, rgba(255, 212, 71, 0.055), transparent 28%),
+    rgba(10, 15, 26, 0.96);
+  border-bottom: 1px solid rgba(33, 201, 243, 0.38);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.34);
+}
+
+#topbar::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  width: min(38vw, 500px);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--hero-energy));
+  box-shadow: 0 0 15px rgba(33, 201, 243, 0.72);
+  pointer-events: none;
+}
+
+#topbar .logo {
+  color: var(--hero-gold);
+  font-size: 21px;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 18px rgba(255, 212, 71, 0.25);
+  transform: skewX(-5deg);
+}
+
+#topbar .logo span {
+  color: var(--hero-energy-bright);
+  font-weight: 600;
+}
+
+#topbar nav button,
+#topbar .share-btn,
+.config-action-btn,
+.btn-follow {
+  border-radius: 2px 9px 2px 2px;
+}
+
+#topbar nav button.active {
+  color: var(--hero-ink);
+  background: linear-gradient(110deg, var(--hero-gold), #ffe982);
+  box-shadow: 0 0 18px rgba(255, 212, 71, 0.16);
+}
+
+#topbar nav button:hover:not(.active) {
+  color: var(--hero-energy-bright);
+  background: rgba(33, 201, 243, 0.08);
+}
+
+#topbar .share-btn:hover,
+.config-action-btn:hover,
+.btn-follow:hover {
+  color: var(--hero-energy-bright);
+  border-color: var(--hero-energy);
+  box-shadow: 0 0 0 2px rgba(33, 201, 243, 0.08);
+}
+
+/* Strong headings, supported by a restrained energy line. */
+.list-header {
+  position: relative;
+  padding-bottom: 14px;
+}
+
+.list-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--hero-gold), rgba(33, 201, 243, 0.5) 34%, transparent 76%);
+}
+
+.list-header h1,
+.preview-name,
+.chr-reader-title,
+.doc-reader-title,
+.campaign-card-title,
+.universe-card-title,
+.admin-hero h1 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  line-height: 0.98;
+  text-transform: uppercase;
+}
+
+.list-header h1 {
+  font-size: clamp(30px, 3.2vw, 44px);
+  text-shadow: 2px 2px 0 rgba(33, 201, 243, 0.12);
+}
+
+.list-header h1 span {
+  color: var(--hero-gold);
+  text-shadow: 0 0 22px rgba(255, 212, 71, 0.22);
+}
+
+.list-header .count,
+.form-section-title,
+.preview-section-title,
+.admin-card-title {
+  color: var(--text3);
+  letter-spacing: 0.13em;
+}
+
+.form-section-title::after,
+.preview-section-title::after {
+  background: linear-gradient(90deg, var(--border2), transparent);
+}
+
+/* Primary actions: a compact emblem-like silhouette, without hurting labels. */
+.btn-primary,
+.btn-save {
+  color: var(--hero-ink);
+  background: linear-gradient(115deg, var(--hero-gold) 0 64%, #ffe985 100%);
+  border: 1px solid rgba(255, 240, 163, 0.72);
+  border-radius: 2px 11px 2px 2px;
+  box-shadow:
+    inset 0 -2px 0 rgba(104, 74, 0, 0.24),
+    0 7px 20px rgba(255, 212, 71, 0.09);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.btn-primary:hover,
+.btn-save:hover {
+  color: var(--hero-ink);
+  background: linear-gradient(115deg, #ffe471, var(--hero-gold));
+  border-color: var(--hero-gold-bright);
+  box-shadow:
+    inset 0 -2px 0 rgba(104, 74, 0, 0.2),
+    0 8px 28px rgba(255, 212, 71, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-primary:focus-visible,
+.btn-save:focus-visible,
+#topbar nav button:focus-visible {
+  outline: 2px solid var(--hero-energy-bright);
+  outline-offset: 3px;
+}
+
+/* Character cards: hero dossiers with an energized corner and stronger depth. */
+.char-card {
+  background:
+    linear-gradient(135deg, rgba(33, 201, 243, 0.045), transparent 38%),
+    linear-gradient(155deg, var(--bg2), #0c121f);
+  border-color: var(--border);
+  border-radius: 2px 15px 2px 2px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.char-card::before {
+  height: 3px;
+  background: linear-gradient(90deg, var(--hero-gold), var(--hero-energy) 58%, transparent);
+  opacity: 0.56;
+}
+
+.char-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(225deg, rgba(33, 201, 243, 0.25) 0 48%, transparent 50%);
+  pointer-events: none;
+  transition: opacity 0.2s, filter 0.2s;
+}
+
+.char-card:hover {
+  border-color: rgba(33, 201, 243, 0.62);
+  transform: translateY(-3px);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.44),
+    0 0 24px rgba(33, 201, 243, 0.07);
+}
+
+.char-card:hover::before { opacity: 1; }
+.char-card:hover::after { filter: brightness(1.45); }
+
+.char-card .card-name {
+  color: var(--text);
+  font-size: 24px;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  line-height: 1;
+  padding-right: 30px;
+  text-shadow: 2px 2px 0 rgba(33, 201, 243, 0.1);
+}
+
+.char-card .card-rank,
+.preview-rank-badge,
+.pow-mod-tag {
+  color: var(--hero-gold);
+  background: linear-gradient(100deg, rgba(255, 212, 71, 0.16), rgba(33, 201, 243, 0.055));
+  border-color: rgba(255, 212, 71, 0.42);
+  border-radius: 2px 7px 2px 2px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.card-attr .val,
+.preview-attr .val {
+  text-shadow: 0 0 14px currentColor;
+}
+
+.card-attr .lbl,
+.preview-attr .lbl {
+  color: var(--text3);
+  letter-spacing: 0.1em;
+}
+
+.card-illus {
+  border-radius: 2px 15px 0 0;
+  filter: saturate(1.08) contrast(1.04);
+}
+
+/* Shared content cards receive the same family resemblance. */
+.chr-card,
+.doc-card,
+.campaign-card,
+.universe-card,
+.config-block,
+.admin-card {
+  background:
+    linear-gradient(140deg, rgba(33, 201, 243, 0.035), transparent 42%),
+    var(--bg2);
+  border-color: var(--border);
+  border-radius: 2px 13px 2px 2px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.chr-card::before,
+.doc-card::before,
+.campaign-card::before,
+.universe-card::before {
+  height: 2px;
+  background: linear-gradient(90deg, var(--hero-energy), var(--hero-gold), transparent 82%);
+}
+
+.chr-card:hover,
+.doc-card:hover,
+.campaign-card:hover,
+.universe-card:hover {
+  border-color: rgba(33, 201, 243, 0.5);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42), 0 0 22px rgba(33, 201, 243, 0.055);
+}
+
+.chr-card-title,
+.doc-card-title,
+.campaign-card-title,
+.universe-card-title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+/* Hero sheet / preview. */
+#preview-panel {
+  background:
+    radial-gradient(circle at 50% 0, rgba(33, 201, 243, 0.075), transparent 26rem),
+    transparent;
+}
+
+.preview-header {
+  position: relative;
+  border-bottom-color: rgba(33, 201, 243, 0.3);
+}
+
+.preview-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 38%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--hero-gold), var(--hero-energy));
+  box-shadow: 0 0 12px rgba(33, 201, 243, 0.36);
+}
+
+.preview-name {
+  color: var(--text);
+  font-size: clamp(38px, 5vw, 54px);
+  text-shadow: 3px 3px 0 rgba(33, 201, 243, 0.14);
+}
+
+.preview-illus {
+  border-color: rgba(33, 201, 243, 0.38);
+  border-radius: 2px 16px 2px 2px;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.4);
+  filter: saturate(1.08) contrast(1.04);
+}
+
+.preview-attr,
+.preview-power,
+.apt-preview-row,
+.trait-chip,
+.xp-field,
+.power-entry,
+.compl-entry {
+  background: linear-gradient(135deg, rgba(33, 201, 243, 0.035), transparent 48%), var(--bg2);
+  border-color: var(--border);
+  border-radius: 2px 10px 2px 2px;
+}
+
+.preview-power:hover,
+.apt-preview-row:hover {
+  border-color: var(--border2);
+  background-color: var(--bg3);
+}
+
+.pow-badge {
+  border-radius: 2px 6px 2px 2px;
+  letter-spacing: 0.085em;
+}
+
+.pip {
+  border-radius: 2px 5px 2px 2px;
+  transform: rotate(-7deg);
+}
+
+/* Inputs remain calm and legible; focus states carry the energy treatment. */
+.field input,
+.field select,
+.field textarea,
+.config-action-input,
+.tags-input-wrap,
+.background-field textarea {
+  border-radius: 2px 8px 2px 2px;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.config-action-input:focus,
+.tags-input-wrap:focus-within,
+.background-field textarea:focus {
+  border-color: var(--hero-energy);
+  box-shadow: 0 0 0 2px rgba(33, 201, 243, 0.09), 0 0 16px rgba(33, 201, 243, 0.07);
+}
+
+.icon-btn:hover {
+  color: var(--hero-energy-bright);
+  border-color: var(--hero-energy);
+}
+
+/* Readers and secondary screens keep the visual language coherent. */
+.chr-reader-body h1,
+.chr-reader-body h2,
+.doc-reader-body h1,
+.doc-reader-body h2 {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-style: italic;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.chr-reader-body blockquote,
+.doc-reader-body blockquote {
+  border-left-color: var(--hero-energy);
+  background: rgba(33, 201, 243, 0.045);
+}
+
+.map-viewport,
+#admin-screen {
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, rgba(33, 201, 243, 0.1), transparent 60%),
+    radial-gradient(circle at 8% 100%, rgba(255, 212, 71, 0.055), transparent 28rem),
+    var(--bg);
+}
+
+.admin-hero h1 {
+  font-size: 30px;
+}
+
+@media (max-width: 768px) {
+  #topbar .logo {
+    font-size: 17px;
+    transform: none;
+  }
+
+  .list-header {
+    padding-bottom: 11px;
+  }
+
+  .list-header h1 {
+    font-size: 29px;
+  }
+
+  .char-card .card-name {
+    font-size: 21px;
+  }
+
+  .preview-name {
+    font-size: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .char-card,
+  .chr-card,
+  .doc-card,
+  .campaign-card,
+  .universe-card,
+  .btn-primary,
+  .btn-save {
+    transition: none;
+  }
+
+  .char-card:hover,
+  .chr-card:hover,
+  .doc-card:hover,
+  .campaign-card:hover,
+  .universe-card:hover,
+  .btn-primary:hover,
+  .btn-save:hover {
+    transform: none;
+  }
+}
