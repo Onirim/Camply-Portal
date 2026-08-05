@@ -592,7 +592,7 @@ a:hover { color: #6cc4a2; }
   transform: translateX(-50%);
   font-size: 11px;
   color: var(--accent);
-  background: var(--bg);
+  /*background: var(--bg);*/
   padding: 0 10px;
   text-shadow: 0 0 8px rgba(79,174,140,0.5);
 }
