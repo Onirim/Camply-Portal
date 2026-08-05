@@ -145,6 +145,7 @@
   flex: 1; min-height: 500px;
   background: var(--bg3); border: 1px solid var(--border);
   border-radius: 4px; color: var(--text); font-family: var(--font-mono);
+  font-variant-ligatures: none;
   font-size: 13px; line-height: 1.7; padding: 12px;
   resize: none; outline: none; transition: border-color 0.15s;
 }
