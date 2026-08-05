@@ -186,7 +186,7 @@ a:hover { color: #eed28d; }
 
 /* Cartes et panneaux */
 .char-card, .chr-card, .doc-card, .campaign-card, .universe-card,
-.config-block, .preview-card, .admin-card, .export-option-card,
+.config-block, .preview-card, .shared-card, .admin-card, .export-option-card,
 .transfer-panel, .siteinfo-modal, .universe-search-modal, .map-modal, .map-popup {
   border-radius: 5px;
   border-color: var(--border);
@@ -196,9 +196,9 @@ a:hover { color: #eed28d; }
   box-shadow: 0 12px 30px rgba(0,0,0,.28);
 }
 .char-card, .chr-card, .doc-card, .campaign-card, .universe-card,
-.config-block, .preview-card, .admin-card, .export-option-card { position: relative; }
+.config-block, .preview-card, .shared-card, .admin-card, .export-option-card { position: relative; }
 .char-card::after, .chr-card::after, .doc-card::after, .campaign-card::after,
-.universe-card::after, .config-block::after, .preview-card::after,
+.universe-card::after, .config-block::after, .preview-card::after, .shared-card::after,
 .admin-card::after, .export-option-card::after {
   content: '';
   position: absolute;
@@ -278,7 +278,11 @@ a:hover { color: #eed28d; }
 #view-doc-reader, #view-entry-reader, #view-chr-detail, #view-campaign-detail {
   background: radial-gradient(circle at 50% 0, rgba(200,173,118,.035), transparent 40%), transparent;
 }
-.preview-card { border-top: 2px solid var(--accent2); }
+.preview-card, .shared-card {
+  box-sizing: border-box;
+  padding: 24px;
+  border-top: 2px solid var(--accent2);
+}
 .chr-reader-body, .doc-reader-body { color: #d4c9ad; font-family: var(--font-body); line-height: 1.9; }
 .chr-reader-body h1, .chr-reader-body h2, .chr-reader-body h3,
 .doc-reader-body h1, .doc-reader-body h2, .doc-reader-body h3 { font-family: var(--font-display); font-weight: 400; letter-spacing: .035em; }
