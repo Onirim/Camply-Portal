@@ -32,6 +32,13 @@
   --accent:  #70d3ad;
   --accent2: #55b28f;
 
+  /* Matières des couvertures — dorure, bois ancien et tenture */
+  --gold:         #d8ad5c;
+  --gold-bright:  #f0d28a;
+  --gold-faded:   rgba(216, 173, 92, 0.38);
+  --wood:         #3a271f;
+  --curtain:      #7b292c;
+
   /* Couleurs fonctionnelles — tons des couvertures */
   --offc: #ed8064;   /* rouge tenture / souffle du dragon */
   --offd: #efbd68;   /* or des bougies et enluminures */
@@ -77,6 +84,9 @@ body::before {
   z-index: 0;
   pointer-events: none;
   background-image:
+    /* plis très discrets des tentures, comme une scène qui s'ouvre */
+    linear-gradient(118deg, rgba(123,41,44,0.19) 0%, rgba(123,41,44,0.08) 7%, transparent 18%),
+    linear-gradient(242deg, rgba(123,41,44,0.17) 0%, rgba(123,41,44,0.07) 7%, transparent 18%),
     /* poussière d'étoiles / rêve scintillant */
     radial-gradient(1px 1px at 8% 12%, rgba(236,228,208,0.55) 0%, transparent 100%),
     radial-gradient(1px 1px at 22% 32%, rgba(217,162,78,0.5) 0%, transparent 100%),
@@ -1354,6 +1364,230 @@ a:hover { color: #6cc4a2; }
 a:not(.logo) {
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   SIGNATURE RÊVE DE DRAGON — Théâtre, alchimie et livre ancien
+   Les ornements restent volontairement fins pour ne pas concurrencer
+   les contenus de jeu.
+   ══════════════════════════════════════════════════════════════ */
+#topbar {
+  background:
+    linear-gradient(90deg, rgba(123,41,44,0.12), transparent 22%, transparent 78%, rgba(123,41,44,0.1)),
+    linear-gradient(180deg, rgba(58,39,31,0.42), rgba(16,24,39,0.92) 72%),
+    rgba(16,24,39,0.95);
+  border-bottom-color: var(--gold-faded);
+  box-shadow:
+    0 1px 0 rgba(240,210,138,0.13),
+    0 5px 24px rgba(2,5,12,0.58);
+}
+
+#topbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.15;
+  background: repeating-linear-gradient(96deg, transparent 0 18px, rgba(240,210,138,0.12) 19px, transparent 20px 37px);
+}
+
+#topbar::after {
+  background: linear-gradient(90deg, transparent, var(--curtain) 14%, var(--gold) 43%, var(--accent) 70%, transparent);
+  opacity: 0.82;
+}
+
+#topbar .logo {
+  color: var(--gold-bright);
+  text-shadow:
+    0 1px 0 rgba(0,0,0,0.95),
+    0 0 18px rgba(216,173,92,0.2);
+}
+
+#topbar .logo span { color: var(--accent); }
+#topbar nav button.active { color: var(--gold-bright); }
+#topbar nav button.active::after { background: linear-gradient(90deg, var(--gold), var(--accent)); }
+
+.list-header h1::after,
+.preview-name::after,
+.chr-detail-title::after,
+.campaign-detail-title::after {
+  content: ' ✦';
+  color: var(--gold);
+  font-size: 0.38em;
+  vertical-align: super;
+  text-shadow: 0 0 12px rgba(216,173,92,0.35);
+}
+
+.form-section-title::before,
+.preview-section-title::before,
+.campaign-section-title::before {
+  content: '◆';
+  color: var(--gold);
+  font-size: 0.7em;
+  text-shadow: 0 0 10px rgba(216,173,92,0.32);
+}
+
+.form-section-title::after,
+.preview-section-title::after,
+.campaign-section-title::after {
+  background: linear-gradient(90deg, var(--gold-faded), rgba(112,211,173,0.3) 38%, transparent 100%);
+}
+
+.char-card,
+.chr-card,
+.doc-card,
+.campaign-card,
+.universe-card {
+  position: relative;
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 92% -8%, rgba(216,173,92,0.1), transparent 31%),
+    linear-gradient(145deg, rgba(58,39,31,0.2), transparent 38%),
+    rgba(16,24,39,0.97);
+}
+
+.char-card::after,
+.chr-card::after,
+.doc-card::after,
+.campaign-card::after,
+.universe-card::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.52;
+  transition: opacity 0.22s ease;
+  background:
+    linear-gradient(90deg, var(--gold-faded), transparent) left top / 24px 1px no-repeat,
+    linear-gradient(180deg, var(--gold-faded), transparent) left top / 1px 24px no-repeat,
+    linear-gradient(270deg, var(--gold-faded), transparent) right top / 24px 1px no-repeat,
+    linear-gradient(180deg, var(--gold-faded), transparent) right top / 1px 24px no-repeat,
+    linear-gradient(90deg, var(--gold-faded), transparent) left bottom / 24px 1px no-repeat,
+    linear-gradient(0deg, var(--gold-faded), transparent) left bottom / 1px 24px no-repeat,
+    linear-gradient(270deg, var(--gold-faded), transparent) right bottom / 24px 1px no-repeat,
+    linear-gradient(0deg, var(--gold-faded), transparent) right bottom / 1px 24px no-repeat;
+}
+
+.char-card:hover::after,
+.chr-card:hover::after,
+.doc-card:hover::after,
+.campaign-card:hover::after,
+.universe-card:hover::after {
+  opacity: 0.88;
+}
+
+.char-card::before,
+.chr-card::before,
+.doc-card::before,
+.campaign-card::before {
+  border-radius: 7px 7px 0 0;
+  background: linear-gradient(90deg, transparent, var(--curtain) 22%, var(--gold) 52%, var(--accent) 78%, transparent);
+}
+
+.char-card::before { opacity: 0.62; }
+.char-card:hover::before { opacity: 1; }
+
+#editor-form,
+#chr-editor-form,
+#doc-editor-form,
+.form-actions,
+.chr-form-actions,
+.doc-form-actions {
+  background:
+    linear-gradient(135deg, rgba(58,39,31,0.2), transparent 34%),
+    var(--bg2);
+}
+
+#editor-form,
+#chr-editor-form,
+#doc-editor-form {
+  box-shadow:
+    inset -1px 0 0 rgba(216,173,92,0.16),
+    10px 0 36px rgba(2,5,12,0.15);
+}
+
+.field input,
+.field select,
+.field textarea,
+.background-field textarea,
+.doc-content-field textarea,
+.rulebook-toc-search input,
+.tags-input-wrap,
+.transfer-username-wrap {
+  background-color: rgba(24,36,58,0.92);
+  border-bottom-color: rgba(216,173,92,0.38);
+}
+
+.pts-bar,
+.apt-pts-bar,
+.xp-field,
+.share-code-box,
+.chr-share-code-box,
+.doc-share-code-box {
+  background:
+    linear-gradient(90deg, rgba(58,39,31,0.16), transparent 38%),
+    var(--bg3);
+  border-color: rgba(216,173,92,0.26);
+}
+
+.btn-primary,
+.btn-save,
+.transfer-confirm-btn {
+  border-color: rgba(240,210,138,0.58);
+  box-shadow:
+    0 0 0 1px rgba(7,19,15,0.42) inset,
+    0 1px 0 rgba(255,255,255,0.2) inset,
+    0 7px 20px rgba(52,150,115,0.22);
+}
+
+.btn-cancel,
+.icon-btn,
+.user-btn,
+#topbar .share-btn {
+  background: linear-gradient(145deg, rgba(58,39,31,0.24), rgba(24,36,58,0.94));
+  border-color: rgba(216,173,92,0.28);
+}
+
+.chr-reader-body h1,
+.doc-reader-body h1 {
+  border-bottom: 0;
+  padding-bottom: 12px;
+  background: linear-gradient(90deg, var(--gold-faded), rgba(112,211,173,0.42), transparent 78%) bottom / 100% 1px no-repeat;
+}
+
+.chr-reader-body h2::before,
+.doc-reader-body h2::before {
+  content: '◇';
+  display: inline-block;
+  margin-right: 0.48em;
+  color: var(--gold);
+  font-size: 0.72em;
+  transform: translateY(-0.08em);
+}
+
+.chr-reader-body blockquote,
+.doc-reader-body blockquote,
+.rulebook-body blockquote {
+  border-left-color: var(--gold);
+  background:
+    linear-gradient(90deg, rgba(123,41,44,0.1), transparent 72%),
+    rgba(112,211,173,0.035);
+  box-shadow: inset 0 1px 0 rgba(216,173,92,0.08);
+}
+
+.auth-box,
+#transfer-modal-panel {
+  border-color: rgba(216,173,92,0.48);
+  background:
+    radial-gradient(circle at 50% 0, rgba(112,211,173,0.08), transparent 42%),
+    linear-gradient(145deg, rgba(58,39,31,0.3), transparent 46%),
+    var(--bg2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--border2), rgba(216,173,92,0.58));
 }
 
 @media (prefers-reduced-motion: reduce) {
