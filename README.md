@@ -4,7 +4,7 @@
 
 Camply Portal is a self-hostable web app for running tabletop RPG campaigns: characters, campaign logs, shared documents and maps, all organized around **universes** that a game master owns and shares with their players.
 
-It ships as a **GitHub template**: fork it, connect your own free Supabase project, and you have a working campaign manager on GitHub Pages in a few minutes — no server to run, no build step.
+It ships as a **GitHub template**: fork it, connect your own free Supabase project, and you have a working campaign manager on GitHub Pages in a few minutes — no server to run, no build step. 
 
 ## How it's organized
 
