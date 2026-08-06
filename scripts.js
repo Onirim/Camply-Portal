@@ -827,8 +827,11 @@ async function populateConfigThemeSelect(selectedId) {
   const select = document.getElementById('config-f-theme');
   if (!select) return;
   const themes = await loadThemeManifest();
+  const sortedThemes = [...themes].sort((a, b) =>
+    a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' })
+  );
   select.innerHTML = `<option value="">${t('config_theme_default')}</option>` +
-    themes.map(theme => `<option value="${esc(theme.id)}">${esc(theme.label)}</option>`).join('');
+    sortedThemes.map(theme => `<option value="${esc(theme.id)}">${esc(theme.label)}</option>`).join('');
   select.value = selectedId || '';
 }
 
@@ -1732,6 +1735,30 @@ function normalizeMarkdownTextarea(textarea) {
 
 function renderMarkdown(md) {
   return marked.parse(normalizeMarkdownTypography(md || ''));
+}
+
+function markdownToPlainText(md) {
+  if (!md) return '';
+
+  const container = document.createElement('div');
+  container.innerHTML = renderMarkdown(md);
+
+  // Les séparateurs entre blocs doivent rester visibles une fois les balises
+  // retirées, sans quoi un titre et le paragraphe suivant seraient concaténés.
+  container.querySelectorAll('br, hr').forEach(el => el.replaceWith(' '));
+  container.querySelectorAll('p, div, h1, h2, h3, h4, h5, h6, li, blockquote, pre, tr, th, td')
+    .forEach(el => {
+      el.prepend(' ');
+      el.append(' ');
+    });
+  container.querySelectorAll('script, style').forEach(el => el.remove());
+
+  return (container.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function markdownPreview(md, maxLength) {
+  const text = markdownToPlainText(md);
+  return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text;
 }
 
 function pipRow(val, cls, max) {

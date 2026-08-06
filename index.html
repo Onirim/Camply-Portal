@@ -345,6 +345,7 @@
             <thead>
               <tr>
                 <th data-i18n="admin_th_user">Utilisateur</th>
+                <th data-i18n="admin_th_user_status">Statut (30 j)</th>
                 <th data-i18n="admin_th_universes_owned">Univers possédés</th>
                 <th data-i18n="admin_th_objects">Objets</th>
                 <th data-i18n="admin_th_universe_limit">Limite d'univers</th>
@@ -891,7 +892,7 @@
         <div class="chr-options">
           <div class="chr-public-row">
             <label data-i18n="chr_editor_public">Partage public</label>
-            <label class="pub-toggle" style="--toggle-color:var(--sup)">
+            <label class="pub-toggle">
               <input type="checkbox" id="chr-f-public" onchange="updateChrForm()">
               <span class="pub-toggle-track"><span class="pub-toggle-dot"></span></span>
               <span class="pub-toggle-label" id="chr-public-label">Privée</span>
@@ -900,7 +901,7 @@
         </div>
         <div class="chr-form-actions">
           <button class="btn-cancel" onclick="showView('chronicles')" data-i18n="btn_cancel">Annuler</button>
-          <button class="btn-save" style="background:var(--sup)" onclick="saveChronicleToDB()" data-i18n="btn_save">Sauvegarder</button>
+          <button class="btn-save" onclick="saveChronicleToDB()" data-i18n="btn_save">Sauvegarder</button>
         </div>
       </div>
       <div id="chr-preview-panel">
@@ -942,7 +943,7 @@
         <div class="entry-form-actions">
           <button class="btn-cancel" id="entry-back-btn" onclick="showChrDetail(activeChrId)" data-i18n="btn_cancel">Annuler</button>
           <button class="btn-cancel" id="entry-mob-preview-btn" onclick="switchEntryTab('preview')" style="display:none" data-i18n="btn_preview">Aperçu</button>
-          <button class="btn-save" style="background:var(--sup)" onclick="saveEntryToDB()" data-i18n="btn_save">Sauvegarder</button>
+          <button class="btn-save" onclick="saveEntryToDB()" data-i18n="btn_save">Sauvegarder</button>
         </div>
       </div>
       <div id="entry-preview-panel">
@@ -1355,7 +1356,7 @@
               Ajoutez et gérez les cartes disponibles dans l'onglet Carte de cet univers.
             </p>
 
-            <button class="btn-follow-chr" style="margin-bottom:14px" onclick="openMapAdminForm(null)" data-i18n="config_maps_new_btn">+ Nouvelle carte</button>
+            <button class="config-action-btn" style="margin-bottom:14px" onclick="openMapAdminForm(null)" data-i18n="config_maps_new_btn">+ Nouvelle carte</button>
 
             <div id="config-maps-list"></div>
           </div>
@@ -1380,9 +1381,9 @@
               Transférez la propriété de cet univers à un membre. Vous perdrez vos droits d'administration et deviendrez simple joueur.
             </p>
 
-            <div class="chr-follow-wrap" style="margin-bottom:16px">
+            <div class="config-action-row" style="margin-bottom:16px">
               <select id="config-transfer-select" class="transfer-item-select"></select>
-              <button class="btn-follow-chr" onclick="transferUniverseOwnership()" data-i18n="config_transfer_btn">Transférer</button>
+              <button class="config-action-btn" onclick="transferUniverseOwnership()" data-i18n="config_transfer_btn">Transférer</button>
             </div>
 
             <div id="config-transfer-error" class="auth-error"></div>

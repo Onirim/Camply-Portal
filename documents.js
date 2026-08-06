@@ -202,10 +202,7 @@ function clearDocTagFilters() {
 }
 
 function docCardHTML(id, d, isFollowed) {
-  const preview = (d.content || '')
-    .replace(/#+\s*/g, '').replace(/\*+/g, '').replace(/!?\[.*?\]\(.*?\)/g, '')
-    .split('\n').find(l => l.trim()) || '';
-  const previewTxt = preview.length > 180 ? preview.slice(0, 180) + '…' : preview;
+  const previewTxt = markdownPreview(d.content, 180);
   const date = d.updated_at
     ? new Date(d.updated_at).toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'fr-FR', { day:'numeric', month:'short', year:'numeric' })
     : '';
