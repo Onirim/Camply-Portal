@@ -3,9 +3,8 @@
   { "id": "forgotten-realms",    "file": "theme-forgotten-realms.css",    "label": "The Forgotten Realms" },
   { "id": "mystic-falls",        "file": "theme_mystic_falls.css",        "label": "Mystic Falls" },
   { "id": "world-of-darkness",   "file": "theme-world-of-darkness.css",   "label": "World of Darkness" },
-  { "id": "red-shift",           "file": "theme-red-shift.css",           "label": "RED//SHIFT - Cyberpunk" },
+  { "id": "red-shift",           "file": "theme-red-shift.css",           "label": "Cyberpunk Red" },
   { "id": "reve-de-dragon",      "file": "theme-reve-de-dragon.css",      "label": "Rêve de Dragon" },
-  { "id": "superhero",           "file": "theme_superhero.css",           "label": "Energy Heroes" },
   { "id": "super-heroes",        "file": "theme-super-heroes.css",        "label": "Super Heroes" },
   { "id": "tales-from-the-loop", "file": "theme_tales_from_the_loop.css", "label": "Tales From the Loop" },
   { "id": "middle-earth",        "file": "theme-middle-earth.css",        "label": "Les Terres du Milieu" }
