@@ -206,7 +206,7 @@ a:hover { color: #ffa0a2; }
 
 /* Cartes et panneaux : surfaces nettes, bordure rouge reservee a l'interaction. */
 .char-card, .chr-card, .doc-card, .campaign-card, .universe-card,
-.config-block, .preview-card, .admin-card, .export-option-card,
+.config-block, .preview-card, .shared-card, .admin-card, .export-option-card,
 .transfer-panel, .siteinfo-modal, .universe-search-modal, .map-modal, .map-popup {
   border-radius: 4px;
   border-color: var(--border);
@@ -216,9 +216,9 @@ a:hover { color: #ffa0a2; }
   box-shadow: 0 14px 34px rgba(0,0,0,.3);
 }
 .char-card, .chr-card, .doc-card, .campaign-card, .universe-card,
-.config-block, .preview-card, .admin-card, .export-option-card { position: relative; }
+.config-block, .preview-card, .shared-card, .admin-card, .export-option-card { position: relative; }
 .char-card::after, .chr-card::after, .doc-card::after, .campaign-card::after,
-.universe-card::after, .config-block::after, .preview-card::after,
+.universe-card::after, .config-block::after, .preview-card::after, .shared-card::after,
 .admin-card::after, .export-option-card::after {
   content: '';
   position: absolute;
@@ -315,7 +315,11 @@ input::placeholder, textarea::placeholder { color: #91888b; opacity: 1; }
 #view-doc-reader, #view-entry-reader, #view-chr-detail, #view-campaign-detail {
   background: radial-gradient(circle at 50% 0, rgba(215,100,105,.035), transparent 42%), transparent;
 }
-.preview-card { border-top: 2px solid var(--accent2); }
+.preview-card, .shared-card {
+  box-sizing: border-box;
+  padding: 24px;
+  border-top: 2px solid var(--accent2);
+}
 .chr-reader-body, .doc-reader-body {
   color: #e4ddd8;
   font-family: var(--font-body);
