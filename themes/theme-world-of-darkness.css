@@ -85,6 +85,7 @@ a:hover { color: #ffa0a2; }
 /* Navigation : verre fume et trait carmin. */
 #topbar {
   position: relative;
+  z-index: 150;
   background: linear-gradient(90deg, rgba(168,56,63,.08), transparent 36%), rgba(13,14,16,.97);
   border-bottom: 1px solid #6b3036;
   box-shadow: 0 2px 0 rgba(215,100,105,.08), 0 12px 34px rgba(0,0,0,.52);

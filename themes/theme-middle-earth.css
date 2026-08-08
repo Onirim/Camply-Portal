@@ -78,6 +78,7 @@ a:hover { color: #eed28d; }
 /* Navigation — bois sombre et filet d'or */
 #topbar {
   position: relative;
+  z-index: 150;
   background: linear-gradient(90deg, rgba(69,105,88,.11), transparent 34%), rgba(11,21,17,.97);
   border-bottom: 1px solid var(--accent2);
   box-shadow: 0 2px 0 rgba(200,173,118,.1), 0 10px 30px rgba(0,0,0,.48);
