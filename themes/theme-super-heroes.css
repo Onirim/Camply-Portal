@@ -484,3 +484,53 @@ body {
     transform: none;
   }
 }
+
+/*
+ * Mobile paint budget
+ *
+ * Long rosters used to make the browser repaint the fixed page texture,
+ * filtered illustrations and every layered card while scrolling.  Keep the
+ * theme's colours and energy rails, but let off-screen cards skip rendering
+ * and avoid the effects that are especially expensive on tiled mobile GPUs.
+ */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  html,
+  body {
+    background-image: linear-gradient(165deg, #080b12, #101623);
+    background-attachment: scroll;
+  }
+
+  .char-card,
+  .chr-card,
+  .doc-card,
+  .campaign-card,
+  .universe-card {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 180px;
+    background: var(--bg2);
+    box-shadow: none;
+    transition: none;
+  }
+
+  .char-card:hover,
+  .chr-card:hover,
+  .doc-card:hover,
+  .campaign-card:hover,
+  .universe-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .char-card::after {
+    transition: none;
+  }
+
+  .card-illus {
+    filter: none;
+  }
+
+  .char-card .card-name,
+  .card-attr .val {
+    text-shadow: none;
+  }
+}

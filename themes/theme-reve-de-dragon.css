@@ -1619,3 +1619,60 @@ a:not(.logo) {
     line-height: 1.75;
   }
 }
+
+/*
+ * Budget de peinture mobile
+ *
+ * Les longues listes cumulaient un decor fixe complexe, le flou de la barre
+ * et onze calques de fond/ornement par carte. Sur un GPU mobile, chacun de ces
+ * calques devait etre repeint pendant le scroll. Les cartes hors ecran sont
+ * maintenant ignorees et les ornements couteux sont simplifies sur tactile.
+ */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  body::before {
+    display: none;
+  }
+
+  #topbar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .char-card,
+  .chr-card,
+  .doc-card,
+  .campaign-card,
+  .universe-card {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 180px;
+    background: rgba(16, 24, 39, 0.98);
+    box-shadow: none;
+    transition: none;
+  }
+
+  .char-card::after,
+  .chr-card::after,
+  .doc-card::after,
+  .campaign-card::after,
+  .universe-card::after {
+    display: none;
+  }
+
+  .char-card:hover,
+  .chr-card:hover,
+  .doc-card:hover,
+  .campaign-card:hover,
+  .universe-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .card-illus {
+    filter: none;
+  }
+
+  .char-card .card-name,
+  .card-attr .val {
+    text-shadow: none;
+  }
+}
