@@ -65,7 +65,7 @@ jobs:
       - name: Appliquer le schéma (00_fresh_install.sql)
         env:
           DB_URL: ${{ secrets.RESTORE_TARGET_DB_URL }}
-        # 00_fresh_install.sql concatène déjà 00_schema.sql -> 46_*.sql (vérifié via
+        # 00_fresh_install.sql concatène déjà 00_schema.sql -> 51_*.sql (vérifié via
         # ses marqueurs "-- BEGIN sql/X.sql"), donc rejouer les migrations séparément
         # serait redondant. À maintenir à jour à chaque nouvelle migration.
         # NB : ce fichier sème aussi quelques lignes en dur (public.site_info,

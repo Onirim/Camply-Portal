@@ -359,7 +359,8 @@ async function onSignedIn(user) {
   updateUserUI(currentUser);
   adminPanel.checkAndShowMenu();
   const username = getDiscordUsername(user);
-  await sb.from('profiles').upsert({ id: user.id, username });
+  const { error: visitError } = await sb.rpc('touch_user_visit', { p_username: username });
+  if (visitError) console.warn('Enregistrement de la visite impossible:', visitError.message);
   document.getElementById('auth-screen').classList.remove('active');
   document.getElementById('app').style.display = 'none';
   document.getElementById('loading-overlay').classList.add('active');

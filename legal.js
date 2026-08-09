@@ -88,7 +88,7 @@ const legalInfo = {
           <ul>
             <li>Adresse email, ou identifiant et avatar Discord en cas de connexion via Discord ;</li>
             <li>Contenu créé par l'utilisateur (univers, personnages, chroniques, documents, cartes, images) ;</li>
-            <li>Horodatage de connexion et de dernière visite d'un univers, utilisé uniquement pour la mise en pause automatique des univers inactifs.</li>
+            <li>Horodatages de connexion, de dernière visite de Camply et de dernière visite d'un univers, utilisés uniquement pour le suivi des comptes inactifs et la mise en pause automatique des univers inactifs.</li>
           </ul>
           <p>
             Ces données sont hébergées par Supabase et ne sont ni revendues ni partagées à des
