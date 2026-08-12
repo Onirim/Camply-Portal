@@ -20,7 +20,7 @@ let filterFollowed   = false;
 let charSecrets = {}; 
 let currentSecretDraft = '';
 
-const APP_VERSION = '2026.08.12.1';
+const APP_VERSION = '2026.08.12.2';
 const USER_VISIT_TOUCH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const APP_VERSION_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 let userVisitTouchPromise = null;
