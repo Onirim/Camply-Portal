@@ -20,6 +20,13 @@ let filterFollowed   = false;
 let charSecrets = {}; 
 let currentSecretDraft = '';
 
+const APP_VERSION = '2026.08.12.1';
+const USER_VISIT_TOUCH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const APP_VERSION_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+let userVisitTouchPromise = null;
+let lastAppVersionCheckAt = 0;
+let pendingAppVersion = null;
+
 function getDiscordUsername(user) {
   const meta = user?.user_metadata || {};
   const raw = meta.full_name
@@ -351,6 +358,87 @@ async function init() {
   });
 }
 
+function userVisitStorageKey() {
+  return currentUser?.id ? `camply_last_visit_touch_at:${currentUser.id}` : '';
+}
+
+async function touchUserVisit({ force = false } = {}) {
+  if (!currentUser) return;
+  if (userVisitTouchPromise) return userVisitTouchPromise;
+
+  const key = userVisitStorageKey();
+  let lastTouchAt = 0;
+  try { lastTouchAt = Number(localStorage.getItem(key)) || 0; } catch (_) {}
+  if (!force && Date.now() - lastTouchAt < USER_VISIT_TOUCH_INTERVAL_MS) return;
+
+  userVisitTouchPromise = (async () => {
+    const username = getDiscordUsername(currentUser);
+    const { error } = await sb.rpc('touch_user_visit', { p_username: username });
+    if (error) {
+      console.warn('Enregistrement de la visite impossible:', error.message);
+      return;
+    }
+    try { localStorage.setItem(key, String(Date.now())); } catch (_) {}
+  })();
+
+  try {
+    await userVisitTouchPromise;
+  } finally {
+    userVisitTouchPromise = null;
+  }
+}
+
+function reloadForAppUpdate(version = pendingAppVersion) {
+  const url = new URL(window.location.href);
+  if (version) url.searchParams.set('app_version', version);
+  window.location.replace(url.toString());
+}
+
+function isSafeForAutomaticUpdate() {
+  return document.getElementById('auth-screen')?.classList.contains('active')
+    || document.getElementById('universe-screen')?.classList.contains('active');
+}
+
+function showAppUpdatePrompt(version) {
+  if (document.getElementById('app-update-banner')) return;
+  pendingAppVersion = version;
+
+  const banner = document.createElement('div');
+  banner.id = 'app-update-banner';
+  banner.setAttribute('role', 'status');
+
+  const message = document.createElement('span');
+  message.textContent = t('app_update_available');
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = t('app_update_reload');
+  button.addEventListener('click', () => reloadForAppUpdate(version));
+
+  banner.append(message, button);
+  document.body.appendChild(banner);
+}
+
+async function checkForAppUpdate({ force = false } = {}) {
+  const now = Date.now();
+  if (!force && now - lastAppVersionCheckAt < APP_VERSION_CHECK_INTERVAL_MS) return;
+  lastAppVersionCheckAt = now;
+
+  try {
+    const response = await fetch(`./version.json?t=${now}`, { cache: 'no-store' });
+    if (!response.ok) return;
+    const remote = await response.json();
+    const remoteVersion = String(remote?.version || '');
+    if (!remoteVersion || remoteVersion === APP_VERSION) return;
+
+    pendingAppVersion = remoteVersion;
+    if (isSafeForAutomaticUpdate()) reloadForAppUpdate(remoteVersion);
+    else showAppUpdatePrompt(remoteVersion);
+  } catch (error) {
+    console.warn('Vérification de la version impossible:', error.message);
+  }
+}
+
 async function onSignedIn(user) {
   currentUser = user;
   currentUniverse = null;
@@ -358,9 +446,7 @@ async function onSignedIn(user) {
   isAppReady = false;
   updateUserUI(currentUser);
   adminPanel.checkAndShowMenu();
-  const username = getDiscordUsername(user);
-  const { error: visitError } = await sb.rpc('touch_user_visit', { p_username: username });
-  if (visitError) console.warn('Enregistrement de la visite impossible:', visitError.message);
+  await touchUserVisit({ force: true });
   document.getElementById('auth-screen').classList.remove('active');
   document.getElementById('app').style.display = 'none';
   document.getElementById('loading-overlay').classList.add('active');
@@ -802,7 +888,7 @@ let themeManifest = null;
 async function loadThemeManifest() {
   if (themeManifest) return themeManifest;
   try {
-    const res = await fetch('./themes/manifest.json');
+    const res = await fetch(`./themes/manifest.json?v=${APP_VERSION}`);
     themeManifest = await res.json();
   } catch (e) {
     console.error('Erreur chargement manifest des thèmes:', e);
@@ -820,7 +906,7 @@ function applyTheme(themeId) {
     link.disabled = true;
     return;
   }
-  link.href = `./themes/${theme.file}`;
+  link.href = `./themes/${theme.file}?v=${APP_VERSION}`;
   link.disabled = false;
 }
 
@@ -1925,5 +2011,14 @@ async function cleanupOrphanTags(type) {
 // ── Boot ──────────────────────────────────────────────────────
 document.getElementById('app').style.display = 'none';
 document.getElementById('universe-screen')?.classList.remove('active');
+window.addEventListener('pageshow', () => {
+  void touchUserVisit();
+  void checkForAppUpdate();
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  void touchUserVisit();
+  void checkForAppUpdate();
+});
 window.bootCamplyApp = init;
 init();

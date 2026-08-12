@@ -23,6 +23,8 @@ const TRANSLATIONS = {
     // ── App ───────────────────────────────────────────────────
     loading:     'Chargement…',
     app_tagline: 'Gestionnaire de campagne pour jeu de rôle sur table',
+    app_update_available: 'Une nouvelle version de Camply est disponible.',
+    app_update_reload:    'Mettre à jour',
 
     // ── Auth ──────────────────────────────────────────────────
     auth_login_discord: 'Se connecter avec Discord',
@@ -467,6 +469,8 @@ const TRANSLATIONS = {
     // ── App ───────────────────────────────────────────────────
     loading:     'Loading…',
     app_tagline: 'Campaign manager for tabletop RPG',
+    app_update_available: 'A new version of Camply is available.',
+    app_update_reload:    'Update now',
 
     // ── Auth ──────────────────────────────────────────────────
     auth_login_discord: 'Log in with Discord',

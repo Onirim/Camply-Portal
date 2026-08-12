@@ -39,6 +39,7 @@ Object.assign(TRANSLATIONS.fr, {
   admin_pagination_info:      'Page ${page}/${pages} · ${count} résultat(s)',
   admin_th_user:             'Utilisateur',
   admin_th_user_status:      'Statut (30 j)',
+  admin_th_last_seen:        'Dernière visite',
   admin_th_universes_owned:  'Univers possédés',
   admin_th_objects:          'Objets',
   admin_th_universe_limit:   'Limite d\'univers',
@@ -110,6 +111,7 @@ Object.assign(TRANSLATIONS.en, {
   admin_pagination_info:      'Page ${page}/${pages} · ${count} result(s)',
   admin_th_user:             'User',
   admin_th_user_status:      'Status (30d)',
+  admin_th_last_seen:        'Last visit',
   admin_th_universes_owned:  'Owned universes',
   admin_th_objects:          'Objects',
   admin_th_universe_limit:   'Universe limit',
@@ -174,6 +176,16 @@ const adminPanel = {
     const mb = bytes / (1024 * 1024);
     if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB';
     return mb.toFixed(1) + ' MB';
+  },
+
+  formatDateTime(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return new Intl.DateTimeFormat(currentLang === 'fr' ? 'fr-FR' : 'en-GB', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(date);
   },
 
   // Affiché quand l'utilisateur courant est admin (fire-and-forget,
@@ -337,6 +349,7 @@ const adminPanel = {
             ${u.is_active ? t('admin_status_active') : t('admin_status_inactive')}
           </span>
         </td>
+        <td>${esc(this.formatDateTime(u.last_seen_at))}</td>
         <td>${u.owned_universes}</td>
         <td>${u.objects_count}</td>
         <td>
@@ -356,7 +369,7 @@ const adminPanel = {
         <td>
           <button class="btn-cancel admin-row-btn" onclick="adminPanel.saveUserLimit('${u.user_id}')" data-i18n="admin_save_btn">Enregistrer</button>
         </td>
-      </tr>`).join('') : `<tr><td colspan="6" class="admin-empty-row" data-i18n="admin_no_results">Aucun résultat.</td></tr>`;
+      </tr>`).join('') : `<tr><td colspan="7" class="admin-empty-row" data-i18n="admin_no_results">Aucun résultat.</td></tr>`;
 
     this._renderPagination('admin-users-pagination', page, totalPages, filtered.length,
       'adminPanel.usersPrevPage()', 'adminPanel.usersNextPage()');
