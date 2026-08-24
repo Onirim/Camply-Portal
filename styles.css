@@ -569,6 +569,36 @@ html, body {
 #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg3); border: 1px solid var(--border2); color: var(--text); font-size: 13px; font-weight: 500; padding: 10px 20px; border-radius: 8px; transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease; z-index: 600; opacity: 0; visibility: hidden; }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
 
+#app-update-banner {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 650;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(440px, calc(100vw - 40px));
+  padding: 12px 14px;
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  background: var(--bg3);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  font-size: 13px;
+}
+
+#app-update-banner button {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 7px;
+  padding: 8px 11px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 #view-sheet { display: none; flex: 1; overflow-y: auto; background: var(--bg); padding: 28px 32px; }
 #view-sheet.active { display: flex; justify-content: center; }
 

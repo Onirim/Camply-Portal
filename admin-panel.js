@@ -25,7 +25,7 @@ Object.assign(TRANSLATIONS.fr, {
   admin_card_universes_list: 'Univers',
   admin_card_users_total:    'Utilisateurs (total)',
   admin_card_users_active:   'Utilisateurs actifs (30 jours)',
-  admin_users_active_pct:    '${pct}% des comptes',
+  admin_users_active_pct:    '${active} actifs sur 30 jours · ${pct}% des comptes',
   admin_purge_btn:      'Purger les fichiers orphelins',
   admin_universes_active_paused: '${active} actifs · ${paused} en pause',
   admin_orphans_count:  '${count} fichier(s) · ${size}',
@@ -39,6 +39,7 @@ Object.assign(TRANSLATIONS.fr, {
   admin_pagination_info:      'Page ${page}/${pages} · ${count} résultat(s)',
   admin_th_user:             'Utilisateur',
   admin_th_user_status:      'Statut (30 j)',
+  admin_th_last_seen:        'Dernière visite',
   admin_th_universes_owned:  'Univers possédés',
   admin_th_objects:          'Objets',
   admin_th_universe_limit:   'Limite d\'univers',
@@ -96,7 +97,7 @@ Object.assign(TRANSLATIONS.en, {
   admin_card_universes_list: 'Universes',
   admin_card_users_total:    'Users (total)',
   admin_card_users_active:   'Active users (30 days)',
-  admin_users_active_pct:    '${pct}% of accounts',
+  admin_users_active_pct:    '${active} active in 30 days · ${pct}% of accounts',
   admin_purge_btn:      'Purge orphan files',
   admin_universes_active_paused: '${active} active · ${paused} paused',
   admin_orphans_count:  '${count} file(s) · ${size}',
@@ -110,6 +111,7 @@ Object.assign(TRANSLATIONS.en, {
   admin_pagination_info:      'Page ${page}/${pages} · ${count} result(s)',
   admin_th_user:             'User',
   admin_th_user_status:      'Status (30d)',
+  admin_th_last_seen:        'Last visit',
   admin_th_universes_owned:  'Owned universes',
   admin_th_objects:          'Objects',
   admin_th_universe_limit:   'Universe limit',
@@ -174,6 +176,32 @@ const adminPanel = {
     const mb = bytes / (1024 * 1024);
     if (mb >= 1024) return (mb / 1024).toFixed(2) + ' GB';
     return mb.toFixed(1) + ' MB';
+  },
+
+  formatMegabytes(bytes) {
+    const mb = (Number(bytes) || 0) / (1024 * 1024);
+    return `${new Intl.NumberFormat(currentLang === 'fr' ? 'fr-FR' : 'en-GB', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(mb)} MB`;
+  },
+
+  formatDateTime(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return new Intl.DateTimeFormat(currentLang === 'fr' ? 'fr-FR' : 'en-GB', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(date);
+  },
+
+  formatPercent(value) {
+    const safeValue = Number.isFinite(value) ? value : 0;
+    return new Intl.NumberFormat(currentLang === 'fr' ? 'fr-FR' : 'en-GB', {
+      style: 'percent',
+      maximumFractionDigits: 1,
+    }).format(safeValue / 100);
   },
 
   // Affiché quand l'utilisateur courant est admin (fire-and-forget,
@@ -253,23 +281,29 @@ const adminPanel = {
     });
 
     document.getElementById('admin-users-total-value').textContent = stats.users.total;
-    document.getElementById('admin-users-active-value').textContent = stats.users.active_30d;
     document.getElementById('admin-users-active-breakdown').textContent = ti('admin_users_active_pct', {
+      active: stats.users.active_30d,
       pct: stats.users.total ? Math.round((stats.users.active_30d / stats.users.total) * 100) : 0,
     });
 
-    const storagePct = Math.min(100, (stats.storage.bytes / stats.storage.limit_bytes) * 100);
+    const storagePct = stats.storage.limit_bytes
+      ? (stats.storage.bytes / stats.storage.limit_bytes) * 100
+      : 0;
+    document.getElementById('admin-storage-percent').textContent = this.formatPercent(storagePct);
     document.getElementById('admin-storage-value').textContent =
-      `${this.formatBytes(stats.storage.bytes)} / ${this.formatBytes(stats.storage.limit_bytes)}`;
+      `${this.formatMegabytes(stats.storage.bytes)} / ${this.formatMegabytes(stats.storage.limit_bytes)}`;
     const storageBar = document.getElementById('admin-storage-bar');
-    storageBar.style.width = storagePct + '%';
+    storageBar.style.width = Math.min(100, storagePct) + '%';
     storageBar.classList.toggle('warning', storagePct >= 80);
 
-    const dbPct = Math.min(100, (stats.database.bytes / stats.database.limit_bytes) * 100);
+    const dbPct = stats.database.limit_bytes
+      ? (stats.database.bytes / stats.database.limit_bytes) * 100
+      : 0;
+    document.getElementById('admin-database-percent').textContent = this.formatPercent(dbPct);
     document.getElementById('admin-database-value').textContent =
-      `${this.formatBytes(stats.database.bytes)} / ${this.formatBytes(stats.database.limit_bytes)}`;
+      `${this.formatMegabytes(stats.database.bytes)} / ${this.formatMegabytes(stats.database.limit_bytes)}`;
     const dbBar = document.getElementById('admin-database-bar');
-    dbBar.style.width = dbPct + '%';
+    dbBar.style.width = Math.min(100, dbPct) + '%';
     dbBar.classList.toggle('warning', dbPct >= 80);
 
     document.getElementById('admin-orphans-value').textContent = ti('admin_orphans_count', {
@@ -337,6 +371,7 @@ const adminPanel = {
             ${u.is_active ? t('admin_status_active') : t('admin_status_inactive')}
           </span>
         </td>
+        <td>${esc(this.formatDateTime(u.last_seen_at))}</td>
         <td>${u.owned_universes}</td>
         <td>${u.objects_count}</td>
         <td>
@@ -356,7 +391,7 @@ const adminPanel = {
         <td>
           <button class="btn-cancel admin-row-btn" onclick="adminPanel.saveUserLimit('${u.user_id}')" data-i18n="admin_save_btn">Enregistrer</button>
         </td>
-      </tr>`).join('') : `<tr><td colspan="6" class="admin-empty-row" data-i18n="admin_no_results">Aucun résultat.</td></tr>`;
+      </tr>`).join('') : `<tr><td colspan="7" class="admin-empty-row" data-i18n="admin_no_results">Aucun résultat.</td></tr>`;
 
     this._renderPagination('admin-users-pagination', page, totalPages, filtered.length,
       'adminPanel.usersPrevPage()', 'adminPanel.usersNextPage()');
