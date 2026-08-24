@@ -169,7 +169,7 @@ function renderCharSheet(data) {
         ${chars.map(ch => `
           <div class="preview-attr" style="border-left:3px solid var(--accent)">
             <div class="val" style="color:var(--accent);font-size:26px">${ch.score ?? 0}</div>
-            <div class="lbl">${esc(ch.trigram || '???')}</div>
+            ${ch.trigram ? `<div class="lbl">${esc(ch.trigram)}</div>` : ''}
             <div class="cost" style="font-size:11px;color:var(--text2);margin-top:2px">${esc(ch.name)}</div>
           </div>`).join('')}
       </div>`;
