@@ -1,34 +1,32 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=IM+Fell+English:ital@0;1&family=IBM+Plex+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap');
 
-/* PAVILLON NOIR — cartes anciennes, bois de navire et laiton patiné. */
+/* PAVILLON NOIR — pavillon pirate, océan nocturne et laiton de navigation. */
 :root {
   color-scheme: dark;
-  --bg: #0b0d0c;
-  --bg2: #121613;
-  --bg3: #1b211c;
-  --bg4: #272d25;
-  --border: #394033;
-  --border2: #766744;
-  --text: #eee7d5;
-  --text2: #c5baa0;
-  --text3: #92886f;
+  --bg: #080d14;
+  --bg2: #101923;
+  --bg3: #172330;
+  --bg4: #202e3b;
+  --border: #304252;
+  --border2: #786746;
+  --text: #eee8d9;
+  --text2: #c5c0b5;
+  --text3: #8995a0;
   --accent: #c5a45e;
   --accent2: #806637;
-  --offc: #a54c3e;
+  --offc: #aa4945;
   --offd: #c27d43;
-  --def: #6c9b91;
-  --mov: #87a76e;
+  --def: #6e9fb0;
+  --mov: #8aa5a2;
   --sup: #a47c8c;
-  --energy-color: #a54c3e;
+  --energy-color: #aa4945;
   --recovery-color: #c27d43;
-  --vigor-color: #87a76e;
+  --vigor-color: #8aa5a2;
   --rank-color: #c5a45e;
-  --font-display: 'Cinzel', 'Palatino Linotype', Georgia, serif;
-  --font-body: 'IM Fell English', Georgia, 'Times New Roman', serif;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
+  --font-body: 'Alegreya', Georgia, 'Times New Roman', serif;
   --font-mono: 'IBM Plex Mono', Consolas, monospace;
   --gold-glow: rgba(197, 164, 94, .18);
-  --sea-glow: rgba(75, 128, 116, .13);
-  --chart-line: rgba(197, 164, 94, .055);
 }
 
 html, body {
@@ -40,17 +38,23 @@ html, body {
 }
 
 body::before {
-  content: '';
+  content: '☠';
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: rgba(197,164,94,.026);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: min(86vw, 94vh);
+  line-height: 1;
+  transform: rotate(-9deg);
   background:
-    radial-gradient(ellipse at 18% 26%, transparent 0 12%, var(--chart-line) 12.2%, transparent 12.5% 20%, var(--chart-line) 20.2%, transparent 20.5% 29%, var(--chart-line) 29.2%, transparent 29.5%),
-    radial-gradient(ellipse at 82% 78%, transparent 0 15%, rgba(108,155,145,.045) 15.2%, transparent 15.5% 25%, rgba(108,155,145,.035) 25.2%, transparent 25.5%),
-    radial-gradient(circle at 12% 14%, var(--sea-glow), transparent 29%),
-    radial-gradient(circle at 91% 88%, rgba(128,102,55,.09), transparent 30%),
-    linear-gradient(145deg, #0d100e, #080a09 62%, #11140f);
+    repeating-linear-gradient(0deg, transparent 0 46px, rgba(110,159,176,.018) 47px, transparent 48px),
+    linear-gradient(180deg, rgba(59,103,137,.12), transparent 34%, rgba(5,9,15,.28)),
+    linear-gradient(112deg, #0a111a, #080d14 58%, #101a24);
 }
 
 #app, #topbar, #view-list, #view-editor, #view-shared, #preview-panel,
@@ -71,11 +75,11 @@ a { color: #d2b875; text-decoration-color: rgba(210,184,117,.42); text-underline
 a:hover { color: #f0d997; }
 .chr-reader-body a, .doc-reader-body a { color: #d2b875; border-bottom-color: rgba(210,184,117,.4); }
 
-/* La barre supérieure reprend le bois sombre et le galon du pavillon. */
+/* Bandeau sombre, liseré de laiton et rappel rouge du pavillon. */
 #topbar {
-  background: linear-gradient(90deg, rgba(108,155,145,.08), transparent 32%), rgba(10,13,11,.97);
-  border-bottom: 1px solid var(--accent2);
-  box-shadow: 0 2px 0 rgba(197,164,94,.1), 0 10px 30px rgba(0,0,0,.42);
+  background: linear-gradient(90deg, rgba(62,105,138,.1), transparent 34%), rgba(7,12,18,.97);
+  border-bottom: 2px solid var(--accent2);
+  box-shadow: 0 2px 0 rgba(170,73,69,.22), 0 10px 30px rgba(0,0,0,.42);
   backdrop-filter: blur(12px);
 }
 #topbar::after {
@@ -89,9 +93,9 @@ a:hover { color: #f0d997; }
 #topbar .logo {
   color: var(--text);
   font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: .1em;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .12em;
   text-transform: uppercase;
 }
 #topbar .logo::before { content: '☠'; color: var(--accent); margin-right: 9px; font-size: 15px; }
@@ -171,7 +175,7 @@ a:hover { color: #f0d997; }
 .siteinfo-modal, .universe-search-modal, .map-modal, .map-popup {
   border-color: var(--border);
   border-radius: 3px;
-  background: linear-gradient(135deg, rgba(197,164,94,.035), transparent 42%), var(--bg2);
+  background: linear-gradient(135deg, rgba(62,105,138,.07), transparent 48%), var(--bg2);
   box-shadow: 0 9px 26px rgba(0,0,0,.23);
 }
 .char-card, .chr-card, .doc-card, .campaign-card, .universe-card, .config-block,
@@ -254,8 +258,8 @@ a:hover { color: #f0d997; }
 /* Entrées de port et cartes de campagne. */
 #auth-screen, #universe-screen {
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(197,164,94,.1), transparent 40%),
-    radial-gradient(circle at 82% 75%, var(--sea-glow), transparent 30%), var(--bg);
+    linear-gradient(135deg, rgba(62,105,138,.14), transparent 45%),
+    linear-gradient(0deg, rgba(197,164,94,.035), transparent 34%), var(--bg);
 }
 .auth-box { border: 1px solid var(--border); border-top: 2px solid var(--accent2); border-radius: 4px; background: rgba(18,22,19,.96); box-shadow: 0 24px 70px rgba(0,0,0,.5), 0 0 28px rgba(197,164,94,.05); }
 .auth-logo, .universe-logo { color: var(--text); font-family: var(--font-display); font-weight: 600; letter-spacing: .12em; }
