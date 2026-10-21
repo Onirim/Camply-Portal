@@ -236,6 +236,11 @@ const adminPanel = {
     contentEl.style.display = 'none';
     document.getElementById('admin-purge-result').textContent = '';
 
+    // Le panneau admin est aussi le point de passage qui applique la
+    // règle d'inactivité à tous les univers, quel que soit leur propriétaire.
+    const pauseRes = await sb.rpc('admin_pause_stale_universes');
+    if (pauseRes.error) console.error('admin_pause_stale_universes:', pauseRes.error);
+
     const [statsRes, usersRes, universesRes, newsRes] = await Promise.all([
       sb.rpc('admin_get_stats'),
       sb.rpc('admin_list_users'),
