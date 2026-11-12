@@ -29,8 +29,9 @@
 --
 -- Déclenchement : pause_stale_universes() est appelée par le client
 -- au chargement de la liste des univers et ne met en pause que les
--- univers POSSÉDÉS par l'appelant. touch_universe_visit() est appelée
--- à chaque entrée dans un univers (par n'importe quel membre).
+-- univers POSSÉDÉS par l'appelant. Une RPC admin distincte balaie tous
+-- les propriétaires à l'ouverture du panneau d'administration.
+-- touch_universe_visit() est appelée à chaque entrée dans un univers.
 -- ══════════════════════════════════════════════════════════════
 
 BEGIN;
