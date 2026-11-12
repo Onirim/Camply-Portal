@@ -643,6 +643,10 @@ async function addDocTag(name) {
 
 function onDocTagInput(val) {
   const ac = document.getElementById('doc-tag-autocomplete');
+  ac.onclick = e => {
+    const item = e.target.closest('[data-create-tag]');
+    if (item) addDocTag(item.dataset.createTag);
+  };
   const q = val.trim().toLowerCase();
   const assigned = docTagMap[editingTagDocId] || [];
   const filtered = allDocTags.filter(tg => !assigned.includes(tg.id) && (!q || tg.name.toLowerCase().includes(q)));
@@ -655,7 +659,7 @@ function onDocTagInput(val) {
         <span class="dot" style="background:${tg.color}"></span>${esc(tg.name)}
       </div>`),
     showCreate ? `
-      <div class="tags-autocomplete-item" onclick="addDocTag('${esc(val.trim())}')">
+      <div class="tags-autocomplete-item" data-create-tag="${esc(val.trim())}">
         <span class="dot" style="background:${randomTagColor()}"></span>${esc(val.trim())}
         <span class="new-hint">${t('editor_tag_create_hint')}</span>
       </div>` : ''
