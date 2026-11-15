@@ -145,6 +145,10 @@ async function addCharTag(name) {
 
 function onCharTagInput(val) {
   const ac = document.getElementById('char-tag-autocomplete');
+  ac.onclick = e => {
+    const item = e.target.closest('[data-create-tag]');
+    if (item) addCharTag(item.dataset.createTag);
+  };
   const q = val.trim().toLowerCase();
   const assigned = charTagMap[editingTagCharId] || [];
   const filtered = allTags.filter(tg => !assigned.includes(tg.id) && (!q || tg.name.toLowerCase().includes(q)));
@@ -157,7 +161,7 @@ function onCharTagInput(val) {
         <span class="dot" style="background:${tg.color}"></span>${esc(tg.name)}
       </div>`),
     showCreate ? `
-      <div class="tags-autocomplete-item" onclick="addCharTag('${esc(val.trim())}')">
+      <div class="tags-autocomplete-item" data-create-tag="${esc(val.trim())}">
         <span class="dot" style="background:${randomTagColor()}"></span>${esc(val.trim())}
         <span class="new-hint">${t('editor_tag_create_hint')}</span>
       </div>` : ''
