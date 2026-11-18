@@ -511,12 +511,14 @@ async function switchMap(key) {
   // Recharge les marqueurs propres pour la nouvelle carte
   await loadMapMarkersFromDB();
 
-  // Ré-affiche les marqueurs suivis (filtrés par la nouvelle carte)
+  // Ré-affiche les marqueurs suivis (filtrés par la nouvelle carte).
+  // Un MJ ou propriétaire peut aussi modifier ceux des couches partagées.
+  const canEditShared = isUniverseGM();
   Object.values(mapFollowedLayers).forEach(({ layer, markers }) => {
     if (_normalizeMapKey(layer.map_key) !== currentMapKey) return;
     Object.values(markers)
       .filter(m => _isMarkerOnCurrentMap(m))
-      .forEach(m => _renderMarker(m, false));
+      .forEach(m => _renderMarker(m, canEditShared));
   });
 
   // Ré-affiche les marqueurs propres
