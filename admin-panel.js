@@ -509,7 +509,7 @@ const adminPanel = {
     if (!universe) return;
 
     const typed = prompt(ti('admin_confirm_delete_universe', { name: universe.name }));
-    if (typed !== universe.name) return;
+    if ((typed || '').trim().toLowerCase() !== universe.name.toLowerCase()) return;
 
     const { data: illustrationUrls, error } = await sb.rpc('admin_delete_universe', { p_universe_id: universeId });
     if (error) { showToast(ti('toast_admin_action_error', { message: error.message })); return; }

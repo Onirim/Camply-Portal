@@ -1105,7 +1105,7 @@ function _refreshDeleteUniverseConfirmState() {
   const input = document.getElementById('delete-universe-confirm-input');
   const btn   = document.getElementById('delete-universe-confirm-btn');
   if (!btn || !currentUniverse) return;
-  btn.disabled = (input?.value || '') !== currentUniverse.name;
+  btn.disabled = (input?.value || '').trim().toLowerCase() !== currentUniverse.name.toLowerCase();
 }
 
 function _extractStoragePath(url, bucket) {
@@ -1119,7 +1119,7 @@ async function confirmDeleteUniverse() {
   const input = document.getElementById('delete-universe-confirm-input');
   const errEl = document.getElementById('delete-universe-error-msg');
   const btn   = document.getElementById('delete-universe-confirm-btn');
-  if ((input?.value || '') !== currentUniverse.name) return;
+  if ((input?.value || '').trim().toLowerCase() !== currentUniverse.name.toLowerCase()) return;
   if (errEl) errEl.style.display = 'none';
 
   const universeId   = currentUniverse.id;
